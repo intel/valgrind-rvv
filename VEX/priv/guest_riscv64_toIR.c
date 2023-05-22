@@ -3534,6 +3534,320 @@ static Bool dis_vsetvl(/*MB_OUT*/ DisResult* dres,
    return True;
 }
 
+// return sew in bits
+static UInt get_sew(VexGuestRISCV64State* guest)
+{
+   UInt raw_sew = SLICE_UInt(guest->guest_vtype, 5, 3);
+   switch (raw_sew) {
+   case 0b000: return 8;
+   case 0b001: return 16;
+   case 0b010: return 32;
+   case 0b011: return 64;
+   default: vassert(0);
+   }
+}
+
+static IRExpr* widen_Uto64(IRExpr* e, IRType ty)
+{
+   switch (ty) {
+   case Ity_I8:  return unop(Iop_8Uto64, e);
+   case Ity_I16: return unop(Iop_16Uto64, e);
+   case Ity_I32: return unop(Iop_32Uto64, e);
+   case Ity_I64: return e;
+   default:      vassert(0);
+   }
+}
+
+static IRExpr* widen_Sto64(IRExpr* e, IRType ty)
+{
+   switch (ty) {
+   case Ity_I8:  return unop(Iop_8Sto64, e);
+   case Ity_I16: return unop(Iop_16Sto64, e);
+   case Ity_I32: return unop(Iop_32Sto64, e);
+   case Ity_I64: return e;
+   default:      vassert(0);
+   }
+}
+
+static Bool dis_vmsgtu_vx(/*MB_OUT*/ DisResult* dres,
+                          /*OUT*/ IRSB*         irsb,
+                          UInt                  insn,
+                          Addr                  guest_pc_curr_instr,
+                          VexGuestRISCV64State* guest)
+{
+   UInt vm = INSN(25, 25);
+   UInt vs2 = INSN(24, 20);
+   UInt rs1 = INSN(19, 15);
+   UInt vd = INSN(11, 7);
+
+   UInt vma = SLICE_UInt(guest->guest_vtype, 7, 7);
+   UInt sew_b = get_sew(guest) / 8;
+   IRType ty = integerIRTypeOfSize(sew_b);
+
+   UInt offset = 0;
+   for (UInt o = 0; o < guest->guest_vl; o += 64) {
+      // generate res w/o mask
+      UInt remain = guest->guest_vl - o;
+      UInt step = (remain > 64) ? 64 : remain;
+      IRExpr* res = mkU64(0);
+      for (UInt i = 0; i < step; ++i) {
+         IRExpr* bit = binop(Iop_Shl64,
+                             unop(Iop_1Uto64,
+                                  binop(Iop_CmpLT64U,
+                                        getIReg64(rs1),
+                                        widen_Uto64(getVReg(vs2, offset, ty), ty))),
+                             mkU8(i));
+
+         res = binop(Iop_Or64, res, bit);
+         offset += sew_b;
+      }
+
+      // modify res according to mask
+      UInt mask_offset = o / 8;
+      if (vm == 0) {
+         IRExpr* v0_step = getVReg(0, mask_offset, Ity_I64);
+
+         IRExpr* inactive;
+         if (vma == 0) { // undisturbed, read it first
+            IRExpr* vd_step = getVReg(vd, mask_offset, Ity_I64);
+            inactive = binop(Iop_And64, unop(Iop_Not64, v0_step), vd_step);
+         } else { // agnostic, set to 1
+            inactive = binop(Iop_And64, unop(Iop_Not64, v0_step), mkU64(-1UL));
+         }
+         IRExpr* active = binop(Iop_And64, v0_step, res);
+         res = binop(Iop_Or64, active, inactive);
+      }
+      putVReg(irsb, vd, mask_offset, res);
+   }
+
+   putPC(irsb, mkU64(guest_pc_curr_instr + 4));
+   dres->whatNext    = Dis_StopHere;
+   dres->jk_StopHere = Ijk_TooManyIR;
+
+   return True;
+}
+
+static Bool dis_vmseq_vi(/*MB_OUT*/ DisResult* dres,
+                         /*OUT*/ IRSB*         irsb,
+                         UInt                  insn,
+                         Addr                  guest_pc_curr_instr,
+                         VexGuestRISCV64State* guest)
+{
+   UInt vm = INSN(25, 25);
+   UInt vs2 = INSN(24, 20);
+   ULong imm = sext_slice_ulong(insn, 19, 15);
+   UInt vd = INSN(11, 7);
+
+   UInt vma = SLICE_UInt(guest->guest_vtype, 7, 7);
+   UInt sew_b = get_sew(guest) / 8;
+   IRType ty = integerIRTypeOfSize(sew_b);
+
+   UInt offset = 0;
+   for (UInt o = 0; o < guest->guest_vl; o += 64) {
+      // generate res w/o mask
+      UInt remain = guest->guest_vl - o;
+      UInt step = (remain > 64) ? 64 : remain;
+      IRExpr* res = mkU64(0);
+      for (UInt i = 0; i < step; ++i) {
+         IRExpr* bit = binop(Iop_Shl64,
+                             unop(Iop_1Uto64,
+                                  binop(Iop_CmpEQ64,
+                                        mkU64(imm),
+                                        widen_Sto64(getVReg(vs2, offset, ty), ty))),
+                             mkU8(i));
+
+         res = binop(Iop_Or64, res, bit);
+         offset += sew_b;
+      }
+
+      // modify res according to mask
+      UInt mask_offset = o / 8;
+      if (vm == 0) {
+         IRExpr* v0_step = getVReg(0, mask_offset, Ity_I64);
+
+         IRExpr* inactive;
+         if (vma == 0) { // undisturbed, read it first
+            IRExpr* vd_step = getVReg(vd, mask_offset, Ity_I64);
+            inactive = binop(Iop_And64, unop(Iop_Not64, v0_step), vd_step);
+         } else { // agnostic, set to 1
+            inactive = binop(Iop_And64, unop(Iop_Not64, v0_step), mkU64(-1UL));
+         }
+         IRExpr* active = binop(Iop_And64, v0_step, res);
+         res = binop(Iop_Or64, active, inactive);
+      }
+
+      putVReg(irsb, vd, mask_offset, res);
+   }
+
+   putPC(irsb, mkU64(guest_pc_curr_instr + 4));
+   dres->whatNext    = Dis_StopHere;
+   dres->jk_StopHere = Ijk_TooManyIR;
+
+   return True;
+}
+
+static Bool dis_vmsne_vv(/*MB_OUT*/ DisResult* dres,
+                         /*OUT*/ IRSB*         irsb,
+                         UInt                  insn,
+                         Addr                  guest_pc_curr_instr,
+                         VexGuestRISCV64State* guest)
+{
+   UInt vm = INSN(25, 25);
+   UInt vs2 = INSN(24, 20);
+   UInt vs1 = INSN(19, 15);
+   UInt vd = INSN(11, 7);
+
+   UInt vma = SLICE_UInt(guest->guest_vtype, 7, 7);
+   UInt sew_b = get_sew(guest) / 8;
+   IRType ty = integerIRTypeOfSize(sew_b);
+
+   UInt offset = 0;
+   for (UInt o = 0; o < guest->guest_vl; o += 64) {
+      // generate res w/o mask
+      UInt remain = guest->guest_vl - o;
+      UInt step = (remain > 64) ? 64 : remain;
+      IRExpr* res = mkU64(0);
+      for (UInt i = 0; i < step; ++i) {
+         IRExpr* bit = binop(Iop_Shl64,
+                             unop(Iop_1Uto64,
+                                  binop(Iop_CmpNE64,
+                                        widen_Sto64(getVReg(vs1, offset, ty), ty),
+                                        widen_Sto64(getVReg(vs2, offset, ty), ty))),
+                             mkU8(i));
+
+         res = binop(Iop_Or64, res, bit);
+         offset += sew_b;
+      }
+
+      // modify res according to mask
+      UInt mask_offset = o / 8;
+      if (vm == 0) {
+         IRExpr* v0_step = getVReg(0, mask_offset, Ity_I64);
+
+         IRExpr* inactive;
+         if (vma == 0) { // undisturbed, read it first
+            IRExpr* vd_step = getVReg(vd, mask_offset, Ity_I64);
+            inactive = binop(Iop_And64, unop(Iop_Not64, v0_step), vd_step);
+         } else { // agnostic, set to 1
+            inactive = binop(Iop_And64, unop(Iop_Not64, v0_step), mkU64(-1UL));
+         }
+         IRExpr* active = binop(Iop_And64, v0_step, res);
+         res = binop(Iop_Or64, active, inactive);
+      }
+
+      putVReg(irsb, vd, mask_offset, res);
+   }
+
+   putPC(irsb, mkU64(guest_pc_curr_instr + 4));
+   dres->whatNext    = Dis_StopHere;
+   dres->jk_StopHere = Ijk_TooManyIR;
+
+   return True;
+}
+
+static Bool dis_vmsbf_m(/*MB_OUT*/ DisResult* dres,
+                        /*OUT*/ IRSB*         irsb,
+                        UInt                  insn,
+                        Addr                  guest_pc_curr_instr,
+                        VexGuestRISCV64State* guest)
+{
+   UInt vm = INSN(25, 25);
+   UInt vs2 = INSN(24, 20);
+   UInt vd = INSN(11, 7);
+
+   vassert(vm == 1);  // mask not supported yet
+
+   IRExpr* not_found = mkU64(-1UL);
+   IRExpr* prev = not_found;
+   for (UInt i = 0; i < guest->guest_vl; i += 64) {
+      UInt mask_offset = i / 8;
+      // x = n - (n & n - 1) with only the rightmost set bit
+      // y = (x - 1) for vmsbf
+      IRExpr* n = getVReg(vs2, mask_offset, Ity_I64);
+      IRExpr* x = binop(Iop_Sub64,
+                        n,
+                        binop(Iop_And64,
+                              n,
+                              binop(Iop_Sub64,
+                                    n,
+                                    mkU64(1))));
+      IRExpr* y = binop(Iop_Sub64,
+                        x,
+                        mkU64(1));
+
+      IRExpr* cond = binop(Iop_CmpEQ64, prev, not_found);
+      IRExpr* res = IRExpr_ITE(cond, y, mkU64(0));
+
+      putVReg(irsb, vd, mask_offset, res);
+      prev = res;
+   }
+
+   return True;
+}
+
+static Bool dis_vmsif_m(/*MB_OUT*/ DisResult* dres,
+                        /*OUT*/ IRSB*         irsb,
+                        UInt                  insn,
+                        Addr                  guest_pc_curr_instr,
+                        VexGuestRISCV64State* guest)
+{
+   UInt vm = INSN(25, 25);
+   UInt vs2 = INSN(24, 20);
+   UInt vd = INSN(11, 7);
+
+   vassert(vm == 1);  // mask not supported yet
+
+   IRExpr* not_found = mkU64(-1UL);
+   IRExpr* prev = not_found;
+   for (UInt i = 0; i < guest->guest_vl; i += 64) {
+      UInt mask_offset = i / 8;
+      // x = n - (n & n - 1) with only the rightmost set bit
+      // y = x + (x - 1) for vmsif
+      IRExpr* n = getVReg(vs2, mask_offset, Ity_I64);
+      IRExpr* x = binop(Iop_Sub64,
+                        n,
+                        binop(Iop_And64,
+                              n,
+                              binop(Iop_Sub64,
+                                    n,
+                                    mkU64(1))));
+      IRExpr* y = binop(Iop_Add64,
+                        x,
+                        binop(Iop_Sub64,
+                              x,
+                              mkU64(1)));
+
+      IRExpr* cond = binop(Iop_CmpEQ64, prev, not_found);
+      IRExpr* res = IRExpr_ITE(cond, y, mkU64(0));
+
+      putVReg(irsb, vd, mask_offset, res);
+      prev = res;
+   }
+
+   return True;
+}
+
+static Bool dis_vmor_mm(/*MB_OUT*/ DisResult* dres,
+                        /*OUT*/ IRSB*         irsb,
+                        UInt                  insn,
+                        Addr                  guest_pc_curr_instr,
+                        VexGuestRISCV64State* guest)
+{
+   UInt vs2 = INSN(24, 20);
+   UInt vs1 = INSN(19, 15);
+   UInt vd = INSN(11, 7);
+
+   for (UInt i = 0; i < guest->guest_vl; i += 64) {
+      UInt mask_offset = i / 8;
+      IRExpr* mask = binop(Iop_Or64,
+                           getVReg(vs1, mask_offset, Ity_I64),
+                           getVReg(vs2, mask_offset, Ity_I64));
+      putVReg(irsb, vd, mask_offset, mask);
+   }
+
+   return True;
+}
+
 static ULong riscv_vfirst(VexGuestRISCV64State* guest, UInt vs2, UInt vm)
 {
    ULong index = -1UL;
@@ -3600,6 +3914,77 @@ static Bool dis_vfirst_m(/*MB_OUT*/ DisResult* dres,
    return True;
 }
 
+static Bool dis_vid_v(/*MB_OUT*/ DisResult* dres,
+                      /*OUT*/ IRSB*         irsb,
+                      UInt                  insn,
+                      Addr                  guest_pc_curr_instr,
+                      VexGuestRISCV64State* guest)
+{
+   UInt vs2 = INSN(24, 20);
+   UInt vd = INSN(11, 7);
+
+   vassert(vs2 == 0);
+
+   UInt sew_b = get_sew(guest) / 8;
+   IRType ty = integerIRTypeOfSize(sew_b);
+
+   UInt offset = 0;
+   for (UInt i = 0; i < guest->guest_vl; ++i) {
+      putVReg(irsb, vd, offset, mkU(ty, i));
+      offset += sew_b;
+   }
+
+   return True;
+}
+
+static Bool dis_vmv_vi(/*MB_OUT*/ DisResult* dres,
+                       /*OUT*/ IRSB*         irsb,
+                       UInt                  insn,
+                       Addr                  guest_pc_curr_instr,
+                       VexGuestRISCV64State* guest)
+{
+   UInt vs2 = INSN(24, 20);
+   ULong imm = sext_slice_ulong(insn, 19, 15);
+   UInt vd = INSN(11, 7);
+
+   vassert(vs2 == 0);
+
+   UInt sew_b = get_sew(guest) / 8;
+   IRExpr* e_imm;
+   switch (sew_b) {
+   case 1: e_imm = mkU8((UChar)imm); break;
+   case 2: e_imm = mkU16((UShort)imm); break;
+   case 4: e_imm = mkU32((UInt)imm); break;
+   case 8: e_imm = mkU64(imm); break;
+   default: vassert(0);
+   }
+
+   UInt offset = 0;
+   for (UInt i = 0; i < guest->guest_vl; ++i) {
+      putVReg(irsb, vd, offset, e_imm);
+      offset += sew_b;
+   }
+
+   return True;
+}
+
+static Bool dis_opivv(/*MB_OUT*/ DisResult* dres,
+                      /*OUT*/ IRSB*         irsb,
+                      UInt                  insn,
+                      Addr                  guest_pc_curr_instr,
+                      VexGuestRISCV64State* guest)
+{
+   UInt funct6 = INSN(31, 26);
+
+   switch (funct6) {
+   case 0b011001:
+      return dis_vmsne_vv(dres, irsb, insn, guest_pc_curr_instr, guest);
+   default:
+      return False;
+   }
+   return False;
+}
+
 static Bool dis_opmvv(/*MB_OUT*/ DisResult* dres,
                       /*OUT*/ IRSB*         irsb,
                       UInt                  insn,
@@ -3609,6 +3994,8 @@ static Bool dis_opmvv(/*MB_OUT*/ DisResult* dres,
    UInt funct6 = INSN(31, 26);
 
    switch (funct6) {
+   case 0b011010:
+      return dis_vmor_mm(dres, irsb, insn, guest_pc_curr_instr, guest);
    case 0b010000:
       switch (INSN(19, 15)) {
       case 0b10001:
@@ -3617,9 +4004,68 @@ static Bool dis_opmvv(/*MB_OUT*/ DisResult* dres,
          return False;
       }
       return False;
+   case 0b010100:
+      switch (INSN(19, 15)) {
+      case 0b00001:
+         return dis_vmsbf_m(dres, irsb, insn, guest_pc_curr_instr, guest);
+      case 0b00011:
+         return dis_vmsif_m(dres, irsb, insn, guest_pc_curr_instr, guest);
+      case 0b10001:
+         return dis_vid_v(dres, irsb, insn, guest_pc_curr_instr, guest);
+      default:
+         return False;
+      }
+      return False;
    default:
       return False;
    }
+   return False;
+}
+
+static Bool dis_opivi(/*MB_OUT*/ DisResult* dres,
+                      /*OUT*/ IRSB*         irsb,
+                      UInt                  insn,
+                      Addr                  guest_pc_curr_instr,
+                      VexGuestRISCV64State* guest)
+{
+   UInt funct6 = INSN(31, 26);
+   UInt vm = INSN(25, 25);
+
+   switch (funct6) {
+   case 0b011000:
+      return dis_vmseq_vi(dres, irsb, insn, guest_pc_curr_instr, guest);
+   case 0b010111:
+      if (vm == 1) {
+         return dis_vmv_vi(dres, irsb, insn, guest_pc_curr_instr, guest);
+      }
+      return False;
+   default:
+      return False;
+   }
+}
+
+static Bool dis_opivx(/*MB_OUT*/ DisResult* dres,
+                      /*OUT*/ IRSB*         irsb,
+                      UInt                  insn,
+                      Addr                  guest_pc_curr_instr,
+                      VexGuestRISCV64State* guest)
+{
+   UInt funct6 = INSN(31, 26);
+
+   switch (funct6) {
+   case 0b011110:
+      return dis_vmsgtu_vx(dres, irsb, insn, guest_pc_curr_instr, guest);
+   default:
+      return False;
+   }
+}
+
+static Bool dis_opmvx(/*MB_OUT*/ DisResult* dres,
+                      /*OUT*/ IRSB*         irsb,
+                      UInt                  insn,
+                      Addr                  guest_pc_curr_instr,
+                      VexGuestRISCV64State* guest)
+{
    return False;
 }
 
@@ -3728,8 +4174,16 @@ static Bool dis_RV64V(/*MB_OUT*/ DisResult* dres,
    switch (INSN(6, 0)) {
    case 0b1010111:
       switch (INSN(14, 12)) {
+      case 0b000:  // OPIVV
+         return dis_opivv(dres, irsb, insn, guest_pc_curr_instr, guest);
       case 0b010:  // OPMVV
          return dis_opmvv(dres, irsb, insn, guest_pc_curr_instr, guest);
+      case 0b011:  // OPIVI
+         return dis_opivi(dres, irsb, insn, guest_pc_curr_instr, guest);
+      case 0b100:  // OPIVX
+         return dis_opivx(dres, irsb, insn, guest_pc_curr_instr, guest);
+      case 0b110:  // OPMVX
+         return dis_opmvx(dres, irsb, insn, guest_pc_curr_instr, guest);
       case 0b111:  // vsetvl
          return dis_vsetvl(dres, irsb, insn, guest_pc_curr_instr);
       default:
