@@ -1510,6 +1510,7 @@ Bool VG_(translate) ( ThreadId tid,
    VexTranslateArgs   vta;
    VexTranslateResult tres;
    VgCallbackClosure  closure;
+   ULong cpu_state = 0;
 
    /* Make sure Vex is initialised right. */
 
@@ -1754,6 +1755,7 @@ Bool VG_(translate) ( ThreadId tid,
    vex_abiinfo.guest__use_fallback_LLSC = True;
    ThreadState *tst = VG_(get_ThreadState)(tid);
    vex_abiinfo.riscv64_guest_state = &tst->arch.vex;
+   cpu_state = get_cpu_state(&tst->arch.vex);
 #  endif
 
    /* Set up closure args. */
@@ -1868,6 +1870,7 @@ Bool VG_(translate) ( ThreadId tid,
           // addr, which might have been changed by the redirection
           VG_(add_to_transtab)( &vge,
                                 nraddr,
+                                cpu_state,
                                 (Addr)(&tmpbuf[0]), 
                                 tmpbuf_used,
                                 tres.n_sc_extents > 0,

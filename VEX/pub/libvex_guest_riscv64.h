@@ -177,6 +177,15 @@ typedef struct {
 /* Initialise all guest riscv64 state. */
 void LibVEX_GuestRISCV64_initialise(/*OUT*/ VexGuestRISCV64State* vex_state);
 
+static inline ULong get_cpu_state(VexGuestRISCV64State* guest)
+{
+#if defined(VGA_riscv64)
+   return guest->guest_vl | (guest->guest_vtype << 16);
+#else
+   return 0;
+#endif
+}
+
 #endif /* ndef __LIBVEX_PUB_GUEST_RISCV64_H */
 
 /*--------------------------------------------------------------------*/

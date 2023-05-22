@@ -171,6 +171,7 @@ extern void VG_(init_tt_tc)       ( void );
 extern
 void VG_(add_to_transtab)( const VexGuestExtents* vge,
                            Addr             entry,
+                           ULong            cpu_state,
                            Addr             code,
                            UInt             code_len,
                            Bool             is_self_checking,
@@ -194,6 +195,7 @@ extern Bool VG_(search_transtab) ( /*OUT*/Addr*  res_hcode,
                                    /*OUT*/SECno* res_sNo,
                                    /*OUT*/TTEno* res_tteNo,
                                    Addr          guest_addr, 
+                                   ULong         cpu_state,
                                    Bool          upd_cache );
 
 extern void VG_(discard_translations) ( Addr  start, ULong range,
@@ -215,6 +217,9 @@ void VG_(add_to_unredir_transtab)( const VexGuestExtents* vge,
 extern 
 Bool VG_(search_unredir_transtab) ( /*OUT*/Addr*  result,
                                     Addr          guest_addr );
+
+extern
+void invalidateFastCache ( void );
 
 // SB profiling stuff
 

@@ -948,6 +948,8 @@ void run_thread_for_a_while ( /*OUT*/HWord* two_words,
    do_pre_run_checks( tst );
    /* end Paranoia */
 
+   ULong cpu_state = get_cpu_state(&tst->arch.vex);
+
    /* Futz with the XIndir stats counters. */
    vg_assert(VG_(stats__n_xIndirs_32) == 0);
    vg_assert(VG_(stats__n_xIndir_hits1_32) == 0);
@@ -977,6 +979,7 @@ void run_thread_for_a_while ( /*OUT*/HWord* two_words,
             to the scheduler. */
          Bool  found = VG_(search_transtab)(&res, NULL, NULL,
                                             (Addr)tst->arch.vex.VG_INSTR_PTR,
+                                            cpu_state,
                                             True/*upd cache*/
                                             );
          if (LIKELY(found)) {
@@ -1133,16 +1136,19 @@ static void handle_tt_miss ( ThreadId tid )
    Bool found;
    Addr ip = VG_(get_IP)(tid);
 
+   volatile ThreadState* tst = VG_(get_ThreadState)(tid);
+   ULong cpu_state = get_cpu_state(&tst->arch.vex);
+
    /* Trivial event.  Miss in the fast-cache.  Do a full
       lookup for it. */
    found = VG_(search_transtab)( NULL, NULL, NULL,
-                                 ip, True/*upd_fast_cache*/ );
+                                 ip, cpu_state, True/*upd_fast_cache*/ );
    if (UNLIKELY(!found)) {
       /* Not found; we need to request a translation. */
       if (VG_(translate)( tid, ip, /*debug*/False, 0/*not verbose*/, 
                           bbs_done, True/*allow redirection*/ )) {
          found = VG_(search_transtab)( NULL, NULL, NULL,
-                                       ip, True ); 
+                                       ip, cpu_state, True );
          vg_assert2(found, "handle_tt_miss: missing tt_fast entry");
       
       } else {
@@ -1163,14 +1169,17 @@ void handle_chain_me ( ThreadId tid, void* place_to_chain, Bool toFastEP )
    SECno to_sNo         = INV_SNO;
    TTEno to_tteNo       = INV_TTE;
 
+   volatile ThreadState* tst = VG_(get_ThreadState)(tid);
+   ULong cpu_state = get_cpu_state(&tst->arch.vex);
+
    found = VG_(search_transtab)( NULL, &to_sNo, &to_tteNo,
-                                 ip, False/*dont_upd_fast_cache*/ );
+                                 ip, cpu_state, False/*dont_upd_fast_cache*/ );
    if (!found) {
       /* Not found; we need to request a translation. */
       if (VG_(translate)( tid, ip, /*debug*/False, 0/*not verbose*/, 
                           bbs_done, True/*allow redirection*/ )) {
          found = VG_(search_transtab)( NULL, &to_sNo, &to_tteNo,
-                                       ip, False ); 
+                                       ip, cpu_state, False );
          vg_assert2(found, "handle_chain_me: missing tt_fast entry");
       } else {
 	 // If VG_(translate)() fails, it's because it had to throw a

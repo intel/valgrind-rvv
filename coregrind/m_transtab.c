@@ -192,6 +192,9 @@ typedef
          may not be a lie, depending on whether or not we're doing
          redirection. */
       Addr entry;
+#ifdef VGA_riscv64
+      ULong cpu_state;
+#endif
 
       /* Address range summary info: these are pointers back to
          eclass[] entries in the containing Sector.  Those entries in
@@ -1461,7 +1464,7 @@ static inline HTTno HASH_TT ( Addr key )
 }
 
 /* Invalidate the fast cache VG_(tt_fast). */
-static void invalidateFastCache ( void )
+void invalidateFastCache ( void )
 {
    for (UWord j = 0; j < VG_TT_FAST_SETS; j++) {
       FastCacheSet* set = &VG_(tt_fast)[j];
@@ -1734,6 +1737,7 @@ static void initialiseSector ( SECno sno )
 */
 void VG_(add_to_transtab)( const VexGuestExtents* vge,
                            Addr             entry,
+                           ULong            cpu_state,
                            Addr             code,
                            UInt             code_len,
                            Bool             is_self_checking,
@@ -1845,6 +1849,9 @@ void VG_(add_to_transtab)( const VexGuestExtents* vge,
              (code_len == 0 ? 1 : (code_len / 4));
 
    sectors[y].ttC[tteix].entry  = entry;
+#ifdef VGA_riscv64
+   sectors[y].ttC[tteix].cpu_state  = cpu_state;
+#endif
    TTEntryH__from_VexGuestExtents( &sectors[y].ttH[tteix], vge );
    sectors[y].ttH[tteix].status = InUse;
 
@@ -1905,6 +1912,14 @@ void VG_(add_to_transtab)( const VexGuestExtents* vge,
    upd_eclasses_after_add( &sectors[y], tteix );
 }
 
+static inline Bool cpu_state_match(TTEntryC* ttC, ULong cpu_state)
+{
+#ifdef VGA_riscv64
+   return ttC->cpu_state == cpu_state;
+#else
+   return True;
+#endif
+}
 
 /* Search for the translation of the given guest address.  If
    requested, a successful search can also cause the fast-caches to be
@@ -1914,6 +1929,7 @@ Bool VG_(search_transtab) ( /*OUT*/Addr*  res_hcode,
                             /*OUT*/SECno* res_sNo,
                             /*OUT*/TTEno* res_tteNo,
                             Addr          guest_addr, 
+                            ULong         cpu_state,
                             Bool          upd_cache )
 {
    SECno i, sno;
@@ -1940,7 +1956,9 @@ Bool VG_(search_transtab) ( /*OUT*/Addr*  res_hcode,
          n_lookup_probes++;
          tti = sectors[sno].htt[k];
          if (tti < N_TTES_PER_SECTOR
-             && sectors[sno].ttC[tti].entry == guest_addr) {
+             && sectors[sno].ttC[tti].entry == guest_addr
+             && cpu_state_match(&sectors[sno].ttC[tti], cpu_state)
+             ) {
             /* found it */
             if (upd_cache)
                setFastCacheEntry( 
@@ -2553,7 +2571,11 @@ void VG_(init_tt_tc) ( void )
       have a lot of TTEntryCs so let's check that too. */
    if (sizeof(HWord) == 8) {
       vg_assert(sizeof(TTEntryH) <= 32);
+#ifdef VGA_riscv64
+      vg_assert(sizeof(TTEntryC) <= 120);
+#else
       vg_assert(sizeof(TTEntryC) <= 112);
+#endif
    } 
    else if (sizeof(HWord) == 4) {
       vg_assert(sizeof(TTEntryH) <= 20);
