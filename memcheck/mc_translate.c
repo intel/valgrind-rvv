@@ -6987,6 +6987,8 @@ static void do_shadow_LoadG ( MCEnv* mce, IRLoadG* lg )
       case ILGop_IdentV128: loadedTy = Ity_V128; vwiden = Iop_INVALID; break;
       case ILGop_Ident64:   loadedTy = Ity_I64;  vwiden = Iop_INVALID; break;
       case ILGop_Ident32:   loadedTy = Ity_I32;  vwiden = Iop_INVALID; break;
+      case ILGop_Ident16:   loadedTy = Ity_I16;  vwiden = Iop_INVALID; break;
+      case ILGop_Ident8:    loadedTy = Ity_I8;   vwiden = Iop_INVALID; break;
       case ILGop_16Uto32:   loadedTy = Ity_I16;  vwiden = Iop_16Uto32; break;
       case ILGop_16Sto32:   loadedTy = Ity_I16;  vwiden = Iop_16Sto32; break;
       case ILGop_8Uto32:    loadedTy = Ity_I8;   vwiden = Iop_8Uto32;  break;
@@ -7619,6 +7621,8 @@ static void do_origins_LoadG ( MCEnv* mce, IRLoadG* lg )
       case ILGop_IdentV128: loadedTy = Ity_V128; break;
       case ILGop_Ident64:   loadedTy = Ity_I64;  break;
       case ILGop_Ident32:   loadedTy = Ity_I32;  break;
+      case ILGop_Ident16:   loadedTy = Ity_I16;  break;
+      case ILGop_Ident8:    loadedTy = Ity_I8;   break;
       case ILGop_16Uto32:   loadedTy = Ity_I16;  break;
       case ILGop_16Sto32:   loadedTy = Ity_I16;  break;
       case ILGop_8Uto32:    loadedTy = Ity_I8;   break;

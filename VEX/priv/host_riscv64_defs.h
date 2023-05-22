@@ -324,7 +324,9 @@ typedef enum {
    RISCV64in_ALUImm,          /* Computational binary instruction, with
                                  an immediate as the second input. */
    RISCV64in_Load,            /* Load from memory (sign-extended). */
+   RISCV64in_LoadG,           /* Load from memory (sign-extended) with guard. */
    RISCV64in_Store,           /* Store to memory. */
+   RISCV64in_StoreG,          /* Store to memory with guard. */
    RISCV64in_LoadR,           /* Load-reserved from memory (sign-extended). */
    RISCV64in_StoreC,          /* Store-conditional to memory. */
    RISCV64in_CSRRW,           /* Atomic swap of values in a CSR and an integer
@@ -382,6 +384,15 @@ typedef struct {
          HReg          base;
          Int           soff12; /* -2048 .. +2047 */
       } Load;
+      /* Load from memory (sign-extended) with guard. */
+      struct {
+         RISCV64LoadOp op;
+         HReg          dst;
+         HReg          base;
+         Int           soff12; /* -2048 .. +2047 */
+         HReg          guard;
+         HReg          alt;
+      } LoadG;
       /* Store to memory. */
       struct {
          RISCV64StoreOp op;
@@ -389,6 +400,14 @@ typedef struct {
          HReg           base;
          Int            soff12; /* -2048 .. +2047 */
       } Store;
+      /* Store to memory with guard. */
+      struct {
+         RISCV64StoreOp op;
+         HReg           src;
+         HReg           base;
+         Int            soff12; /* -2048 .. +2047 */
+         HReg           guard;
+      } StoreG;
       /* Load-reserved from memory (sign-extended). */
       struct {
          RISCV64LoadROp op;
@@ -536,7 +555,11 @@ RISCV64Instr_ALUImm(RISCV64ALUImmOp op, HReg dst, HReg src, Int imm12);
 RISCV64Instr*
 RISCV64Instr_Load(RISCV64LoadOp op, HReg dst, HReg base, Int soff12);
 RISCV64Instr*
+RISCV64Instr_LoadG(RISCV64LoadOp op, HReg dst, HReg base, Int soff12, HReg guard, HReg alt);
+RISCV64Instr*
 RISCV64Instr_Store(RISCV64StoreOp op, HReg src, HReg base, Int soff12);
+RISCV64Instr*
+RISCV64Instr_StoreG(RISCV64StoreOp op, HReg src, HReg base, Int soff12, HReg guard);
 RISCV64Instr* RISCV64Instr_LoadR(RISCV64LoadROp op, HReg dst, HReg addr);
 RISCV64Instr*
 RISCV64Instr_StoreC(RISCV64StoreCOp op, HReg res, HReg src, HReg addr);

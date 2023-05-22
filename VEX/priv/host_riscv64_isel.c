@@ -1587,6 +1587,37 @@ static void iselStmt(ISelEnv* env, IRStmt* stmt)
    }
 
    switch (stmt->tag) {
+   /* ----------------------- LoadG ------------------------ */
+   case Ist_LoadG: {
+      IRLoadG* lg = stmt->Ist.LoadG.details;
+      if (lg->end != Iend_LE)
+         goto stmt_fail;
+
+      IRType tyd = typeOfIRExpr(env->type_env, lg->alt);
+      if (tyd == Ity_I64 || tyd == Ity_I32 || tyd == Ity_I16 || tyd == Ity_I8) {
+         HReg dst = lookupIRTemp(env, lg->dst);
+         HReg addr = iselIntExpr_R(env, lg->addr);
+         HReg guard = iselIntExpr_R(env, lg->guard);
+         HReg alt = iselIntExpr_R(env, lg->alt);
+
+         vassert(lg->cvt == ILGop_Ident8 || lg->cvt == ILGop_Ident16 ||
+                 lg->cvt == ILGop_Ident32 || lg->cvt == ILGop_Ident64);
+
+         if (tyd == Ity_I64)
+            addInstr(env, RISCV64Instr_LoadG(RISCV64op_LD, dst, addr, 0, guard, alt));
+         else if (tyd == Ity_I32)
+            addInstr(env, RISCV64Instr_LoadG(RISCV64op_LW, dst, addr, 0, guard, alt));
+         else if (tyd == Ity_I16)
+            addInstr(env, RISCV64Instr_LoadG(RISCV64op_LH, dst, addr, 0, guard, alt));
+         else if (tyd == Ity_I8)
+            addInstr(env, RISCV64Instr_LoadG(RISCV64op_LB, dst, addr, 0, guard, alt));
+         else
+            vassert(0);
+         return;
+      }
+      return;
+   }
+
    /* ------------------------ STORE ------------------------ */
    /* Little-endian write to memory. */
    case Ist_Store: {
@@ -1621,6 +1652,33 @@ static void iselStmt(ISelEnv* env, IRStmt* stmt)
          return;
       }
       break;
+   }
+
+   /* ----------------------- StoreG ------------------------ */
+   case Ist_StoreG: {
+      IRStoreG* sg = stmt->Ist.StoreG.details;
+      if (sg->end != Iend_LE)
+         goto stmt_fail;
+
+      IRType tyd = typeOfIRExpr(env->type_env, sg->data);
+      if (tyd == Ity_I64 || tyd == Ity_I32 || tyd == Ity_I16 || tyd == Ity_I8) {
+         HReg src = iselIntExpr_R(env, sg->data);
+         HReg addr = iselIntExpr_R(env, sg->addr);
+         HReg guard = iselIntExpr_R(env, sg->guard);
+
+         if (tyd == Ity_I64)
+            addInstr(env, RISCV64Instr_StoreG(RISCV64op_SD, src, addr, 0, guard));
+         else if (tyd == Ity_I32)
+            addInstr(env, RISCV64Instr_StoreG(RISCV64op_SW, src, addr, 0, guard));
+         else if (tyd == Ity_I16)
+            addInstr(env, RISCV64Instr_StoreG(RISCV64op_SH, src, addr, 0, guard));
+         else if (tyd == Ity_I8)
+            addInstr(env, RISCV64Instr_StoreG(RISCV64op_SB, src, addr, 0, guard));
+         else
+            vassert(0);
+         return;
+      }
+      return;
    }
 
    /* ------------------------- PUT ------------------------- */

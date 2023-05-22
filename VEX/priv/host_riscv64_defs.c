@@ -441,6 +441,20 @@ RISCV64Instr_Load(RISCV64LoadOp op, HReg dst, HReg base, Int soff12)
 }
 
 RISCV64Instr*
+RISCV64Instr_LoadG(RISCV64LoadOp op, HReg dst, HReg base, Int soff12, HReg guard, HReg alt)
+{
+   RISCV64Instr* i           = LibVEX_Alloc_inline(sizeof(RISCV64Instr));
+   i->tag                    = RISCV64in_LoadG;
+   i->RISCV64in.LoadG.op     = op;
+   i->RISCV64in.LoadG.dst    = dst;
+   i->RISCV64in.LoadG.base   = base;
+   i->RISCV64in.LoadG.soff12 = soff12;
+   i->RISCV64in.LoadG.guard  = guard;
+   i->RISCV64in.LoadG.alt    = alt;
+   return i;
+}
+
+RISCV64Instr*
 RISCV64Instr_Store(RISCV64StoreOp op, HReg src, HReg base, Int soff12)
 {
    RISCV64Instr* i           = LibVEX_Alloc_inline(sizeof(RISCV64Instr));
@@ -449,6 +463,19 @@ RISCV64Instr_Store(RISCV64StoreOp op, HReg src, HReg base, Int soff12)
    i->RISCV64in.Store.src    = src;
    i->RISCV64in.Store.base   = base;
    i->RISCV64in.Store.soff12 = soff12;
+   return i;
+}
+
+RISCV64Instr*
+RISCV64Instr_StoreG(RISCV64StoreOp op, HReg src, HReg base, Int soff12, HReg guard)
+{
+   RISCV64Instr* i            = LibVEX_Alloc_inline(sizeof(RISCV64Instr));
+   i->tag                     = RISCV64in_StoreG;
+   i->RISCV64in.StoreG.op     = op;
+   i->RISCV64in.StoreG.src    = src;
+   i->RISCV64in.StoreG.base   = base;
+   i->RISCV64in.StoreG.soff12 = soff12;
+   i->RISCV64in.StoreG.guard  = guard;
    return i;
 }
 
@@ -703,12 +730,30 @@ void ppRISCV64Instr(const RISCV64Instr* i, Bool mode64)
       ppHRegRISCV64(i->RISCV64in.Load.base);
       vex_printf(")");
       return;
+   case RISCV64in_LoadG:
+      vex_printf("%-7s ", showRISCV64LoadOp(i->RISCV64in.LoadG.op));
+      ppHRegRISCV64(i->RISCV64in.LoadG.dst);
+      vex_printf(", %d(", i->RISCV64in.LoadG.soff12);
+      ppHRegRISCV64(i->RISCV64in.LoadG.base);
+      vex_printf("), ");
+      ppHRegRISCV64(i->RISCV64in.LoadG.guard);
+      vex_printf(", ");
+      ppHRegRISCV64(i->RISCV64in.LoadG.alt);
+      return;
    case RISCV64in_Store:
       vex_printf("%-7s ", showRISCV64StoreOp(i->RISCV64in.Store.op));
       ppHRegRISCV64(i->RISCV64in.Store.src);
       vex_printf(", %d(", i->RISCV64in.Store.soff12);
       ppHRegRISCV64(i->RISCV64in.Store.base);
       vex_printf(")");
+      return;
+   case RISCV64in_StoreG:
+      vex_printf("%-7s ", showRISCV64StoreOp(i->RISCV64in.StoreG.op));
+      ppHRegRISCV64(i->RISCV64in.StoreG.src);
+      vex_printf(", %d(", i->RISCV64in.StoreG.soff12);
+      ppHRegRISCV64(i->RISCV64in.StoreG.base);
+      vex_printf("), ");
+      ppHRegRISCV64(i->RISCV64in.StoreG.guard);
       return;
    case RISCV64in_LoadR:
       vex_printf("%-7s ", showRISCV64LoadROp(i->RISCV64in.LoadR.op));
@@ -997,9 +1042,20 @@ void getRegUsage_RISCV64Instr(HRegUsage* u, const RISCV64Instr* i, Bool mode64)
       addHRegUse(u, HRmWrite, i->RISCV64in.Load.dst);
       addHRegUse(u, HRmRead, i->RISCV64in.Load.base);
       return;
+   case RISCV64in_LoadG:
+      addHRegUse(u, HRmWrite, i->RISCV64in.LoadG.dst);
+      addHRegUse(u, HRmRead, i->RISCV64in.LoadG.base);
+      addHRegUse(u, HRmRead, i->RISCV64in.LoadG.guard);
+      addHRegUse(u, HRmRead, i->RISCV64in.LoadG.alt);
+      return;
    case RISCV64in_Store:
       addHRegUse(u, HRmRead, i->RISCV64in.Store.src);
       addHRegUse(u, HRmRead, i->RISCV64in.Store.base);
+      return;
+   case RISCV64in_StoreG:
+      addHRegUse(u, HRmRead, i->RISCV64in.StoreG.src);
+      addHRegUse(u, HRmRead, i->RISCV64in.StoreG.base);
+      addHRegUse(u, HRmRead, i->RISCV64in.StoreG.guard);
       return;
    case RISCV64in_LoadR:
       addHRegUse(u, HRmWrite, i->RISCV64in.LoadR.dst);
@@ -1218,9 +1274,20 @@ void mapRegs_RISCV64Instr(HRegRemap* m, RISCV64Instr* i, Bool mode64)
       mapReg(m, &i->RISCV64in.Load.dst);
       mapReg(m, &i->RISCV64in.Load.base);
       return;
+   case RISCV64in_LoadG:
+      mapReg(m, &i->RISCV64in.LoadG.dst);
+      mapReg(m, &i->RISCV64in.LoadG.base);
+      mapReg(m, &i->RISCV64in.LoadG.guard);
+      mapReg(m, &i->RISCV64in.LoadG.alt);
+      return;
    case RISCV64in_Store:
       mapReg(m, &i->RISCV64in.Store.src);
       mapReg(m, &i->RISCV64in.Store.base);
+      return;
+   case RISCV64in_StoreG:
+      mapReg(m, &i->RISCV64in.StoreG.src);
+      mapReg(m, &i->RISCV64in.StoreG.base);
+      mapReg(m, &i->RISCV64in.StoreG.guard);
       return;
    case RISCV64in_LoadR:
       mapReg(m, &i->RISCV64in.LoadR.dst);
@@ -1914,6 +1981,43 @@ Int emit_RISCV64Instr(/*MB_MOD*/ Bool*    is_profInc,
       }
       break;
    }
+   case RISCV64in_LoadG: {
+      /*    beq guard, zero, 1f
+       *    l<size> dst, soff12(base)
+       *    c.j 2f
+       * 1: c.mv dst, alt
+       * 2:
+       */
+      UInt guard  = iregEnc(i->RISCV64in.LoadG.guard);
+      p = emit_B(p, 0b1100011, (8 >> 1) & 0xfff, 0b000, guard, 0 /*x0/zero*/);
+
+      UInt dst    = iregEnc(i->RISCV64in.LoadG.dst);
+      UInt base   = iregEnc(i->RISCV64in.LoadG.base);
+      Int  soff12 = i->RISCV64in.LoadG.soff12;
+      vassert(soff12 >= -2048 && soff12 < 2048);
+      UInt imm11_0 = soff12 & 0xfff;
+      switch (i->RISCV64in.LoadG.op) {
+      case RISCV64op_LD:
+         p = emit_I(p, 0b0000011, dst, 0b011, base, imm11_0);
+         goto done;
+      case RISCV64op_LW:
+         p = emit_I(p, 0b0000011, dst, 0b010, base, imm11_0);
+         goto done;
+      case RISCV64op_LH:
+         p = emit_I(p, 0b0000011, dst, 0b001, base, imm11_0);
+         goto done;
+      case RISCV64op_LB:
+         p = emit_I(p, 0b0000011, dst, 0b000, base, imm11_0);
+         goto done;
+      }
+
+      p = emit_CJ(p, 0b01, (4 >> 1) & 0x7ff, 0b101);
+
+      UInt alt = iregEnc(i->RISCV64in.LoadG.alt);
+      p = emit_CR(p, 0b10, alt, dst, 0b1000);
+
+      break;
+   }
    case RISCV64in_Store: {
       /* s<size> src, soff12(base) */
       UInt src    = iregEnc(i->RISCV64in.Store.src);
@@ -1922,6 +2026,35 @@ Int emit_RISCV64Instr(/*MB_MOD*/ Bool*    is_profInc,
       vassert(soff12 >= -2048 && soff12 < 2048);
       UInt imm11_0 = soff12 & 0xfff;
       switch (i->RISCV64in.Store.op) {
+      case RISCV64op_SD:
+         p = emit_S(p, 0b0100011, imm11_0, 0b011, base, src);
+         goto done;
+      case RISCV64op_SW:
+         p = emit_S(p, 0b0100011, imm11_0, 0b010, base, src);
+         goto done;
+      case RISCV64op_SH:
+         p = emit_S(p, 0b0100011, imm11_0, 0b001, base, src);
+         goto done;
+      case RISCV64op_SB:
+         p = emit_S(p, 0b0100011, imm11_0, 0b000, base, src);
+         goto done;
+      }
+      goto done;
+   }
+   case RISCV64in_StoreG: {
+      /*    beq guard, zero, 1f
+       *    s<size> src, soff12(base)
+       * 1:
+       */
+      UInt guard  = iregEnc(i->RISCV64in.StoreG.guard);
+      p = emit_B(p, 0b1100011, (8 >> 1) & 0xfff, 0b000, guard, 0 /*x0/zero*/);
+
+      UInt src    = iregEnc(i->RISCV64in.StoreG.src);
+      UInt base   = iregEnc(i->RISCV64in.StoreG.base);
+      Int  soff12 = i->RISCV64in.StoreG.soff12;
+      vassert(soff12 >= -2048 && soff12 < 2048);
+      UInt imm11_0 = soff12 & 0xfff;
+      switch (i->RISCV64in.StoreG.op) {
       case RISCV64op_SD:
          p = emit_S(p, 0b0100011, imm11_0, 0b011, base, src);
          goto done;

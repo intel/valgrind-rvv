@@ -2996,7 +2996,9 @@ static IRSB* cprop_BB_WRK ( IRSB* in, Bool mustRetainNoOps, Bool doFolding )
       switch (lg->cvt) {
          case ILGop_IdentV128:
          case ILGop_Ident64:
-         case ILGop_Ident32: break;
+         case ILGop_Ident32:
+         case ILGop_Ident16:
+         case ILGop_Ident8: break;
          case ILGop_8Uto32:  cvtOp = Iop_8Uto32;  break;
          case ILGop_8Sto32:  cvtOp = Iop_8Sto32;  break;
          case ILGop_16Uto32: cvtOp = Iop_16Uto32; break;

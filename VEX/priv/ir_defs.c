@@ -2032,6 +2032,8 @@ void ppIRLoadGOp ( IRLoadGOp cvt )
       case ILGop_IdentV128: vex_printf("IdentV128"); break;      
       case ILGop_Ident64:   vex_printf("Ident64"); break;      
       case ILGop_Ident32:   vex_printf("Ident32"); break;      
+      case ILGop_Ident16:   vex_printf("Ident16"); break;
+      case ILGop_Ident8:    vex_printf("Ident8");  break;
       case ILGop_16Uto32:   vex_printf("16Uto32"); break;      
       case ILGop_16Sto32:   vex_printf("16Sto32"); break;      
       case ILGop_8Uto32:    vex_printf("8Uto32"); break;      
@@ -4261,6 +4263,10 @@ void typeOfIRLoadGOp ( IRLoadGOp cvt,
          *t_res = Ity_I64; *t_arg = Ity_I64; break;
       case ILGop_Ident32:
          *t_res = Ity_I32; *t_arg = Ity_I32; break;
+      case ILGop_Ident16:
+         *t_res = Ity_I16; *t_arg = Ity_I16; break;
+      case ILGop_Ident8:
+         *t_res = Ity_I8; *t_arg = Ity_I8; break;
       case ILGop_16Uto32: case ILGop_16Sto32:
          *t_res = Ity_I32; *t_arg = Ity_I16; break;
       case ILGop_8Uto32: case ILGop_8Sto32:
