@@ -123,11 +123,24 @@ static IRExpr* mkU64(ULong i) { return IRExpr_Const(IRConst_U64(i)); }
 /* Create an expression to produce a 32-bit constant. */
 static IRExpr* mkU32(UInt i) { return IRExpr_Const(IRConst_U32(i)); }
 
+static IRExpr* mkU16(UInt i) { return IRExpr_Const(IRConst_U16((UShort)i)); }
+
 /* Create an expression to produce an 8-bit constant. */
 static IRExpr* mkU8(UInt i)
 {
    vassert(i < 256);
    return IRExpr_Const(IRConst_U8((UChar)i));
+}
+
+static IRExpr* mkU(IRType ty, ULong i)
+{
+   switch (ty) {
+   case Ity_I8:   return mkU8((UChar)i);
+   case Ity_I16:  return mkU16((UShort)i);
+   case Ity_I32:  return mkU32((UInt)i);
+   case Ity_I64:  return mkU64(i);
+   default:       vassert(0);
+   }
 }
 
 /* Create an expression to read a temporary. */
@@ -3510,6 +3523,98 @@ static Bool dis_vsetvl(/*MB_OUT*/ DisResult* dres,
    return True;
 }
 
+static UInt decode_eew(UInt raw_eew)
+{
+   switch (raw_eew) {
+   case 0b000: return 8;
+   case 0b101: return 16;
+   case 0b110: return 32;
+   case 0b111: return 64;
+   default: vassert(0);
+   }
+}
+
+static Bool dis_ldst(/*MB_OUT*/ DisResult* dres,
+                     /*OUT*/ IRSB*         irsb,
+                     UInt                  insn,
+                     Addr                  guest_pc_curr_instr,
+                     VexGuestRISCV64State* guest)
+{
+   UInt vd = INSN(11, 7);
+   UInt width = INSN(14, 12);
+   UInt rs1 = INSN(19, 15);
+   UInt umop = INSN(24, 20);
+   UInt vm = INSN(25, 25);
+   UInt mew_mop = INSN(28, 26);
+
+   // TODO: only part of  all ld/st instructions are handled
+   if (!(mew_mop == 0b000 &&
+         (umop == 0b00000 || umop == 0b10000))) {  // ignore fault-only-first
+      return False;
+   }
+
+   Bool is_load = INSN(6, 0) == 0b0000111;
+
+   DIP("%s - vl: %llu, insn: %x, vtype: %llx, vreg: %s\n",
+       is_load ? "vload" : "vstore",
+       guest->guest_vl, insn, guest->guest_vtype, nameVReg(vd));
+
+   UInt eew_b = decode_eew(width) / 8;
+   IRType ty = integerIRTypeOfSize(eew_b);
+   UInt offset = 0;
+   if (vm == 1) {  // disabled
+      // It's possible to use larger ty them elem size
+      for (UInt i = 0; i < guest->guest_vl; ++i) {
+         IRExpr* addr = binop(Iop_Add64, getIReg64(rs1), mkU64(offset));
+
+         if (is_load) {
+            putVReg(irsb, vd, offset, loadLE(ty, addr));
+         } else {
+            storeLE(irsb, addr, getVReg(vd, offset, ty));
+         }
+
+         offset += eew_b;
+      }
+   } else {  // enabled
+      for (UInt i = 0; i < guest->guest_vl; ++i) {
+         IRExpr* addr = binop(Iop_Add64, getIReg64(rs1), mkU64(offset));
+         UInt mask_offset = i / 64 * 8;
+         IRExpr* guard = binop(Iop_CmpNE64,
+                               mkU64(0),
+                               binop(Iop_And64,
+                                     getVReg(0 /* v0 */, mask_offset, Ity_I64),
+                                     mkU64(1UL << (i % 64))));
+
+         if (is_load) {
+            IRLoadGOp no_cvt = ILGop_INVALID;
+            switch (ty) {
+               case Ity_I8:  no_cvt = ILGop_Ident8;  break;
+               case Ity_I16: no_cvt = ILGop_Ident16;  break;
+               case Ity_I32: no_cvt = ILGop_Ident32;  break;
+               case Ity_I64: no_cvt = ILGop_Ident64;  break;
+               default:  vassert(0);
+            }
+
+            UInt vma = SLICE_UInt(guest->guest_vtype, 7, 7);
+            IRExpr* alt = (vma == 0) ? getVReg(vd, offset, ty) : mkU(ty, -1UL);
+            IRTemp res = newTemp(irsb, ty);
+            stmt(irsb, IRStmt_LoadG(Iend_LE, no_cvt, res, addr, alt, guard));
+            putVReg(irsb, vd, offset, mkexpr(res));
+         } else {
+            stmt(irsb, IRStmt_StoreG(Iend_LE, addr, getVReg(vd, offset, ty), guard));
+         }
+
+         offset += eew_b;
+      }
+   }
+
+   putPC(irsb, mkU64(guest_pc_curr_instr + 4));
+   dres->whatNext    = Dis_StopHere;
+   dres->jk_StopHere = Ijk_TooManyIR;
+
+   return True;
+}
+
 static Bool dis_RV64V(/*MB_OUT*/ DisResult* dres,
                       /*OUT*/ IRSB*         irsb,
                       UInt                  insn,
@@ -3517,6 +3622,8 @@ static Bool dis_RV64V(/*MB_OUT*/ DisResult* dres,
                       const VexAbiInfo*     abiinfo)
 
 {
+   VexGuestRISCV64State* guest = abiinfo->riscv64_guest_state;
+
    // spec - 10. Vector Arithmetic Instruction Formats
    switch (INSN(6, 0)) {
    case 0b1010111:
@@ -3526,6 +3633,9 @@ static Bool dis_RV64V(/*MB_OUT*/ DisResult* dres,
       default:
          return False;
       }
+   case 0b0000111:  // load
+   case 0b0100111:  // store
+      return dis_ldst(dres, irsb, insn, guest_pc_curr_instr, guest);
    default:
       return False;
    }
