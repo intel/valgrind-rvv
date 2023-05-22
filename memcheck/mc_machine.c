@@ -1489,6 +1489,41 @@ static Int get_otrack_shadow_offset_wrk ( Int offset, Int szB )
    if (o == GOF(LLSC_ADDR) && sz == 8) return o;
    if (o == GOF(LLSC_DATA) && sz == 8) return o;
 
+   if (o >= GOF(v0)   && o+sz <= GOF(v0) +SZB(v0))  return GOF(v0);
+   if (o >= GOF(v1)   && o+sz <= GOF(v1) +SZB(v1))  return GOF(v1);
+   if (o >= GOF(v2)   && o+sz <= GOF(v2) +SZB(v2))  return GOF(v2);
+   if (o >= GOF(v3)   && o+sz <= GOF(v3) +SZB(v3))  return GOF(v3);
+   if (o >= GOF(v4)   && o+sz <= GOF(v4) +SZB(v4))  return GOF(v4);
+   if (o >= GOF(v5)   && o+sz <= GOF(v5) +SZB(v5))  return GOF(v5);
+   if (o >= GOF(v6)   && o+sz <= GOF(v6) +SZB(v6))  return GOF(v6);
+   if (o >= GOF(v7)   && o+sz <= GOF(v7) +SZB(v7))  return GOF(v7);
+   if (o >= GOF(v8)   && o+sz <= GOF(v8) +SZB(v8))  return GOF(v8);
+   if (o >= GOF(v9)   && o+sz <= GOF(v9) +SZB(v9))  return GOF(v9);
+   if (o >= GOF(v10)  && o+sz <= GOF(v10)+SZB(v10)) return GOF(v10);
+   if (o >= GOF(v11)  && o+sz <= GOF(v11)+SZB(v11)) return GOF(v11);
+   if (o >= GOF(v12)  && o+sz <= GOF(v12)+SZB(v12)) return GOF(v12);
+   if (o >= GOF(v13)  && o+sz <= GOF(v13)+SZB(v13)) return GOF(v13);
+   if (o >= GOF(v14)  && o+sz <= GOF(v14)+SZB(v14)) return GOF(v14);
+   if (o >= GOF(v15)  && o+sz <= GOF(v15)+SZB(v15)) return GOF(v15);
+   if (o >= GOF(v16)  && o+sz <= GOF(v16)+SZB(v16)) return GOF(v16);
+   if (o >= GOF(v17)  && o+sz <= GOF(v17)+SZB(v17)) return GOF(v17);
+   if (o >= GOF(v18)  && o+sz <= GOF(v18)+SZB(v18)) return GOF(v18);
+   if (o >= GOF(v19)  && o+sz <= GOF(v19)+SZB(v19)) return GOF(v19);
+   if (o >= GOF(v20)  && o+sz <= GOF(v20)+SZB(v20)) return GOF(v20);
+   if (o >= GOF(v21)  && o+sz <= GOF(v21)+SZB(v21)) return GOF(v21);
+   if (o >= GOF(v22)  && o+sz <= GOF(v22)+SZB(v22)) return GOF(v22);
+   if (o >= GOF(v23)  && o+sz <= GOF(v23)+SZB(v23)) return GOF(v23);
+   if (o >= GOF(v24)  && o+sz <= GOF(v24)+SZB(v24)) return GOF(v24);
+   if (o >= GOF(v25)  && o+sz <= GOF(v25)+SZB(v25)) return GOF(v25);
+   if (o >= GOF(v26)  && o+sz <= GOF(v26)+SZB(v26)) return GOF(v26);
+   if (o >= GOF(v27)  && o+sz <= GOF(v27)+SZB(v27)) return GOF(v27);
+   if (o >= GOF(v28)  && o+sz <= GOF(v28)+SZB(v28)) return GOF(v28);
+   if (o >= GOF(v29)  && o+sz <= GOF(v29)+SZB(v29)) return GOF(v29);
+   if (o >= GOF(v30)  && o+sz <= GOF(v30)+SZB(v30)) return GOF(v30);
+   if (o >= GOF(v31)  && o+sz <= GOF(v31)+SZB(v31)) return GOF(v31);
+   if (o >= GOF(vl)   && o+sz <= GOF(vl)+SZB(vl))   return GOF(vl);
+   if (o >= GOF(vtype) && o+sz <= GOF(vtype)+SZB(vtype)) return GOF(vtype);
+
    VG_(printf)("MC_(get_otrack_shadow_offset)(riscv64)(off=%d,sz=%d)\n",
                offset,szB);
    tl_assert(0);

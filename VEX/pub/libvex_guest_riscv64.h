@@ -128,8 +128,44 @@ typedef struct {
    /* 576 */ ULong guest_LLSC_ADDR; /* Address of the transaction. */
    /* 584 */ ULong guest_LLSC_DATA; /* Original value at ADDR, sign-extended. */
 
+#define VLEN 128
+   /* 592 */ V128 guest_v0;
+             V128 guest_v1;
+             V128 guest_v2;
+             V128 guest_v3;
+             V128 guest_v4;
+             V128 guest_v5;
+             V128 guest_v6;
+             V128 guest_v7;
+             V128 guest_v8;
+             V128 guest_v9;
+             V128 guest_v10;
+             V128 guest_v11;
+             V128 guest_v12;
+             V128 guest_v13;
+             V128 guest_v14;
+             V128 guest_v15;
+             V128 guest_v16;
+             V128 guest_v17;
+             V128 guest_v18;
+             V128 guest_v19;
+             V128 guest_v20;
+             V128 guest_v21;
+             V128 guest_v22;
+             V128 guest_v23;
+             V128 guest_v24;
+             V128 guest_v25;
+             V128 guest_v26;
+             V128 guest_v27;
+             V128 guest_v28;
+             V128 guest_v29;
+             V128 guest_v30;
+             V128 guest_v31;
+
+   /* 1104 */ ULong guest_vl;
+   /* 1112 */ ULong guest_vtype;
+
    /* Padding to 16 bytes. */
-   /* 592 */
 } VexGuestRISCV64State;
 
 /*------------------------------------------------------------*/

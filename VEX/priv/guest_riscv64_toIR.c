@@ -289,6 +289,42 @@ static IRExpr* narrowFrom64(IRType dstTy, IRExpr* e)
 #define OFFB_LLSC_ADDR offsetof(VexGuestRISCV64State, guest_LLSC_ADDR)
 #define OFFB_LLSC_DATA offsetof(VexGuestRISCV64State, guest_LLSC_DATA)
 
+#define OFFB_V0   offsetof(VexGuestRISCV64State, guest_v0)
+#define OFFB_V1   offsetof(VexGuestRISCV64State, guest_v1)
+#define OFFB_V2   offsetof(VexGuestRISCV64State, guest_v2)
+#define OFFB_V3   offsetof(VexGuestRISCV64State, guest_v3)
+#define OFFB_V4   offsetof(VexGuestRISCV64State, guest_v4)
+#define OFFB_V5   offsetof(VexGuestRISCV64State, guest_v5)
+#define OFFB_V6   offsetof(VexGuestRISCV64State, guest_v6)
+#define OFFB_V7   offsetof(VexGuestRISCV64State, guest_v7)
+#define OFFB_V8   offsetof(VexGuestRISCV64State, guest_v8)
+#define OFFB_V9   offsetof(VexGuestRISCV64State, guest_v9)
+#define OFFB_V10  offsetof(VexGuestRISCV64State, guest_v10)
+#define OFFB_V11  offsetof(VexGuestRISCV64State, guest_v11)
+#define OFFB_V12  offsetof(VexGuestRISCV64State, guest_v12)
+#define OFFB_V13  offsetof(VexGuestRISCV64State, guest_v13)
+#define OFFB_V14  offsetof(VexGuestRISCV64State, guest_v14)
+#define OFFB_V15  offsetof(VexGuestRISCV64State, guest_v15)
+#define OFFB_V16  offsetof(VexGuestRISCV64State, guest_v16)
+#define OFFB_V17  offsetof(VexGuestRISCV64State, guest_v17)
+#define OFFB_V18  offsetof(VexGuestRISCV64State, guest_v18)
+#define OFFB_V19  offsetof(VexGuestRISCV64State, guest_v19)
+#define OFFB_V20  offsetof(VexGuestRISCV64State, guest_v20)
+#define OFFB_V21  offsetof(VexGuestRISCV64State, guest_v21)
+#define OFFB_V22  offsetof(VexGuestRISCV64State, guest_v22)
+#define OFFB_V23  offsetof(VexGuestRISCV64State, guest_v23)
+#define OFFB_V24  offsetof(VexGuestRISCV64State, guest_v24)
+#define OFFB_V25  offsetof(VexGuestRISCV64State, guest_v25)
+#define OFFB_V26  offsetof(VexGuestRISCV64State, guest_v26)
+#define OFFB_V27  offsetof(VexGuestRISCV64State, guest_v27)
+#define OFFB_V28  offsetof(VexGuestRISCV64State, guest_v28)
+#define OFFB_V29  offsetof(VexGuestRISCV64State, guest_v29)
+#define OFFB_V30  offsetof(VexGuestRISCV64State, guest_v30)
+#define OFFB_V31  offsetof(VexGuestRISCV64State, guest_v31)
+
+#define OFFB_VL    offsetof(VexGuestRISCV64State, guest_vl)
+#define OFFB_VTYPE offsetof(VexGuestRISCV64State, guest_vtype)
+
 /*------------------------------------------------------------*/
 /*--- Integer registers                                    ---*/
 /*------------------------------------------------------------*/
@@ -412,6 +448,105 @@ static void putPC(/*OUT*/ IRSB* irsb, /*IN*/ IRExpr* e)
    vassert(typeOfIRExpr(irsb->tyenv, e) == Ity_I64);
    stmt(irsb, IRStmt_Put(OFFB_PC, e));
 }
+
+/*------------------------------------------------------------*/
+/*--- Vector registers                                     ---*/
+/*------------------------------------------------------------*/
+static Int offsetVReg(UInt vregNo)
+{
+   switch (vregNo) {
+   case 0:
+      return OFFB_V0;
+   case 1:
+      return OFFB_V1;
+   case 2:
+      return OFFB_V2;
+   case 3:
+      return OFFB_V3;
+   case 4:
+      return OFFB_V4;
+   case 5:
+      return OFFB_V5;
+   case 6:
+      return OFFB_V6;
+   case 7:
+      return OFFB_V7;
+   case 8:
+      return OFFB_V8;
+   case 9:
+      return OFFB_V9;
+   case 10:
+      return OFFB_V10;
+   case 11:
+      return OFFB_V11;
+   case 12:
+      return OFFB_V12;
+   case 13:
+      return OFFB_V13;
+   case 14:
+      return OFFB_V14;
+   case 15:
+      return OFFB_V15;
+   case 16:
+      return OFFB_V16;
+   case 17:
+      return OFFB_V17;
+   case 18:
+      return OFFB_V18;
+   case 19:
+      return OFFB_V19;
+   case 20:
+      return OFFB_V20;
+   case 21:
+      return OFFB_V21;
+   case 22:
+      return OFFB_V22;
+   case 23:
+      return OFFB_V23;
+   case 24:
+      return OFFB_V24;
+   case 25:
+      return OFFB_V25;
+   case 26:
+      return OFFB_V26;
+   case 27:
+      return OFFB_V27;
+   case 28:
+      return OFFB_V28;
+   case 29:
+      return OFFB_V29;
+   case 30:
+      return OFFB_V30;
+   case 31:
+      return OFFB_V31;
+   default:
+      vassert(0);
+   }
+}
+
+static const HChar* nameVReg(UInt iregNo)
+{
+   vassert(iregNo < 32);
+   static const HChar* names[32] = {
+       "v0",  "v1",  "v2",  "v3",  "v4",  "v5",  "v6",  "v7",
+       "v8",  "v9", "v10", "v11", "v12", "v13", "v14", "v15",
+      "v16", "v17", "v18", "v19", "v20", "v21", "v22", "v23",
+      "v24", "v25", "v26", "v27", "v28", "v29", "v30", "v31"};
+   return names[iregNo];
+}
+
+static IRExpr* getVReg(UInt vregNo, UInt offset, IRType ty)
+{
+   vassert(vregNo < 32);
+   return IRExpr_Get(offsetVReg(vregNo) + offset, ty);
+}
+
+static void putVReg(/*OUT*/ IRSB* irsb, UInt vregNo, UInt offset, /*IN*/ IRExpr* e)
+{
+   vassert(vregNo < 32);
+   stmt(irsb, IRStmt_Put(offsetVReg(vregNo) + offset, e));
+}
+
 
 /*------------------------------------------------------------*/
 /*--- Floating-point registers                             ---*/
