@@ -1752,6 +1752,8 @@ Bool VG_(translate) ( ThreadId tid,
 
 #  if defined(VGP_riscv64_linux)
    vex_abiinfo.guest__use_fallback_LLSC = True;
+   ThreadState *tst = VG_(get_ThreadState)(tid);
+   vex_abiinfo.riscv64_guest_state = &tst->arch.vex;
 #  endif
 
    /* Set up closure args. */

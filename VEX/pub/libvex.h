@@ -37,6 +37,7 @@
 
 #include "libvex_basictypes.h"
 #include "libvex_ir.h"
+#include "pub_tool_guest.h"
 
 
 /*---------------------------------------------------------------*/
@@ -470,6 +471,9 @@ typedef
 
       /* MIPS32/MIPS64 GUESTS only: emulated FPU mode. */
       UInt guest_mips_fp_mode;
+
+      /* RISC-V vector needs guest state on translation */
+      VexGuestArchState* riscv64_guest_state;
    }
    VexAbiInfo;
 
