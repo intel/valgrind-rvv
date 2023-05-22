@@ -58,6 +58,8 @@
 #include "main_globals.h"
 #include "main_util.h"
 
+#include "coregrind/pub_core_transtab.h"
+
 /*------------------------------------------------------------*/
 /*--- Debugging output                                     ---*/
 /*------------------------------------------------------------*/
@@ -3415,6 +3417,122 @@ static Bool dis_RV64Zicsr(/*MB_OUT*/ DisResult* dres,
    return False;
 }
 
+static inline Long sext_slice_ulong(ULong value, UInt bmax, UInt bmin)
+{
+   return ((Long)value) << (63 - bmax) >> (63 - (bmax - bmin));
+}
+
+#define MAX_VL  (-1UL)
+#define KEEP_VL (-2UL)
+
+static ULong helper_vsetvl(VexGuestRISCV64State* guest, ULong avl, ULong vtype)
+{
+   UInt sew = SLICE_UInt(vtype, 5, 3);
+   Int lmul = sext_slice_ulong(vtype, 3, 0);
+
+   ULong vlmax = VLEN >> (sew + 3 - lmul);
+   ULong vl = guest->guest_vl;
+   if (avl != KEEP_VL)
+      vl = (avl < vlmax) ? avl : vlmax;
+
+   guest->guest_vl = vl;
+   guest->guest_vtype = vtype;
+
+   invalidateFastCache();
+
+   DIP("vsetvl - vl: %llu, sew: 0x%x, lmul: %d, avl: %llu, vtype: %llx\n",
+       vl, sew, lmul, avl, vtype);
+
+   return vl;
+}
+
+static Bool dis_vsetvl(/*MB_OUT*/ DisResult* dres,
+                       /*OUT*/ IRSB*         irsb,
+                       UInt                  insn,
+                       Addr                  guest_pc_curr_instr)
+{
+   UInt rd = INSN(11, 7);
+   IRExpr* avl;
+   IRExpr* vtype;
+
+   if (INSN(31, 30) == 0b11) {  // vsetivli
+      UInt uimm = INSN(19, 15);
+      Int zimm = INSN(29, 20);
+      avl = mkU64(uimm);
+      vtype = mkU64(zimm);
+   } else if (INSN(31, 31) == 0b0 || INSN(31, 25) == 0b1000000) {
+      UInt rs1 = INSN(19, 15);
+      if (rs1 != 0) {
+         avl = getIReg64(rs1);
+      } else if (rd == 0) {
+         avl = mkU64(KEEP_VL);
+      } else {
+         avl = mkU64(MAX_VL);
+      }
+
+      if (INSN(31, 31) == 0b0) {  // vsetvli
+         Int zimm = INSN(30, 20);
+         vtype = mkU64(zimm);
+      } else {  // vsetvl
+         UInt rs2 = INSN(24, 20);
+         vtype = getIReg64(rs2);
+      }
+   } else {
+      vassert(0);
+   }
+
+   IRTemp vl = newTemp(irsb, Ity_I64);
+   IRDirty *d = unsafeIRDirty_1_N(vl,
+         0,
+         "helper_vsetvl",
+         &helper_vsetvl,
+         mkIRExprVec_3(IRExpr_GSPTR(), avl, vtype));
+
+   d->nFxState = 2;
+   vex_bzero(&d->fxState, sizeof(d->fxState));
+   d->fxState[0].fx = Ifx_Write;
+   d->fxState[0].offset = OFFB_VL;
+   d->fxState[0].size = sizeof(ULong);
+   d->fxState[1].fx = Ifx_Write;
+   d->fxState[1].offset = OFFB_VTYPE;
+   d->fxState[1].size = sizeof(ULong);
+
+   stmt(irsb, IRStmt_Dirty(d));
+
+   if (rd != 0) {
+      putIReg64(irsb, rd, mkexpr(vl));
+   }
+
+   putPC(irsb, mkU64(guest_pc_curr_instr + 4));
+   dres->whatNext    = Dis_StopHere;
+   dres->jk_StopHere = Ijk_SyncupEnv;
+
+   return True;
+}
+
+static Bool dis_RV64V(/*MB_OUT*/ DisResult* dres,
+                      /*OUT*/ IRSB*         irsb,
+                      UInt                  insn,
+                      Addr                  guest_pc_curr_instr,
+                      const VexAbiInfo*     abiinfo)
+
+{
+   // spec - 10. Vector Arithmetic Instruction Formats
+   switch (INSN(6, 0)) {
+   case 0b1010111:
+      switch (INSN(14, 12)) {
+      case 0b111:  // vsetvl
+         return dis_vsetvl(dres, irsb, insn, guest_pc_curr_instr);
+      default:
+         return False;
+      }
+   default:
+      return False;
+   }
+
+   return False;
+}
+
 static Bool dis_RISCV64_standard(/*MB_OUT*/ DisResult* dres,
                                  /*OUT*/ IRSB*         irsb,
                                  UInt                  insn,
@@ -3437,6 +3555,8 @@ static Bool dis_RISCV64_standard(/*MB_OUT*/ DisResult* dres,
       ok = dis_RV64D(dres, irsb, insn);
    if (!ok)
       ok = dis_RV64Zicsr(dres, irsb, insn);
+   if (!ok)
+      ok = dis_RV64V(dres, irsb, insn, guest_pc_curr_instr, abiinfo);
    if (ok)
       return True;
 
