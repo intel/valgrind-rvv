@@ -3534,6 +3534,95 @@ static Bool dis_vsetvl(/*MB_OUT*/ DisResult* dres,
    return True;
 }
 
+static ULong riscv_vfirst(VexGuestRISCV64State* guest, UInt vs2, UInt vm)
+{
+   ULong index = -1UL;
+   ULong* p0 = (ULong *)((char *)guest + OFFB_V0);
+   ULong* p = (ULong *)((char *)guest + OFFB_V0 + vs2 * sizeof(guest->guest_v0));
+
+   for (UInt o = 0; o < guest->guest_vl && index == -1; o += 64) {
+      UInt remain = guest->guest_vl - o;
+      UInt step = (remain > 64) ? 64 : remain;
+
+      ULong v = *p++;
+      ULong v0 = (vm == 1) ? -1UL : *p0++;
+      v &= v0;
+      for (ULong i = 0; i < step; ++i) {
+         if (v & (1UL << i)) {
+            index = i + o;
+            break;
+         }
+      }
+   }
+
+   return index;
+}
+
+// From Hacker's Delight
+static UInt round_down_to_pow2(UInt x)
+{
+    x = x | (x >> 1);
+    x = x | (x >> 2);
+    x = x | (x >> 4);
+    x = x | (x >> 8);
+    x = x | (x >> 16);
+    return x - (x >> 1);
+}
+
+static Bool dis_vfirst_m(/*MB_OUT*/ DisResult* dres,
+                         /*OUT*/ IRSB*         irsb,
+                         UInt                  insn,
+                         Addr                  guest_pc_curr_instr,
+                         VexGuestRISCV64State* guest)
+{
+   UInt vm = INSN(25, 25);
+   UInt vs2 = INSN(24, 20);
+   UInt rd = INSN(11, 7);
+
+   // lack ctz (count trailing zeros) like instruction in the backend, so use
+   // helper function
+   IRTemp index = newTemp(irsb, Ity_I64);
+   IRDirty *d = unsafeIRDirty_1_N(index,
+         0,
+         "riscv_vfirst",
+         &riscv_vfirst,
+         mkIRExprVec_3(IRExpr_GSPTR(), mkU32(vs2), mkU32(vm)));
+   d->nFxState = 1;
+   vex_bzero(&d->fxState, sizeof(d->fxState));
+   d->fxState[0].fx = Ifx_Read;
+   d->fxState[0].offset = offsetVReg(vs2);
+   // do_shadow_Dirty doesn't accept non-power-2 size yet
+   d->fxState[0].size = round_down_to_pow2(guest->guest_vl / 8);
+
+   stmt(irsb, IRStmt_Dirty(d));
+   putIReg64(irsb, rd, mkexpr(index));
+
+   return True;
+}
+
+static Bool dis_opmvv(/*MB_OUT*/ DisResult* dres,
+                      /*OUT*/ IRSB*         irsb,
+                      UInt                  insn,
+                      Addr                  guest_pc_curr_instr,
+                      VexGuestRISCV64State* guest)
+{
+   UInt funct6 = INSN(31, 26);
+
+   switch (funct6) {
+   case 0b010000:
+      switch (INSN(19, 15)) {
+      case 0b10001:
+         return dis_vfirst_m(dres, irsb, insn, guest_pc_curr_instr, guest);
+      default:
+         return False;
+      }
+      return False;
+   default:
+      return False;
+   }
+   return False;
+}
+
 static UInt decode_eew(UInt raw_eew)
 {
    switch (raw_eew) {
@@ -3639,6 +3728,8 @@ static Bool dis_RV64V(/*MB_OUT*/ DisResult* dres,
    switch (INSN(6, 0)) {
    case 0b1010111:
       switch (INSN(14, 12)) {
+      case 0b010:  // OPMVV
+         return dis_opmvv(dres, irsb, insn, guest_pc_curr_instr, guest);
       case 0b111:  // vsetvl
          return dis_vsetvl(dres, irsb, insn, guest_pc_curr_instr);
       default:
