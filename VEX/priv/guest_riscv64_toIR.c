@@ -826,6 +826,8 @@ static const HChar* nameCSR(UInt csr)
       return "frm";
    case 0x003:
       return "fcsr";
+   case 0xc20:
+      return "vl";
    default:
       vpanic("nameCSR(riscv64)");
    }
@@ -3376,7 +3378,7 @@ static Bool dis_RV64Zicsr(/*MB_OUT*/ DisResult* dres,
       UInt rd  = INSN(11, 7);
       UInt rs1 = INSN(19, 15);
       UInt csr = INSN(31, 20);
-      if (csr != 0x001 && csr != 0x002 && csr != 0x003) {
+      if (csr != 0x001 && csr != 0x002 && csr != 0x003 && csr != 0xc20) {
          /* Invalid CSRRS, fall through. */
       } else {
          switch (csr) {
@@ -3417,6 +3419,15 @@ static Bool dis_RV64Zicsr(/*MB_OUT*/ DisResult* dres,
                putIReg64(irsb, rd, unop(Iop_32Uto64, mkexpr(fcsr)));
             putFCSR(irsb, binop(Iop_Or32, mkexpr(fcsr),
                                 binop(Iop_And32, getIReg32(rs1), mkU32(0xff))));
+            break;
+         }
+         case 0xc20: {
+            /* vl */
+            IRTemp vl = newTemp(irsb, Ity_I64);
+            assign(irsb, vl, IRExpr_Get(OFFB_VL, Ity_I64));
+            if (rd != 0)
+               putIReg64(irsb, rd, mkexpr(vl));
+            vassert(rs1 == 0);
             break;
          }
          default:
