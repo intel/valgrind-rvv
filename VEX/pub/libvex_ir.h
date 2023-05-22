@@ -2513,8 +2513,13 @@ typedef
       Ijk_Sys_int130,     /* amd64/x86 'int $0x82' */
       Ijk_Sys_int145,     /* amd64/x86 'int $0x91' */
       Ijk_Sys_int210,     /* amd64/x86 'int $0xD2' */
-      Ijk_Sys_sysenter    /* x86 'sysenter'.  guest_EIP becomes 
+      Ijk_Sys_sysenter,   /* x86 'sysenter'.  guest_EIP becomes
                              invalid at the point this happens. */
+      Ijk_SyncupEnv,      /* rvv syncup so that following instructions can read
+                             the env set here */
+      Ijk_TooManyIR       /* some rvv instructions generate too many IRs to
+                             exhaust storage, break out early to reduce the
+                             risk */
    }
    IRJumpKind;
 
