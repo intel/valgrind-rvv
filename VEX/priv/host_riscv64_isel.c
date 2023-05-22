@@ -425,8 +425,10 @@ static Bool doHelperCall(/*OUT*/ UInt*   stackAdjustAfterCall,
          } else if (arg->tag == Iex_GSPTR) {
             if (nextArgReg >= RISCV64_N_ARGREGS)
                return False; /* Out of argregs. */
+	    /* See dispatch-riscv64-linux.S for -2048 */
             addInstr(env,
-                     RISCV64Instr_MV(argregs[nextArgReg], hregRISCV64_x8()));
+                     RISCV64Instr_ALUImm(RISCV64op_ADDI, argregs[nextArgReg],
+                                         hregRISCV64_x8(), -2048));
             nextArgReg++;
          } else if (arg->tag == Iex_VECRET) {
             /* Because of the go_fast logic above, we can't get here, since
@@ -461,7 +463,10 @@ static Bool doHelperCall(/*OUT*/ UInt*   stackAdjustAfterCall,
          } else if (arg->tag == Iex_GSPTR) {
             if (nextArgReg >= RISCV64_N_ARGREGS)
                return False; /* Out of argregs. */
-            tmpregs[nextArgReg] = hregRISCV64_x8();
+
+            addInstr(env,
+                     RISCV64Instr_ALUImm(RISCV64op_ADDI, tmpregs[nextArgReg],
+                                         hregRISCV64_x8(), -2048));
             nextArgReg++;
          } else if (arg->tag == Iex_VECRET) {
             vassert(!hregIsInvalid(r_vecRetAddr));
