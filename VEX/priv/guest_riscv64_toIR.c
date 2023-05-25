@@ -3569,6 +3569,17 @@ static IRExpr* widen_Sto64(IRExpr* e, IRType ty)
    }
 }
 
+static IRExpr* narrow_64to(IRExpr* e, UInt bits)
+{
+   switch (bits) {
+   case  8: return unop(Iop_64to8, e);
+   case 16: return unop(Iop_64to16, e);
+   case 32: return unop(Iop_64to32, e);
+   case 64: return e;
+   default:      vassert(0);
+   }
+}
+
 static Bool dis_vmsgtu_vx(/*MB_OUT*/ DisResult* dres,
                           /*OUT*/ IRSB*         irsb,
                           UInt                  insn,
@@ -3682,6 +3693,44 @@ static Bool dis_vmseq_vi(/*MB_OUT*/ DisResult* dres,
    putPC(irsb, mkU64(guest_pc_curr_instr + 4));
    dres->whatNext    = Dis_StopHere;
    dres->jk_StopHere = Ijk_TooManyIR;
+
+   return True;
+}
+
+static Bool dis_vadd_vv(/*MB_OUT*/ DisResult* dres,
+                        /*OUT*/ IRSB*         irsb,
+                        UInt                  insn,
+                        Addr                  guest_pc_curr_instr,
+                        VexGuestRISCV64State* guest)
+{
+   UInt vm = INSN(25, 25);
+   UInt vs2 = INSN(24, 20);
+   UInt vs1 = INSN(19, 15);
+   UInt vd = INSN(11, 7);
+
+   UInt sew = get_sew(guest);
+   UInt sew_b =  sew / 8;
+   IRType ty = integerIRTypeOfSize(sew_b);
+
+   for (UInt i = 0; i < guest->guest_vl; ++i) {
+      UInt offset = i * sew_b;
+      IRExpr* res = narrow_64to(
+                        binop(Iop_Add64,
+                              widen_Sto64(getVReg(vs2, offset, ty), ty),
+                              widen_Sto64(getVReg(vs1, offset, ty), ty)),
+                        sew);
+      if (vm == 0) {
+         UInt mask_outer_offset = i / 64 * 8;
+         UInt mask_inner_offset = i % 64;
+         IRExpr* guard = binop(Iop_CmpNE64,
+                               mkU64(0),
+                               binop(Iop_And64,
+                                     getVReg(0 /* v0 */, mask_outer_offset, Ity_I64),
+                                     mkU64(1UL << mask_inner_offset)));
+         res = IRExpr_ITE(guard, res, getVReg(vd, offset, ty));
+      }
+      putVReg(irsb, vd, offset, res);
+   }
 
    return True;
 }
@@ -3977,6 +4026,8 @@ static Bool dis_opivv(/*MB_OUT*/ DisResult* dres,
    UInt funct6 = INSN(31, 26);
 
    switch (funct6) {
+   case 0b000000:
+      return dis_vadd_vv(dres, irsb, insn, guest_pc_curr_instr, guest);
    case 0b011001:
       return dis_vmsne_vv(dres, irsb, insn, guest_pc_curr_instr, guest);
    default:
