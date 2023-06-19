@@ -212,6 +212,14 @@
 
 /* ------------------ Types ------------------ */
 
+#define IR_TYPE_MASK 0x0000FFFF
+#define IR_TYPE_VL_OFFSET 16
+#define IR_TYPE_VL_MASK 0xFFFF0000
+
+#define IR_OP_MASK 0x0000FFFF
+#define IR_OP_VL_OFFSET 16
+#define IR_OP_VL_MASK 0xFFFF0000
+
 /* A type indicates the size of a value, and whether it's an integer, a
    float, or a vector (SIMD) value. */
 typedef 
@@ -231,7 +239,11 @@ typedef
       Ity_D128,  /* 128-bit Decimal floating point */
       Ity_F128,  /* 128-bit floating point; implementation defined */
       Ity_V128,  /* 128-bit SIMD */
-      Ity_V256   /* 256-bit SIMD */
+      Ity_V256,   /* 256-bit SIMD */
+      Ity_VLen8,
+      Ity_VLen16,
+      Ity_VLen32,
+      Ity_VLen64,
    }
    IRType;
 
@@ -240,6 +252,10 @@ extern void ppIRType ( IRType );
 
 /* Get the size (in bytes) of an IRType */ 
 extern Int sizeofIRType ( IRType );
+
+extern Int sizeofVecIRType ( IRType );
+extern Int sizeofVecIRTypeElem (IRType ty);
+extern Int VLofVecIRType (IRType ty);
 
 /* Translate 1/2/4/8 into Ity_I{8,16,32,64} respectively.  Asserts on
    any other input. */
@@ -2054,12 +2070,21 @@ typedef
       Iop_Max32Fx8, Iop_Min32Fx8,
       Iop_Max64Fx4, Iop_Min64Fx4,
       Iop_Rotx32, Iop_Rotx64,
+
+      Iop_VAdd8, Iop_VAdd16, Iop_VAdd32, Iop_VAdd64,
+      Iop_VOr8, Iop_VOr16, Iop_VOr32, Iop_VOr64,
+      Iop_VCmpNEZ8, Iop_VCmpNEZ16, Iop_VCmpNEZ32, Iop_VCmpNEZ64,
+
       Iop_LAST      /* must be the last enumerator */
    }
    IROp;
 
 /* Pretty-print an op. */
 extern void ppIROp ( IROp );
+
+extern Int sizeofVecIROp ( IROp op );
+extern Int VLofVecIROp ( IROp op);
+extern IRType typeofVecIR ( UInt vl, IRType ty );
 
 /* For a given operand return the types of its arguments and its result. */
 extern void typeOfPrimop ( IROp op,

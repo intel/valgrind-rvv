@@ -37,6 +37,28 @@
 
 #include "main_util.h"
 
+Int sizeofVecIRTypeElem (IRType ty)
+{
+   ty &= IR_TYPE_MASK;
+   vassert(ty >= Ity_VLen8 && ty <= Ity_VLen64);
+   return 1 << (ty - Ity_VLen8);
+}
+
+Int VLofVecIRType (IRType ty)
+{
+	return ty >> IR_TYPE_VL_OFFSET;
+}
+
+Int VLofVecIROp ( IROp op)
+{
+   return op >> IR_OP_VL_OFFSET;
+}
+
+Int sizeofVecIRType ( IRType ty)
+{
+   return VLofVecIRType(ty) * sizeofVecIRTypeElem(ty);
+}
+
 
 /*---------------------------------------------------------------*/
 /*--- Printing the IR                                         ---*/
@@ -44,7 +66,7 @@
 
 void ppIRType ( IRType ty )
 {
-   switch (ty) {
+   switch (ty & IR_TYPE_MASK) {
       case Ity_INVALID: vex_printf("Ity_INVALID"); break;
       case Ity_I1:      vex_printf( "I1");   break;
       case Ity_I8:      vex_printf( "I8");   break;
@@ -61,6 +83,10 @@ void ppIRType ( IRType ty )
       case Ity_D128:    vex_printf( "D128"); break;
       case Ity_V128:    vex_printf( "V128"); break;
       case Ity_V256:    vex_printf( "V256"); break;
+      case Ity_VLen8:    vex_printf( "VLen8-%d",  VLofVecIRType(ty) ); break;
+      case Ity_VLen16:   vex_printf( "VLen16-%d", VLofVecIRType(ty) ); break;
+      case Ity_VLen32:   vex_printf( "VLen32-%d", VLofVecIRType(ty) ); break;
+      case Ity_VLen64:   vex_printf( "VLen64-%d", VLofVecIRType(ty) ); break;
       default: vex_printf("ty = 0x%x\n", (UInt)ty);
                vpanic("ppIRType");
    }
@@ -120,6 +146,7 @@ void ppIROp ( IROp op )
 {
    const HChar* str = NULL; 
    IROp   base;
+   op &= IR_OP_MASK;
    switch (op) {
       case Iop_Add8 ... Iop_Add64:
          str = "Add"; base = Iop_Add8; break;
@@ -151,6 +178,12 @@ void ppIROp ( IROp op )
          str = "ExpCmpNE"; base = Iop_ExpCmpNE8; break;
       case Iop_Not8 ... Iop_Not64:
          str = "Not"; base = Iop_Not8; break;
+      case Iop_VAdd8 ... Iop_VAdd64:
+         str = "VAdd"; base = Iop_VAdd8; break;
+      case Iop_VOr8 ... Iop_VOr64:
+         str = "VOr"; base = Iop_VOr8; break;
+      case Iop_VCmpNEZ8 ... Iop_VCmpNEZ64:
+         str = "VCmpNEZ"; base = Iop_VCmpNEZ8; break;
       /* other cases must explicitly "return;" */
       case Iop_8Uto16:   vex_printf("8Uto16");  return;
       case Iop_8Uto32:   vex_printf("8Uto32");  return;
@@ -1377,11 +1410,16 @@ void ppIROp ( IROp op )
    }
 }
 
+IRType typeofVecIR ( UInt vl, IRType base )
+{
+   return (vl << IR_OP_VL_OFFSET) | base;
+}
+
 // A very few primops might trap (eg, divide by zero).  We need to be able to
 // identify them.
 Bool primopMightTrap ( IROp op )
 {
-   switch (op) {
+   switch (op & IR_OP_MASK) {
 
    // The few potentially trapping ones
    case Iop_DivU32: case Iop_DivS32: case Iop_DivU64: case Iop_DivS64:
@@ -1810,6 +1848,9 @@ Bool primopMightTrap ( IROp op )
    case Iop_Max64Fx4: case Iop_Min64Fx4:
    case Iop_Rotx32: case Iop_Rotx64:
    case Iop_2xMultU64Add128CarryOut:
+   case Iop_VAdd8: case Iop_VAdd16: case Iop_VAdd32: case Iop_VAdd64:
+   case Iop_VCmpNEZ8: case Iop_VCmpNEZ16: case Iop_VCmpNEZ32: case Iop_VCmpNEZ64:
+   case Iop_VOr8: case Iop_VOr16: case Iop_VOr32: case Iop_VOr64:
       return False;
 
    case Iop_INVALID: case Iop_LAST:
@@ -3113,7 +3154,7 @@ void typeOfPrimop ( IROp op,
    *t_arg2 = Ity_INVALID;
    *t_arg3 = Ity_INVALID;
    *t_arg4 = Ity_INVALID;
-   switch (op) {
+   switch (op & IR_OP_MASK) {
       case Iop_Add8: case Iop_Sub8: case Iop_Mul8: 
       case Iop_Or8:  case Iop_And8: case Iop_Xor8:
          BINARY(Ity_I8,Ity_I8, Ity_I8);
@@ -4160,6 +4201,24 @@ void typeOfPrimop ( IROp op,
          QUATERNARY(Ity_I32, Ity_I8, Ity_I8, Ity_I8, Ity_I32);
       case Iop_Rotx64:
          QUATERNARY(Ity_I64, Ity_I8, Ity_I8, Ity_I8, Ity_I64);
+      case Iop_VAdd8    ... Iop_VAdd64: {
+         IRType base = Ity_VLen8 + (op & IR_OP_MASK) - Iop_VAdd8;
+         UInt vl = VLofVecIROp(op);
+         IRType ty = typeofVecIR (vl, base);
+         BINARY(ty, ty, ty);
+      }
+      case Iop_VOr8     ... Iop_VOr64: {
+         IRType base = Ity_VLen8 + (op & IR_OP_MASK) - Iop_VOr8;
+         UInt vl = VLofVecIROp(op);
+         IRType ty = typeofVecIR (vl, base);
+         BINARY(ty, ty, ty);
+      }
+      case Iop_VCmpNEZ8 ... Iop_VCmpNEZ64: {
+         IRType base = Ity_VLen8 + (op & IR_OP_MASK) - Iop_VCmpNEZ8;
+         UInt vl = VLofVecIROp(op);
+         IRType ty = typeofVecIR (vl, base);
+         UNARY(ty, ty);
+      }
 
       default:
          ppIROp(op);
@@ -4328,13 +4387,14 @@ IRType typeOfIRExpr ( const IRTypeEnv* tyenv, const IRExpr* e )
 /* Is this any value actually in the enumeration 'IRType' ? */
 Bool isPlausibleIRType ( IRType ty )
 {
-   switch (ty) {
+   switch (ty & IR_TYPE_MASK) {
       case Ity_INVALID: case Ity_I1:
       case Ity_I8: case Ity_I16: case Ity_I32: 
       case Ity_I64: case Ity_I128:
       case Ity_F16: case Ity_F32: case Ity_F64: case Ity_F128:
       case Ity_D32: case Ity_D64: case Ity_D128:
       case Ity_V128: case Ity_V256:
+      case Ity_VLen8 ... Ity_VLen64:
          return True;
       default: 
          return False;
@@ -5379,7 +5439,7 @@ Bool eqIRRegArray ( const IRRegArray* descr1, const IRRegArray* descr2 )
 
 Int sizeofIRType ( IRType ty )
 {
-   switch (ty) {
+   switch (ty & IR_TYPE_MASK) {
       case Ity_I8:   return 1;
       case Ity_I16:  return 2;
       case Ity_I32:  return 4;
@@ -5394,6 +5454,7 @@ Int sizeofIRType ( IRType ty )
       case Ity_D128: return 16;
       case Ity_V128: return 16;
       case Ity_V256: return 32;
+      case Ity_VLen8 ... Ity_VLen64: return sizeofVecIRType(ty);
       default: vex_printf("\n"); ppIRType(ty); vex_printf("\n");
                vpanic("sizeofIRType");
    }

@@ -489,13 +489,14 @@ static Bool sameKindedAtoms ( IRAtom* a1, IRAtom* a2 )
 
 static IRType shadowTypeV ( IRType ty )
 {
-   switch (ty) {
+   switch (ty & IR_TYPE_MASK) {
       case Ity_I1:
       case Ity_I8:
       case Ity_I16:
       case Ity_I32: 
       case Ity_I64: 
       case Ity_I128: return ty;
+      case Ity_VLen8 ... Ity_VLen64: return ty;
       case Ity_F16:  return Ity_I16;
       case Ity_F32:  return Ity_I32;
       case Ity_D32:  return Ity_I32;
@@ -710,8 +711,44 @@ static IRAtom* mkUifUV256 ( MCEnv* mce, IRAtom* a1, IRAtom* a2 ) {
    return assignNew('V', mce, Ity_V256, binop(Iop_OrV256, a1, a2));
 }
 
+static IRAtom* mkUifUVLen8 ( MCEnv* mce, IRAtom* a1, IRAtom* a2 ) {
+   tl_assert(isShadowAtom(mce,a1));
+   tl_assert(isShadowAtom(mce,a2));
+
+   IRType ty = typeOfIRExpr(mce->sb->tyenv, a1);
+   IROp op = Iop_VOr8 | (ty & IR_TYPE_VL_MASK);
+   return assignNew('V', mce, ty, binop(op, a1, a2));
+}
+
+static IRAtom* mkUifUVLen16 ( MCEnv* mce, IRAtom* a1, IRAtom* a2 ) {
+   tl_assert(isShadowAtom(mce,a1));
+   tl_assert(isShadowAtom(mce,a2));
+
+   IRType ty = typeOfIRExpr(mce->sb->tyenv, a1);
+   IROp op = Iop_VOr16 | (ty & IR_TYPE_VL_MASK);
+   return assignNew('V', mce, ty, binop(op, a1, a2));
+}
+
+static IRAtom* mkUifUVLen32 ( MCEnv* mce, IRAtom* a1, IRAtom* a2 ) {
+   tl_assert(isShadowAtom(mce,a1));
+   tl_assert(isShadowAtom(mce,a2));
+
+   IRType ty = typeOfIRExpr(mce->sb->tyenv, a1);
+   IROp op = Iop_VOr32 | (ty & IR_TYPE_VL_MASK);
+   return assignNew('V', mce, ty, binop(op, a1, a2));
+}
+
+static IRAtom* mkUifUVLen64 ( MCEnv* mce, IRAtom* a1, IRAtom* a2 ) {
+   tl_assert(isShadowAtom(mce,a1));
+   tl_assert(isShadowAtom(mce,a2));
+
+   IRType ty = typeOfIRExpr(mce->sb->tyenv, a1);
+   IROp op = Iop_VOr64 | (ty & IR_TYPE_VL_MASK);
+   return assignNew('V', mce, ty, binop(op, a1, a2));
+}
+
 static IRAtom* mkUifU ( MCEnv* mce, IRType vty, IRAtom* a1, IRAtom* a2 ) {
-   switch (vty) {
+   switch (vty & IR_TYPE_MASK) {
       case Ity_I8:   return mkUifU8(mce, a1, a2);
       case Ity_I16:  return mkUifU16(mce, a1, a2);
       case Ity_I32:  return mkUifU32(mce, a1, a2);
@@ -719,6 +756,10 @@ static IRAtom* mkUifU ( MCEnv* mce, IRType vty, IRAtom* a1, IRAtom* a2 ) {
       case Ity_I128: return mkUifU128(mce, a1, a2);
       case Ity_V128: return mkUifUV128(mce, a1, a2);
       case Ity_V256: return mkUifUV256(mce, a1, a2);
+      case Ity_VLen8: return mkUifUVLen8(mce, a1, a2);
+      case Ity_VLen16: return mkUifUVLen16(mce, a1, a2);
+      case Ity_VLen32: return mkUifUVLen32(mce, a1, a2);
+      case Ity_VLen64: return mkUifUVLen64(mce, a1, a2);
       default:
          VG_(printf)("\n"); ppIRType(vty); VG_(printf)("\n");
          VG_(tool_panic)("memcheck:mkUifU");
@@ -2577,6 +2618,13 @@ static IRAtom* mkPCast8x4 ( MCEnv* mce, IRAtom* at )
    return assignNew('V', mce, Ity_I32, unop(Iop_CmpNEZ8x4, at));
 }
 
+static IRAtom* mkPCast32_v ( MCEnv* mce, IRAtom* at )
+{
+   IRType ty = typeOfIRExpr(mce->sb->tyenv, at);
+   UInt vl = ty >> IR_TYPE_VL_OFFSET;
+   IROp op = Iop_VCmpNEZ32 | (vl << IR_OP_VL_OFFSET);
+   return assignNew('V', mce, ty, unop(op, at));
+}
 
 /* Here's a simple scheme capable of handling ops derived from SSE1
    code and while only generating ops that can be efficiently
@@ -3222,6 +3270,15 @@ IRAtom* binary128Ix1 ( MCEnv* mce, IRAtom* vatom1, IRAtom* vatom2 )
    return at;
 }
 
+static
+IRAtom* binary32I_v ( MCEnv* mce, IRAtom* vatom1, IRAtom* vatom2 )
+{
+   IRAtom* at;
+   at = mkUifUVLen32(mce, vatom1, vatom2);
+   at = mkPCast32_v(mce, at);
+   return at;
+}
+
 /* --- 64-bit versions --- */
 
 static
@@ -3520,7 +3577,7 @@ IRAtom* expr2vbits_Binop ( MCEnv* mce,
    tl_assert(isShadowAtom(mce,vatom2));
    tl_assert(sameKindedAtoms(atom1,vatom1));
    tl_assert(sameKindedAtoms(atom2,vatom2));
-   switch (op) {
+   switch (op & IR_OP_MASK) {
 
       /* 32-bit SIMD */
 
@@ -5021,6 +5078,9 @@ IRAtom* expr2vbits_Binop ( MCEnv* mce,
          return mkUifUV128(mce, narrowed, rmPCasted);
       }
 
+      case Iop_VAdd32: {
+         return binary32I_v(mce, vatom1, vatom2);
+      }
       default:
          ppIROp(op);
          VG_(tool_panic)("memcheck:expr2vbits_Binop");

@@ -74,6 +74,7 @@ UInt ppHReg ( HReg r )
       case HRcFlt64:   return vex_printf("%%%sD%u", maybe_v, regNN);
       case HRcVec64:   return vex_printf("%%%sv%u", maybe_v, regNN);
       case HRcVec128:  return vex_printf("%%%sV%u", maybe_v, regNN);
+      case HRcVecVLen: return vex_printf("%%%sVV%u", maybe_v, regNN);
       default: vpanic("ppHReg");
    }
 }

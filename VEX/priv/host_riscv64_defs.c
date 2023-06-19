@@ -48,6 +48,12 @@ UInt ppHRegRISCV64(HReg reg)
       "fa6", "fa7", "fs2",  "fs3",  "fs4", "fs5", "fs6",  "fs7",
       "fs8", "fs9", "fs10", "fs11", "ft8", "ft9", "ft10", "ft11"};
 
+   static const HChar* vnames[32] = {
+      "v0",  "v1",  "v2",  "v3",  "v4",  "v5",  "v6",  "v7",
+      "v8",  "v9",  "v10", "v11", "v12", "v13", "v14", "v15",
+      "v16", "v17", "v18", "v19", "v20", "v21", "v22", "v23",
+      "v24", "v25", "v26", "v27", "v28", "v29", "v30", "v31" };
+
    /* Be generic for all virtual regs. */
    if (hregIsVirtual(reg))
       return ppHReg(reg);
@@ -63,6 +69,11 @@ UInt ppHRegRISCV64(HReg reg)
       UInt r = hregEncoding(reg);
       vassert(r < 32);
       return vex_printf("%s", fnames[r]);
+   }
+   case HRcVecVLen: {
+      UInt r = hregEncoding(reg);
+      vassert(r < 32);
+      return vex_printf("%s", vnames[r]);
    }
    default:
       vpanic("ppHRegRISCV64");
@@ -85,6 +96,16 @@ static inline UInt fregEnc(HReg r)
    vassert(hregClass(r) == HRcFlt64);
    vassert(!hregIsVirtual(r));
    n = hregEncoding(r);
+   vassert(n < 32);
+   return n;
+}
+
+static inline UInt vregEnc(HReg r)
+{
+   vassert(hregClass(r) == HRcVecVLen);
+   vassert(!hregIsVirtual(r));
+
+   UInt n = hregEncoding(r);
    vassert(n < 32);
    return n;
 }
@@ -387,6 +408,48 @@ static const HChar* showRISCV64FpLdStOp(RISCV64FpLdStOp op)
    vpanic("showRISCV64FpLdStOp");
 }
 
+static const HChar* showRISCV64VLoadOp(RISCV64VLoadOp op)
+{
+   static HChar buf[32];
+
+   switch (op) {
+   case RISCV64op_VLoad8 ... RISCV64op_VLoad64:
+      vex_sprintf(buf, "vle%d", 8 << (op - RISCV64op_VLoad8));
+      return buf;
+   default:
+      vpanic("showRISCV64VLoadOp");
+   }
+}
+
+static const HChar* showRISCV64VStoreOp(RISCV64VStoreOp op)
+{
+   static HChar buf[32];
+
+   switch (op) {
+   case RISCV64op_VStore8 ... RISCV64op_VStore64:
+      vex_sprintf(buf, "vse%d", 8 << (op - RISCV64op_VStore8));
+      return buf;
+   default:
+      vpanic("showRISCV64VStoreOp");
+   }
+}
+
+static const HChar* showRISCV64VALUOp(RISCV64VALUOp op)
+{
+   static HChar buf[32];
+
+   switch (op) {
+   case RISCV64op_VADD8 ... RISCV64op_VADD64:
+      vex_sprintf(buf, "vadd%d", 8 << (op - RISCV64op_VADD8));
+      return buf;
+   case RISCV64op_VOr8 ... RISCV64op_VOr64:
+      vex_sprintf(buf, "vor%d", 8 << (op - RISCV64op_VOr8));
+      return buf;
+   default:
+      vpanic("showRISCV64VALUOp");
+   }
+}
+
 RISCV64Instr* RISCV64Instr_LI(HReg dst, ULong imm64)
 {
    RISCV64Instr* i       = LibVEX_Alloc_inline(sizeof(RISCV64Instr));
@@ -498,6 +561,42 @@ RISCV64Instr_StoreC(RISCV64StoreCOp op, HReg res, HReg src, HReg addr)
    i->RISCV64in.StoreC.res  = res;
    i->RISCV64in.StoreC.src  = src;
    i->RISCV64in.StoreC.addr = addr;
+   return i;
+}
+
+RISCV64Instr*
+RISCV64Instr_VLoad(RISCV64VLoadOp op, Int vl, HReg dst, HReg base)
+{
+   RISCV64Instr* i           = LibVEX_Alloc_inline(sizeof(RISCV64Instr));
+   i->tag                    = RISCV64in_VLoad;
+   i->RISCV64in.VLoad.op     = op;
+   i->RISCV64in.VLoad.vl     = vl;
+   i->RISCV64in.VLoad.dst    = dst;
+   i->RISCV64in.VLoad.base   = base;
+   return i;
+}
+
+RISCV64Instr*
+RISCV64Instr_VStore(RISCV64VStoreOp op, Int vl, HReg src, HReg base)
+{
+   RISCV64Instr* i           = LibVEX_Alloc_inline(sizeof(RISCV64Instr));
+   i->tag                    = RISCV64in_VStore;
+   i->RISCV64in.VStore.op    = op;
+   i->RISCV64in.VStore.vl    = vl;
+   i->RISCV64in.VStore.src   = src;
+   i->RISCV64in.VStore.base  = base;
+   return i;
+}
+
+RISCV64Instr* RISCV64Instr_VALU(RISCV64VALUOp op, Int vl, HReg dst, HReg src1, HReg src2)
+{
+   RISCV64Instr* i        = LibVEX_Alloc_inline(sizeof(RISCV64Instr));
+   i->tag                 = RISCV64in_VALU;
+   i->RISCV64in.VALU.op   = op;
+   i->RISCV64in.VALU.vl   = vl;
+   i->RISCV64in.VALU.dst  = dst;
+   i->RISCV64in.VALU.src1 = src1;
+   i->RISCV64in.VALU.src2 = src2;
    return i;
 }
 
@@ -771,6 +870,31 @@ void ppRISCV64Instr(const RISCV64Instr* i, Bool mode64)
       ppHRegRISCV64(i->RISCV64in.StoreC.addr);
       vex_printf(")");
       return;
+   case RISCV64in_VLoad:
+      vex_printf("%-7s ", showRISCV64VLoadOp(i->RISCV64in.VLoad.op));
+      vex_printf("[%d] ", i->RISCV64in.VLoad.vl);
+      ppHRegRISCV64(i->RISCV64in.VLoad.dst);
+      vex_printf(", (");
+      ppHRegRISCV64(i->RISCV64in.VLoad.base);
+      vex_printf(")");
+      return;
+   case RISCV64in_VStore:
+      vex_printf("%-7s ", showRISCV64VStoreOp(i->RISCV64in.VStore.op));
+      vex_printf("[%d] ", i->RISCV64in.VStore.vl);
+      ppHRegRISCV64(i->RISCV64in.VStore.src);
+      vex_printf(", (");
+      ppHRegRISCV64(i->RISCV64in.VStore.base);
+      vex_printf(")");
+      return;
+   case RISCV64in_VALU:
+      vex_printf("%-7s ", showRISCV64VALUOp(i->RISCV64in.VALU.op));
+      vex_printf("[%d] ", i->RISCV64in.VALU.vl);
+      ppHRegRISCV64(i->RISCV64in.VALU.dst);
+      vex_printf(", ");
+      ppHRegRISCV64(i->RISCV64in.VALU.src1);
+      vex_printf(", ");
+      ppHRegRISCV64(i->RISCV64in.VALU.src2);
+      return;
    case RISCV64in_CSRRW:
       vex_printf("csrrw   ");
       ppHRegRISCV64(i->RISCV64in.CSRRW.dst);
@@ -1001,12 +1125,32 @@ const RRegUniverse* getRRegUniverse_RISCV64(void)
    ru->regs[ru->size++]          = hregRISCV64_f30(); /* ft10 */
    ru->regs[ru->size++]          = hregRISCV64_f31(); /* ft11 */
    ru->allocable_end[HRcFlt64]   = ru->size - 1;
+
+   ru->allocable_start[HRcVecVLen] = ru->size;
+   ru->regs[ru->size++]          = hregRISCV64_v1();  /* v1 */
+   ru->regs[ru->size++]          = hregRISCV64_v2();  /* v2 */
+   ru->regs[ru->size++]          = hregRISCV64_v3();  /* v3 */
+   ru->regs[ru->size++]          = hregRISCV64_v4();  /* v4 */
+   ru->regs[ru->size++]          = hregRISCV64_v5();  /* v5 */
+   ru->regs[ru->size++]          = hregRISCV64_v6();  /* v6 */
+   ru->regs[ru->size++]          = hregRISCV64_v7();  /* v7 */
+   ru->regs[ru->size++]          = hregRISCV64_v8();  /* v8 */
+   ru->regs[ru->size++]          = hregRISCV64_v9();  /* v9 */
+   ru->regs[ru->size++]          = hregRISCV64_v10();  /* v10 */
+   ru->regs[ru->size++]          = hregRISCV64_v11();  /* v11 */
+   ru->regs[ru->size++]          = hregRISCV64_v12();  /* v12 */
+   ru->regs[ru->size++]          = hregRISCV64_v13();  /* v13 */
+   ru->regs[ru->size++]          = hregRISCV64_v14();  /* v14 */
+   ru->regs[ru->size++]          = hregRISCV64_v15();  /* v15 */
+   ru->allocable_end[HRcVecVLen]   = ru->size - 1;
+
    ru->allocable                 = ru->size;
 
    /* Add the registers that are not available for allocation. */
    ru->regs[ru->size++] = hregRISCV64_x0(); /* zero */
    ru->regs[ru->size++] = hregRISCV64_x2(); /* sp */
    ru->regs[ru->size++] = hregRISCV64_x8(); /* s0 */
+   ru->regs[ru->size++] = hregRISCV64_v0(); /* v0 */
 
    initialised = True;
 
@@ -1110,6 +1254,19 @@ void getRegUsage_RISCV64Instr(HRegUsage* u, const RISCV64Instr* i, Bool mode64)
          break;
       }
       addHRegUse(u, HRmRead, i->RISCV64in.FpLdSt.base);
+      return;
+   case RISCV64in_VALU:
+      addHRegUse(u, HRmWrite, i->RISCV64in.VALU.dst);
+      addHRegUse(u, HRmRead, i->RISCV64in.VALU.src1);
+      addHRegUse(u, HRmRead, i->RISCV64in.VALU.src2);
+      return;
+   case RISCV64in_VLoad:
+      addHRegUse(u, HRmWrite, i->RISCV64in.VLoad.dst);
+      addHRegUse(u, HRmRead, i->RISCV64in.VLoad.base);
+      return;
+   case RISCV64in_VStore:
+      addHRegUse(u, HRmRead, i->RISCV64in.VStore.src);
+      addHRegUse(u, HRmRead, i->RISCV64in.VStore.base);
       return;
    case RISCV64in_CAS:
       addHRegUse(u, HRmWrite, i->RISCV64in.CAS.old);
@@ -1333,6 +1490,19 @@ void mapRegs_RISCV64Instr(HRegRemap* m, RISCV64Instr* i, Bool mode64)
    case RISCV64in_FpLdSt:
       mapReg(m, &i->RISCV64in.FpLdSt.reg);
       mapReg(m, &i->RISCV64in.FpLdSt.base);
+      return;
+   case RISCV64in_VALU:
+      mapReg(m, &i->RISCV64in.VALU.dst);
+      mapReg(m, &i->RISCV64in.VALU.src1);
+      mapReg(m, &i->RISCV64in.VALU.src2);
+      return;
+   case RISCV64in_VLoad:
+      mapReg(m, &i->RISCV64in.VLoad.dst);
+      mapReg(m, &i->RISCV64in.VLoad.base);
+      return;
+   case RISCV64in_VStore:
+      mapReg(m, &i->RISCV64in.VStore.src);
+      mapReg(m, &i->RISCV64in.VStore.base);
       return;
    case RISCV64in_CAS:
       mapReg(m, &i->RISCV64in.CAS.old);
@@ -1667,6 +1837,133 @@ static UChar* emit_CJ(UChar* p, UInt opcode, UInt imm11_1, UInt funct3)
    the_insn |= funct3 << 13;
 
    return emit16(p, the_insn);
+}
+
+static UChar*
+gen_vsetivli(UChar* p, UInt rd, UInt zimm, UInt uimm)
+{
+   UInt the_insn = 0;
+
+   the_insn |= 0b1010111;
+   the_insn |= rd << 7;
+   the_insn |= 0b111 << 12;
+   the_insn |= uimm << 15;
+   the_insn |= zimm << 20;
+   the_insn |= 0b11 << 30;
+
+   return emit32(p, the_insn);
+}
+
+static UChar*
+gen_preceding_vsetvl(UChar* p, const RISCV64Instr* i)
+{
+   UInt vl;
+   UInt vsew;
+
+   switch (i->tag) {
+      case RISCV64in_VLoad:
+         vl = i->RISCV64in.VLoad.vl;
+         switch (i->RISCV64in.VLoad.op) {
+            case RISCV64op_VLoad64:
+               vsew = 3;
+               break;
+            default:
+               goto bad;
+         }
+         break;
+      case RISCV64in_VStore:
+         vl = i->RISCV64in.VStore.vl;
+         switch (i->RISCV64in.VStore.op) {
+            case RISCV64op_VStore64:
+               vsew = 3;
+               break;
+            default:
+               goto bad;
+         }
+         break;
+      case RISCV64in_VALU:
+         vl = i->RISCV64in.VALU.vl;
+         switch (i->RISCV64in.VALU.op) {
+            case RISCV64op_VADD8:
+            case RISCV64op_VOr8:
+               vsew = 0;
+               break;
+            case RISCV64op_VADD16:
+            case RISCV64op_VOr16:
+               vsew = 1;
+               break;
+            case RISCV64op_VADD32:
+            case RISCV64op_VOr32:
+               vsew = 2;
+               break;
+            case RISCV64op_VADD64:
+            case RISCV64op_VOr64:
+               vsew = 3;
+               break;
+            default:
+               goto bad;
+         }
+         break;
+      default:
+         goto bad;
+   }
+
+   // set LMUL=1 until a solution of grouped register allocation
+   UInt vlmul = 0;
+   UInt zimm = vsew << 3 | vlmul;
+   UInt uimm = vl;
+
+   // TODO: use vsetvli version for larger avl
+   return gen_vsetivli(p, 0, zimm, uimm);
+
+bad:
+   ppRISCV64Instr(i, True);
+   vpanic("emit_vsetvl_RISCV64Instr");
+}
+
+static UChar*
+emit_vldst(UChar* p, UInt opcode, UInt vd, UInt width, UInt rs1, UInt umop, UInt vm, UInt mop, UInt mew, UInt nf)
+{
+   UInt the_insn = 0;
+
+   the_insn |= opcode;
+   the_insn |= vd << 7;
+   the_insn |= width << 12;
+   the_insn |= rs1 << 15;
+   the_insn |= umop << 20;
+   the_insn |= vm << 25;
+   the_insn |= mop << 26;
+   the_insn |= mew << 28;
+   the_insn |= nf << 29;
+
+   return emit32(p, the_insn);
+}
+
+static UChar*
+emit_nomask_unit_stride_vldst(UChar* p, UInt opcode, UInt vd, UInt width, UInt rs1)
+{
+   UInt nf = 0;
+   UInt mew = 0;
+   UInt mop = 0; // unit-stride
+   UInt vm = 1;
+   UInt umop = 0; // unit-stride
+   return emit_vldst(p, opcode, vd, width, rs1, umop, vm, mop, mew, nf);
+}
+
+static UChar*
+emit_opivv(UChar* p, UInt funct6, UInt vd, UInt vs1, UInt vs2, UInt vm)
+{
+   UInt the_insn = 0;
+
+   the_insn |= 0b1010111;
+   the_insn |= vd << 7;
+   the_insn |= 0b000 << 12;
+   the_insn |= vs1 << 15;
+   the_insn |= vs2 << 20;
+   the_insn |= vm << 25;
+   the_insn |= funct6 << 26;
+
+   return emit32(p, the_insn);
 }
 
 /*------------------------------------------------------------*/
@@ -2689,6 +2986,70 @@ Int emit_RISCV64Instr(/*MB_MOD*/ Bool*    is_profInc,
       goto done;
    }
 
+   case RISCV64in_VLoad: {
+      UInt dst    = vregEnc(i->RISCV64in.VLoad.dst);
+      UInt base   = iregEnc(i->RISCV64in.VLoad.base);
+
+      // every insn calls vsetvl to make itself independent, necessary?
+      p = gen_preceding_vsetvl(p, i);
+      UInt width = 0;
+      switch (i->RISCV64in.VLoad.op) {
+         case RISCV64op_VLoad64:
+            width = 0b111;
+            break;
+         default:
+            goto bad;
+      }
+
+      // used only in the internal of coregrind, not user instructions
+      p = emit_nomask_unit_stride_vldst(p, 0b0000111, dst, width, base);
+      goto done;
+   }
+   case RISCV64in_VStore: {
+      UInt src    = vregEnc(i->RISCV64in.VStore.src);
+      UInt base   = iregEnc(i->RISCV64in.VStore.base);
+
+      p = gen_preceding_vsetvl(p, i);
+      UInt width = 0;
+      switch (i->RISCV64in.VStore.op) {
+      case RISCV64op_VStore64:
+         width = 0b111;
+         break;
+      default:
+         goto bad;
+      }
+
+      p = emit_nomask_unit_stride_vldst(p, 0b0100111, src, width, base);
+      goto done;
+   }
+   case RISCV64in_VALU: {
+      UInt dst  = vregEnc(i->RISCV64in.VALU.dst);
+      UInt src1 = vregEnc(i->RISCV64in.VALU.src1);
+      UInt src2;
+      UInt func6;
+
+      HReg src2_r = i->RISCV64in.VALU.src2;
+      if (hregClass(src2_r) == HRcVecVLen) {
+         src2 = vregEnc(src2_r);
+      } else {
+         src2 = iregEnc(src2_r);
+      }
+
+      p = gen_preceding_vsetvl(p, i);
+
+      switch (i->RISCV64in.VALU.op) {
+      case RISCV64op_VADD8 ... RISCV64op_VADD64:
+         func6 = 0b000000;
+         break;
+      case RISCV64op_VOr8 ...  RISCV64op_VOr64:
+         func6 = 0b001010;
+         break;
+      default:
+         goto bad;
+      }
+      p = emit_opivv(p, func6, dst, src1, src2, 1 /*vm*/);
+      goto done;
+   }
    default:
       goto bad;
    }

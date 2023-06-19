@@ -82,9 +82,27 @@ ST_IN HReg hregRISCV64_f29(void) { return mkHReg(False, HRcFlt64, 29, 35); }
 ST_IN HReg hregRISCV64_f30(void) { return mkHReg(False, HRcFlt64, 30, 36); }
 ST_IN HReg hregRISCV64_f31(void) { return mkHReg(False, HRcFlt64, 31, 37); }
 
-ST_IN HReg hregRISCV64_x0(void) { return mkHReg(False, HRcInt64, 0, 38); }
-ST_IN HReg hregRISCV64_x2(void) { return mkHReg(False, HRcInt64, 2, 39); }
-ST_IN HReg hregRISCV64_x8(void) { return mkHReg(False, HRcInt64, 8, 40); }
+ST_IN HReg hregRISCV64_v1(void) { return mkHReg(False, HRcVecVLen, 1, 38); }
+ST_IN HReg hregRISCV64_v2(void) { return mkHReg(False, HRcVecVLen, 2, 39); }
+ST_IN HReg hregRISCV64_v3(void) { return mkHReg(False, HRcVecVLen, 3, 40); }
+ST_IN HReg hregRISCV64_v4(void) { return mkHReg(False, HRcVecVLen, 4, 41); }
+ST_IN HReg hregRISCV64_v5(void) { return mkHReg(False, HRcVecVLen, 5, 42); }
+ST_IN HReg hregRISCV64_v6(void) { return mkHReg(False, HRcVecVLen, 6, 43); }
+ST_IN HReg hregRISCV64_v7(void) { return mkHReg(False, HRcVecVLen, 7, 44); }
+ST_IN HReg hregRISCV64_v8(void) { return mkHReg(False, HRcVecVLen, 8, 45); }
+ST_IN HReg hregRISCV64_v9(void) { return mkHReg(False, HRcVecVLen, 9, 46); }
+ST_IN HReg hregRISCV64_v10(void) { return mkHReg(False, HRcVecVLen, 10, 47); }
+ST_IN HReg hregRISCV64_v11(void) { return mkHReg(False, HRcVecVLen, 11, 48); }
+ST_IN HReg hregRISCV64_v12(void) { return mkHReg(False, HRcVecVLen, 12, 49); }
+ST_IN HReg hregRISCV64_v13(void) { return mkHReg(False, HRcVecVLen, 13, 50); }
+ST_IN HReg hregRISCV64_v14(void) { return mkHReg(False, HRcVecVLen, 14, 51); }
+ST_IN HReg hregRISCV64_v15(void) { return mkHReg(False, HRcVecVLen, 15, 52); }
+
+ST_IN HReg hregRISCV64_x0(void) { return mkHReg(False, HRcInt64, 0, 53); }
+ST_IN HReg hregRISCV64_x2(void) { return mkHReg(False, HRcInt64, 2, 54); }
+ST_IN HReg hregRISCV64_x8(void) { return mkHReg(False, HRcInt64, 8, 55); }
+ST_IN HReg hregRISCV64_v0(void) { return mkHReg(False, HRcVecVLen, 0, 56); }
+
 #undef ST_IN
 
 /* Number of registers used for argument passing in function calls. */
@@ -316,6 +334,32 @@ typedef enum {
    RISCV64op_CAS_W,         /* 32-bit compare-and-swap pseudoinstruction. */
 } RISCV64CASOp;
 
+typedef enum {
+   RISCV64op_VLoad8 = 0xf00,
+   RISCV64op_VLoad16,
+   RISCV64op_VLoad32,
+   RISCV64op_VLoad64,
+} RISCV64VLoadOp;
+
+typedef enum {
+   RISCV64op_VStore8 = 0xf10,
+   RISCV64op_VStore16,
+   RISCV64op_VStore32,
+   RISCV64op_VStore64,
+} RISCV64VStoreOp;
+
+typedef enum {
+   RISCV64op_VADD8 = 0xf20,
+   RISCV64op_VADD16,
+   RISCV64op_VADD32,
+   RISCV64op_VADD64,
+
+   RISCV64op_VOr8,
+   RISCV64op_VOr16,
+   RISCV64op_VOr32,
+   RISCV64op_VOr64,
+} RISCV64VALUOp;
+
 /* The kind of instructions. */
 typedef enum {
    RISCV64in_LI = 0x52640000, /* Load immediate pseudoinstruction. */
@@ -346,7 +390,11 @@ typedef enum {
    RISCV64in_XIndir,          /* Indirect transfer to guest address. */
    RISCV64in_XAssisted,       /* Assisted transfer to guest address. */
    RISCV64in_EvCheck,         /* Event check. */
-   RISCV64in_ProfInc          /* 64-bit profile counter increment. */
+   RISCV64in_ProfInc,         /* 64-bit profile counter increment. */
+
+   RISCV64in_VStore,           /* Store to memory. */
+   RISCV64in_VLoad,
+   RISCV64in_VALU,             /* Computational binary instruction. */
 } RISCV64InstrTag;
 
 typedef struct {
@@ -421,6 +469,26 @@ typedef struct {
          HReg            src;
          HReg            addr;
       } StoreC;
+      /* vector */
+      struct {
+         RISCV64VLoadOp op;
+         Int            vl;
+         HReg           dst;
+         HReg           base;
+      } VLoad;
+      struct {
+         RISCV64VStoreOp op;
+         Int             vl;
+         HReg            src;
+         HReg            base;
+      } VStore;
+      struct {
+         RISCV64VALUOp op;
+         Int           vl;
+         HReg          dst;
+         HReg          src1;
+         HReg          src2;
+      } VALU;
       /* Atomic swap of values in a CSR and an integer register. */
       struct {
          HReg dst;
@@ -563,6 +631,14 @@ RISCV64Instr_StoreG(RISCV64StoreOp op, HReg src, HReg base, Int soff12, HReg gua
 RISCV64Instr* RISCV64Instr_LoadR(RISCV64LoadROp op, HReg dst, HReg addr);
 RISCV64Instr*
 RISCV64Instr_StoreC(RISCV64StoreCOp op, HReg res, HReg src, HReg addr);
+
+RISCV64Instr*
+RISCV64Instr_VLoad(RISCV64VLoadOp op, Int vl, HReg dst, HReg base);
+RISCV64Instr*
+RISCV64Instr_VStore(RISCV64VStoreOp op, Int vl, HReg src, HReg base);
+RISCV64Instr*
+RISCV64Instr_VALU(RISCV64VALUOp op, Int vl, HReg dst, HReg src1, HReg src2);
+
 RISCV64Instr* RISCV64Instr_CSRRW(HReg dst, HReg src, UInt csr);
 RISCV64Instr* RISCV64Instr_FpUnary(RISCV64FpUnaryOp op, HReg dst, HReg src);
 RISCV64Instr*

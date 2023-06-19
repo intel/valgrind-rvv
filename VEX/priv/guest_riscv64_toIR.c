@@ -3697,6 +3697,19 @@ static Bool dis_vmseq_vi(/*MB_OUT*/ DisResult* dres,
    return True;
 }
 
+static IRType baseVecIRType (UInt sew)
+{
+   IRType ty;
+   switch (sew) {
+      case  8: ty =  Ity_VLen8;  break;
+      case 16: ty =  Ity_VLen16; break;
+      case 32: ty =  Ity_VLen32; break;
+      case 64: ty =  Ity_VLen64; break;
+      default: vassert(0);
+   }
+   return ty;
+}
+
 static Bool dis_vadd_vv(/*MB_OUT*/ DisResult* dres,
                         /*OUT*/ IRSB*         irsb,
                         UInt                  insn,
@@ -3708,29 +3721,23 @@ static Bool dis_vadd_vv(/*MB_OUT*/ DisResult* dres,
    UInt vs1 = INSN(19, 15);
    UInt vd = INSN(11, 7);
 
-   UInt sew = get_sew(guest);
-   UInt sew_b =  sew / 8;
-   IRType ty = integerIRTypeOfSize(sew_b);
+   vassert(vm == 1);  // FIXME
 
-   for (UInt i = 0; i < guest->guest_vl; ++i) {
-      UInt offset = i * sew_b;
-      IRExpr* res = narrow_64to(
-                        binop(Iop_Add64,
-                              widen_Sto64(getVReg(vs2, offset, ty), ty),
-                              widen_Sto64(getVReg(vs1, offset, ty), ty)),
-                        sew);
-      if (vm == 0) {
-         UInt mask_outer_offset = i / 64 * 8;
-         UInt mask_inner_offset = i % 64;
-         IRExpr* guard = binop(Iop_CmpNE64,
-                               mkU64(0),
-                               binop(Iop_And64,
-                                     getVReg(0 /* v0 */, mask_outer_offset, Ity_I64),
-                                     mkU64(1UL << mask_inner_offset)));
-         res = IRExpr_ITE(guard, res, getVReg(vd, offset, ty));
-      }
-      putVReg(irsb, vd, offset, res);
+   UInt sew = get_sew(guest);
+   IROp op;
+
+   switch (sew) {
+      case  8: op =  Iop_VAdd8; break;
+      case 16: op = Iop_VAdd16; break;
+      case 32: op = Iop_VAdd32; break;
+      case 64: op = Iop_VAdd64; break;
+      default: vassert(0);
    }
+
+   IRType ty = typeofVecIR(guest->guest_vl, baseVecIRType(sew));
+   IROp vop = op | (guest->guest_vl << IR_OP_VL_OFFSET);
+   putVReg(irsb, vd, 0, binop(vop, getVReg(vs2, 0, ty),
+                                   getVReg(vs1, 0, ty)));
 
    return True;
 }
