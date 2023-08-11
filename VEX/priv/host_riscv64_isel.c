@@ -144,7 +144,7 @@ static HReg newVRegV(ISelEnv* env)
 static HReg iselIntExpr_R(ISelEnv* env, IRExpr* e);
 static void iselInt128Expr(HReg* rHi, HReg* rLo, ISelEnv* env, IRExpr* e);
 static HReg iselFltExpr(ISelEnv* env, IRExpr* e);
-static HReg iselVecExpr_R(ISelEnv* env, IRExpr* e);
+static void iselVecExpr_R(HReg r[], ISelEnv* env, IRExpr* e);
 
 /*------------------------------------------------------------*/
 /*--- ISEL: FP rounding mode helpers                       ---*/
@@ -1313,6 +1313,17 @@ static void h_Iop_VAdd32(void *dst, void *srcL, void *srcR, ULong len)
    }
 }
 
+static void h_Iop_VOr32(void *dst, void *srcL, void *srcR, ULong len)
+{
+   int *d = dst;
+   int *s1 = srcL;
+   int *s2 = srcR;
+
+   for (int i = 0; i < len; ++i) {
+      d[i] = s1[i] | s2[i];
+   }
+}
+
 static void h_Iop_VCmpNEZ32(void *dst, void *src, ULong len)
 {
    int *d = dst;
@@ -1330,36 +1341,75 @@ struct Iop_handler {
 
 static const struct Iop_handler IOP_HANDLERS[] = {
    [Iop_VAdd32]    = {"Iop_VAdd32", h_Iop_VAdd32},
+   [Iop_VOr32]     = {"Iop_VOr32",  h_Iop_VOr32},
    [Iop_VCmpNEZ32] = {"Iop_VCmpNEZ32", h_Iop_VCmpNEZ32},
    [Iop_LAST] = {"Iop_LAST", 0}
 };
 
-static void adjust_sp(ISelEnv* env, Int n)
-{
-   vassert(n >= -2048 && n < 2048);
+#define MAX_REGS 8
+#define MAX_ARGS_STACK_SIZE 1000
 
-   addInstr(env, RISCV64Instr_ALUImm(RISCV64op_ADDI, hregRISCV64_x2(),
-            hregRISCV64_x2(), n));
+static void adjust_sp(ISelEnv* env, Long n)
+{
+   if (n >= -2048 && n < 2048) {
+      addInstr(env, RISCV64Instr_ALUImm(RISCV64op_ADDI, hregRISCV64_x2(),
+               hregRISCV64_x2(), n));
+   } else {
+      HReg tmp = newVRegI(env);
+      addInstr(env, RISCV64Instr_LI(tmp, n));
+      addInstr(env, RISCV64Instr_ALU(RISCV64op_ADD, hregRISCV64_x2(),
+               hregRISCV64_x2(), tmp));
+   }
 }
 
-static HReg iselVecExpr_R_wrk_unop(ISelEnv* env, IRExpr* e)
+static void storeVecReg(ISelEnv* env, HReg src[], Int nregs, HReg addr)
+{
+   Int vlen_b = VLEN / 8;
+   Int vl_ldst64 = vlen_b / 8;
+
+   HReg tmp = newVRegI(env);
+   addInstr(env, RISCV64Instr_MV(tmp, addr));
+
+   for (int i = 0; i < nregs; ++i) {
+      addInstr(env, RISCV64Instr_VStore(RISCV64op_VStore64, vl_ldst64, src[i], tmp));
+      addInstr(env, RISCV64Instr_ALUImm(RISCV64op_ADDI, tmp, tmp, vlen_b));
+   }
+}
+
+static void loadVecReg(ISelEnv* env, HReg dst[], Int nregs, HReg addr)
+{
+   Int vlen_b = VLEN / 8;
+   Int vl_ldst64 = vlen_b / 8;
+
+   HReg tmp = newVRegI(env);
+   addInstr(env, RISCV64Instr_MV(tmp, addr));
+
+   for (int i = 0; i < nregs; ++i) {
+      addInstr(env, RISCV64Instr_VLoad(RISCV64op_VLoad64, vl_ldst64, dst[i], tmp));
+      addInstr(env, RISCV64Instr_ALUImm(RISCV64op_ADDI, tmp, tmp, vlen_b));
+   }
+}
+
+static void iselVecExpr_R_wrk_unop(HReg dst[], ISelEnv* env, IRExpr* e)
 {
    const void* fn = IOP_HANDLERS[e->Iex.Unop.op & IR_OP_MASK].fn;
    if (fn == 0) {
-      return INVALID_HREG;
+      return;
    }
 
    IRType ty = typeOfIRExpr(env->type_env, e);
    Int vl = VLofVecIRType(ty);
    Int sz = sizeofVecIRType(ty);
-   Int vl_ldst64 = sz / 8;
+   Int vlen_b = VLEN / 8;
+   Int nregs = sz / vlen_b;
 
-   HReg dst  = newVRegV(env);
-   HReg src = iselVecExpr_R(env, e->Iex.Unop.arg);
+   HReg src[MAX_REGS] = {0};
+   iselVecExpr_R(src, env, e->Iex.Unop.arg);
 
    HReg argp = newVRegI(env);
 
-   adjust_sp(env, -2000);  // TODO: larger vlen
+   adjust_sp(env, -MAX_ARGS_STACK_SIZE);
+
    addInstr(env, RISCV64Instr_MV(argp, hregRISCV64_x2()));
 
    addInstr(env, RISCV64Instr_ALUImm(RISCV64op_ADDI, argp, argp, 15));
@@ -1369,33 +1419,34 @@ static HReg iselVecExpr_R_wrk_unop(ISelEnv* env, IRExpr* e)
    addInstr(env, RISCV64Instr_ALUImm(RISCV64op_ADDI, hregRISCV64_x11(), argp, sz));                // a1 - src
    addInstr(env, RISCV64Instr_ALUImm(RISCV64op_ADDI, hregRISCV64_x12(), hregRISCV64_x0(), vl));    // a2 - vl
 
-   addInstr(env, RISCV64Instr_VStore(RISCV64op_VStore64, vl_ldst64, src, hregRISCV64_x11()));
+   storeVecReg(env, src, nregs, hregRISCV64_x11());
    addInstr(env, RISCV64Instr_Call(mk_RetLoc_simple(RLPri_None), (Addr64) fn, INVALID_HREG, 3, 0));
-   addInstr(env, RISCV64Instr_VLoad(RISCV64op_VLoad64, vl_ldst64, dst, argp));
+   loadVecReg(env, dst, nregs, argp);
 
-   adjust_sp(env, 2000);
-   return dst;
+   adjust_sp(env, MAX_ARGS_STACK_SIZE);
 }
 
-static HReg iselVecExpr_R_wrk_binop(ISelEnv* env, IRExpr* e)
+static void iselVecExpr_R_wrk_binop(HReg dst[], ISelEnv* env, IRExpr* e)
 {
    const void* fn = IOP_HANDLERS[e->Iex.Unop.op & IR_OP_MASK].fn;
    if (fn == 0) {
-      return INVALID_HREG;
+      return;
    }
 
    IRType ty = typeOfIRExpr(env->type_env, e);
    Int vl = VLofVecIRType(ty);
    Int sz = sizeofVecIRType(ty);
-   Int vl_ldst64 = sz / 8;
+   Int vlen_b = VLEN / 8;
+   Int nregs = sz / vlen_b;
 
-   HReg dst  = newVRegV(env);
-   HReg srcL = iselVecExpr_R(env, e->Iex.Binop.arg1);
-   HReg srcR = iselVecExpr_R(env, e->Iex.Binop.arg2);
+   HReg srcL[MAX_REGS] = {0};
+   HReg srcR[MAX_REGS] = {0};
+   iselVecExpr_R(srcL, env, e->Iex.Binop.arg2);
+   iselVecExpr_R(srcR, env, e->Iex.Binop.arg1);
 
    HReg argp = newVRegI(env);
 
-   adjust_sp(env, -2000);  // TODO: larger vlen
+   adjust_sp(env, -MAX_ARGS_STACK_SIZE);
    addInstr(env, RISCV64Instr_MV(argp, hregRISCV64_x2()));
 
    addInstr(env, RISCV64Instr_ALUImm(RISCV64op_ADDI, argp, argp, 15));
@@ -1406,39 +1457,48 @@ static HReg iselVecExpr_R_wrk_binop(ISelEnv* env, IRExpr* e)
    addInstr(env, RISCV64Instr_ALUImm(RISCV64op_ADDI, hregRISCV64_x12(), argp, sz * 2));            // a2 - srcR
    addInstr(env, RISCV64Instr_ALUImm(RISCV64op_ADDI, hregRISCV64_x13(), hregRISCV64_x0(), vl));    // a3 - vl
 
-   addInstr(env, RISCV64Instr_VStore(RISCV64op_VStore64, vl_ldst64, srcL, hregRISCV64_x11()));
-   addInstr(env, RISCV64Instr_VStore(RISCV64op_VStore64, vl_ldst64, srcR, hregRISCV64_x12()));
+   storeVecReg(env, srcL, nregs, hregRISCV64_x11());
+   storeVecReg(env, srcR, nregs, hregRISCV64_x12());
    addInstr(env, RISCV64Instr_Call(mk_RetLoc_simple(RLPri_None), (Addr64) fn, INVALID_HREG, 4, 0));
-   addInstr(env, RISCV64Instr_VLoad(RISCV64op_VLoad64, vl_ldst64, dst, argp));
+   loadVecReg(env, dst, nregs, argp);
 
-   adjust_sp(env, 2000);
-   return dst;
+   adjust_sp(env, MAX_ARGS_STACK_SIZE);
 }
 
-static HReg iselVecExpr_R_wrk(ISelEnv* env, IRExpr* e)
+static void iselVecExpr_R_wrk(HReg dst[], ISelEnv* env, IRExpr* e)
 {
    IRType ty = typeOfIRExpr(env->type_env, e);
    Int vl = VLofVecIRType(ty);
    Int sz = sizeofVecIRType(ty);
-   Int vl_ldst64 = sz / 8;
+   Int vlen_b = VLEN / 8;
+   Int nregs = sz / vlen_b;  // assume sz is multple time of vlen_b
+   Int vl_ldst64 = vlen_b / 8;
+
+   for (int i = 0; i < nregs; ++i) {
+      dst[i] = newVRegV(env);
+   }
 
    switch (e->tag) {
       case Iex_Get: {
-         HReg dst  = newVRegV(env);
          HReg base = newVRegI(env);
-
          Int  off  = e->Iex.Get.offset - BASEBLOCK_OFFSET_ADJUSTMENT;
          addInstr(env, RISCV64Instr_ALUImm(RISCV64op_ADDI, base, get_baseblock_register(), off));
-         addInstr(env, RISCV64Instr_VLoad(RISCV64op_VLoad64, vl_ldst64, dst, base));
-         return dst;
+         addInstr(env, RISCV64Instr_VLoad(RISCV64op_VLoad64, vl_ldst64, dst[0], base));
+
+         for (int i = 1; i < nregs; ++i) {
+            addInstr(env, RISCV64Instr_ALUImm(RISCV64op_ADDI, base, base, vlen_b));
+            addInstr(env, RISCV64Instr_VLoad(RISCV64op_VLoad64, vl_ldst64, dst[i], base));
+         }
+         return;
       }
 
       case Iex_Unop: {
-         HReg dst = iselVecExpr_R_wrk_unop(env, e);
-         if (!hregIsInvalid(dst)) {
-            return dst;
+         iselVecExpr_R_wrk_unop(dst, env, e);
+         if (!hregIsInvalid(dst[0])) {
+            return;
          }
 
+         /*
          RISCV64VALUOp op;
          IROp ir_op = e->Iex.Unop.op & IR_OP_MASK;
          switch (ir_op) {
@@ -1451,13 +1511,16 @@ static HReg iselVecExpr_R_wrk(ISelEnv* env, IRExpr* e)
          HReg argR = hregRISCV64_x0();
          addInstr(env, RISCV64Instr_VALU(op, vl, dst, argL, argR));
          return dst;
+         */
+         break;
       }
       case Iex_Binop: {
-         HReg dst = iselVecExpr_R_wrk_binop(env, e);
-         if (!hregIsInvalid(dst)) {
-            return dst;
+         iselVecExpr_R_wrk_binop(dst, env, e);
+         if (!hregIsInvalid(dst[0])) {
+            return;
          }
 
+         /*
          RISCV64VALUOp op;
          IROp ir_op = e->Iex.Binop.op & IR_OP_MASK;
          switch (ir_op) {
@@ -1474,6 +1537,8 @@ static HReg iselVecExpr_R_wrk(ISelEnv* env, IRExpr* e)
          HReg argR = iselVecExpr_R(env, e->Iex.Binop.arg2);
          addInstr(env, RISCV64Instr_VALU(op, vl, dst, argL, argR));
          return dst;
+         */
+         break;
       }
 
       default:
@@ -1485,15 +1550,13 @@ irreducible:
    vpanic("iselVecExpr_R(riscv64)");
 }
 
-static HReg iselVecExpr_R(ISelEnv* env, IRExpr* e)
+static void iselVecExpr_R(HReg r[], ISelEnv* env, IRExpr* e)
 {
-   HReg r = iselVecExpr_R_wrk(env, e);
+   iselVecExpr_R_wrk(r, env, e);
 
    /* Sanity checks ... */
-   vassert(hregClass(r) == HRcVecVLen);
-   vassert(hregIsVirtual(r));
-
-   return r;
+   //vassert(hregClass(r) == HRcVecVLen);
+   //vassert(hregIsVirtual(r));
 }
 
 /*------------------------------------------------------------*/
@@ -1939,13 +2002,25 @@ static void iselStmt(ISelEnv* env, IRStmt* stmt)
       }
       IRType vty = tyd & IR_TYPE_MASK;
       if (vty >= Ity_VLen8 && vty <= Ity_VLen64) {
-         HReg src  = iselVecExpr_R(env, stmt->Ist.Put.data);
-         HReg base = newVRegI(env);
+         Int vl = VLofVecIRType(tyd);
+         Int sz = sizeofVecIRType(tyd);
+         Int vlen_b = VLEN / 8;
+         Int nregs = sz / vlen_b;
+         Int vl_ldst64  = vlen_b / 8;
+
+         HReg src[MAX_REGS] = {0};
+         iselVecExpr_R(src, env, stmt->Ist.Put.data);
+
          Int  off  = stmt->Ist.Put.offset - BASEBLOCK_OFFSET_ADJUSTMENT;
-         Int  vl_ldst64  = sizeofVecIRType(tyd) / 8;
+         HReg base = newVRegI(env);
 
          addInstr(env, RISCV64Instr_ALUImm(RISCV64op_ADDI, base, get_baseblock_register(), off));
-         addInstr(env, RISCV64Instr_VStore(RISCV64op_VStore64, vl_ldst64, src, base));
+         addInstr(env, RISCV64Instr_VStore(RISCV64op_VStore64, vl_ldst64, src[0], base));
+
+         for (int i = 1; i < nregs; ++i) {
+            addInstr(env, RISCV64Instr_ALUImm(RISCV64op_ADDI, base, base, vlen_b));
+            addInstr(env, RISCV64Instr_VStore(RISCV64op_VStore64, vl_ldst64, src[i], base));
+         }
          return;
       }
       break;
