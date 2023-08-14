@@ -56,6 +56,9 @@ Int VLofVecIROp ( IROp op)
 
 Int sizeofVecIRType ( IRType ty)
 {
+   if ((ty & IR_TYPE_MASK) == Ity_VLen1) {
+      return (VLofVecIRType(ty) + 7) / 8;
+   }
    return VLofVecIRType(ty) * sizeofVecIRTypeElem(ty);
 }
 
@@ -83,6 +86,7 @@ void ppIRType ( IRType ty )
       case Ity_D128:    vex_printf( "D128"); break;
       case Ity_V128:    vex_printf( "V128"); break;
       case Ity_V256:    vex_printf( "V256"); break;
+      case Ity_VLen1:    vex_printf( "VLen1-%d",  VLofVecIRType(ty) ); break;
       case Ity_VLen8:    vex_printf( "VLen8-%d",  VLofVecIRType(ty) ); break;
       case Ity_VLen16:   vex_printf( "VLen16-%d", VLofVecIRType(ty) ); break;
       case Ity_VLen32:   vex_printf( "VLen32-%d", VLofVecIRType(ty) ); break;
@@ -184,6 +188,12 @@ void ppIROp ( IROp op )
          str = "VOr"; base = Iop_VOr8; break;
       case Iop_VCmpNEZ8 ... Iop_VCmpNEZ64:
          str = "VCmpNEZ"; base = Iop_VCmpNEZ8; break;
+      case Iop_VAnd8 ... Iop_VAnd64:
+         str = "VAnd"; base = Iop_VAnd8; break;
+      case Iop_VNot8 ... Iop_VNot64:
+         str = "VNot"; base = Iop_VNot8; break;
+      case Iop_VExpandBitsTo8 ... Iop_VExpandBitsTo64:
+         str = "VExpandBitsTo"; base = Iop_VExpandBitsTo8; break;
       /* other cases must explicitly "return;" */
       case Iop_8Uto16:   vex_printf("8Uto16");  return;
       case Iop_8Uto32:   vex_printf("8Uto32");  return;
@@ -1412,6 +1422,11 @@ void ppIROp ( IROp op )
 
 IRType typeofVecIR ( UInt vl, IRType base )
 {
+   return (vl << IR_TYPE_VL_OFFSET) | base;
+}
+
+IROp opofVecIR ( UInt vl, IROp base )
+{
    return (vl << IR_OP_VL_OFFSET) | base;
 }
 
@@ -1848,9 +1863,12 @@ Bool primopMightTrap ( IROp op )
    case Iop_Max64Fx4: case Iop_Min64Fx4:
    case Iop_Rotx32: case Iop_Rotx64:
    case Iop_2xMultU64Add128CarryOut:
-   case Iop_VAdd8: case Iop_VAdd16: case Iop_VAdd32: case Iop_VAdd64:
-   case Iop_VCmpNEZ8: case Iop_VCmpNEZ16: case Iop_VCmpNEZ32: case Iop_VCmpNEZ64:
-   case Iop_VOr8: case Iop_VOr16: case Iop_VOr32: case Iop_VOr64:
+   case Iop_VAdd8 ... Iop_VAdd64:
+   case Iop_VCmpNEZ8 ... Iop_VCmpNEZ64:
+   case Iop_VOr8 ... Iop_VOr64:
+   case Iop_VAnd8 ... Iop_VAnd64:
+   case Iop_VNot8 ... Iop_VNot64:
+   case Iop_VExpandBitsTo8 ... Iop_VExpandBitsTo64:
       return False;
 
    case Iop_INVALID: case Iop_LAST:
@@ -3145,6 +3163,22 @@ void typeOfPrimop ( IROp op,
 #  define UNARY_COMPARISON(_ta)                                \
      *t_dst = Ity_I1; *t_arg1 = (_ta); break;
 
+#  define VEC_BINARY(bop_base) \
+      { \
+         IRType base = Ity_VLen8 + bop - bop_base; \
+         UInt vl = VLofVecIROp(op); \
+         IRType ty = typeofVecIR (vl, base); \
+         BINARY(ty, ty, ty); \
+      }
+
+#  define VEC_UNARY(bop_base) \
+      { \
+         IRType base = Ity_VLen8 + bop - bop_base; \
+         UInt vl = VLofVecIROp(op); \
+         IRType ty = typeofVecIR (vl, base); \
+         UNARY(ty, ty); \
+      }
+
    /* Rounding mode values are always Ity_I32, encoded as per
       IRRoundingMode */
    const IRType ity_RMode = Ity_I32;
@@ -3154,7 +3188,8 @@ void typeOfPrimop ( IROp op,
    *t_arg2 = Ity_INVALID;
    *t_arg3 = Ity_INVALID;
    *t_arg4 = Ity_INVALID;
-   switch (op & IR_OP_MASK) {
+   IROp bop = op & IR_OP_MASK;
+   switch (bop) {
       case Iop_Add8: case Iop_Sub8: case Iop_Mul8: 
       case Iop_Or8:  case Iop_And8: case Iop_Xor8:
          BINARY(Ity_I8,Ity_I8, Ity_I8);
@@ -4201,23 +4236,22 @@ void typeOfPrimop ( IROp op,
          QUATERNARY(Ity_I32, Ity_I8, Ity_I8, Ity_I8, Ity_I32);
       case Iop_Rotx64:
          QUATERNARY(Ity_I64, Ity_I8, Ity_I8, Ity_I8, Ity_I64);
-      case Iop_VAdd8    ... Iop_VAdd64: {
-         IRType base = Ity_VLen8 + (op & IR_OP_MASK) - Iop_VAdd8;
+      case Iop_VAdd8    ... Iop_VAdd64:
+         VEC_BINARY(Iop_VAdd8);
+      case Iop_VOr8     ... Iop_VOr64:
+         VEC_BINARY(Iop_VOr8);
+      case Iop_VCmpNEZ8 ... Iop_VCmpNEZ64:
+         VEC_UNARY(Iop_VCmpNEZ8);
+      case Iop_VAnd8    ... Iop_VAnd64:
+         VEC_BINARY(Iop_VAnd8);
+      case Iop_VNot8 ... Iop_VNot64:
+         VEC_UNARY(Iop_VNot8);
+      case Iop_VExpandBitsTo8 ... Iop_VExpandBitsTo64: {
+         IRType base = Ity_VLen8 + bop - Iop_VExpandBitsTo8;
          UInt vl = VLofVecIROp(op);
-         IRType ty = typeofVecIR (vl, base);
-         BINARY(ty, ty, ty);
-      }
-      case Iop_VOr8     ... Iop_VOr64: {
-         IRType base = Ity_VLen8 + (op & IR_OP_MASK) - Iop_VOr8;
-         UInt vl = VLofVecIROp(op);
-         IRType ty = typeofVecIR (vl, base);
-         BINARY(ty, ty, ty);
-      }
-      case Iop_VCmpNEZ8 ... Iop_VCmpNEZ64: {
-         IRType base = Ity_VLen8 + (op & IR_OP_MASK) - Iop_VCmpNEZ8;
-         UInt vl = VLofVecIROp(op);
-         IRType ty = typeofVecIR (vl, base);
-         UNARY(ty, ty);
+         IRType dst_ty = typeofVecIR (vl, base);
+         IRType src_ty = typeofVecIR (vl, Ity_VLen1);
+         UNARY(src_ty, dst_ty);
       }
 
       default:
@@ -4394,6 +4428,7 @@ Bool isPlausibleIRType ( IRType ty )
       case Ity_F16: case Ity_F32: case Ity_F64: case Ity_F128:
       case Ity_D32: case Ity_D64: case Ity_D128:
       case Ity_V128: case Ity_V256:
+      case Ity_VLen1:
       case Ity_VLen8 ... Ity_VLen64:
          return True;
       default: 
@@ -5002,8 +5037,10 @@ void tcExpr ( const IRSB* bb, const IRStmt* stmt, const IRExpr* expr,
          if (t_arg1 == Ity_INVALID || t_arg2 != Ity_INVALID
              || t_arg3 != Ity_INVALID || t_arg4 != Ity_INVALID)
             sanityCheckFail(bb,stmt,"Iex.Unop: wrong arity op");
-         if (t_arg1 != typeOfIRExpr(tyenv, expr->Iex.Unop.arg))
+         if (t_arg1 != typeOfIRExpr(tyenv, expr->Iex.Unop.arg)) {
+            vex_printf("AAA: %x, %x\n", t_arg1, typeOfIRExpr(tyenv, expr->Iex.Unop.arg));
             sanityCheckFail(bb,stmt,"Iex.Unop: arg ty doesn't match op ty");
+         }
          break;
       case Iex_Load:
          tcExpr(bb,stmt, expr->Iex.Load.addr, gWordTy);
@@ -5454,6 +5491,7 @@ Int sizeofIRType ( IRType ty )
       case Ity_D128: return 16;
       case Ity_V128: return 16;
       case Ity_V256: return 32;
+      case Ity_VLen1:
       case Ity_VLen8 ... Ity_VLen64: return sizeofVecIRType(ty);
       default: vex_printf("\n"); ppIRType(ty); vex_printf("\n");
                vpanic("sizeofIRType");

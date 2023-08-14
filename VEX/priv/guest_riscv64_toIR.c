@@ -3697,17 +3697,17 @@ static Bool dis_vmseq_vi(/*MB_OUT*/ DisResult* dres,
    return True;
 }
 
-static IRType baseVecIRType (UInt sew)
+static Int sewToIndex(UInt sew)
 {
-   IRType ty;
+   Int index = -1;
    switch (sew) {
-      case  8: ty =  Ity_VLen8;  break;
-      case 16: ty =  Ity_VLen16; break;
-      case 32: ty =  Ity_VLen32; break;
-      case 64: ty =  Ity_VLen64; break;
+      case  8: index = 0;  break;
+      case 16: index = 1; break;
+      case 32: index = 2; break;
+      case 64: index = 3 ; break;
       default: vassert(0);
    }
-   return ty;
+   return index;
 }
 
 static Bool dis_vadd_vv(/*MB_OUT*/ DisResult* dres,
@@ -3721,23 +3721,32 @@ static Bool dis_vadd_vv(/*MB_OUT*/ DisResult* dres,
    UInt vs1 = INSN(19, 15);
    UInt vd = INSN(11, 7);
 
-   vassert(vm == 1);  // FIXME
-
+   UInt vma = SLICE_UInt(guest->guest_vtype, 7, 7);
    UInt sew = get_sew(guest);
-   IROp op;
+   Int index = sewToIndex(sew);
+   UInt vl = guest->guest_vl;
+   IRType ty = typeofVecIR(vl, Ity_VLen8 + index);
+   IRExpr* res = binop(opofVecIR(vl, Iop_VAdd8 + index),
+                       getVReg(vs2, 0, ty), getVReg(vs1, 0, ty));
+   if (vm == 0) {
+      IRType mask_ty = typeofVecIR(vl, Ity_VLen1);
+      IRExpr* mask = unop(opofVecIR(vl, Iop_VExpandBitsTo8 + index),
+                          getVReg(0 /*v0*/, 0, mask_ty));
 
-   switch (sew) {
-      case  8: op =  Iop_VAdd8; break;
-      case 16: op = Iop_VAdd16; break;
-      case 32: op = Iop_VAdd32; break;
-      case 64: op = Iop_VAdd64; break;
-      default: vassert(0);
+      if (vma == 0) { // undisturbed, read it first
+         IRExpr* origin = getVReg(vd, 0, ty);
+         IRExpr* inactive = binop(opofVecIR(vl, Iop_VAnd8 + index),
+                                  unop(opofVecIR(vl, Iop_VNot8 + index), mask),
+                                  origin);
+         IRExpr* active = binop(opofVecIR(vl, Iop_VAnd8 + index), mask, res);
+         res = binop(opofVecIR(vl, Iop_VOr8 + index), active, inactive);
+      } else { // agnostic, set to 1
+         res = binop(opofVecIR(vl, Iop_VOr8 + index),
+                     unop(opofVecIR(vl, Iop_VNot8 + index), mask),
+                     res);
+      }
    }
-
-   IRType ty = typeofVecIR(guest->guest_vl, baseVecIRType(sew));
-   IROp vop = op | (guest->guest_vl << IR_OP_VL_OFFSET);
-   putVReg(irsb, vd, 0, binop(vop, getVReg(vs2, 0, ty),
-                                   getVReg(vs1, 0, ty)));
+   putVReg(irsb, vd, 0, res);
 
    return True;
 }

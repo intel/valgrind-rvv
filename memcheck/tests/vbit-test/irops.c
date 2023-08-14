@@ -1201,6 +1201,18 @@ static irop_t irops[] = {
   { DEFOP(Iop_VCmpNEZ16, UNDEF_UNKNOWN), },
   { DEFOP(Iop_VCmpNEZ32, UNDEF_UNKNOWN), },
   { DEFOP(Iop_VCmpNEZ64, UNDEF_UNKNOWN), },
+  { DEFOP(Iop_VAnd8, UNDEF_UNKNOWN), },
+  { DEFOP(Iop_VAnd16, UNDEF_UNKNOWN), },
+  { DEFOP(Iop_VAnd32, UNDEF_UNKNOWN), },
+  { DEFOP(Iop_VAnd64, UNDEF_UNKNOWN), },
+  { DEFOP(Iop_VNot8, UNDEF_UNKNOWN), },
+  { DEFOP(Iop_VNot16, UNDEF_UNKNOWN), },
+  { DEFOP(Iop_VNot32, UNDEF_UNKNOWN), },
+  { DEFOP(Iop_VNot64, UNDEF_UNKNOWN), },
+  { DEFOP(Iop_VExpandBitsTo8, UNDEF_UNKNOWN), },
+  { DEFOP(Iop_VExpandBitsTo16, UNDEF_UNKNOWN), },
+  { DEFOP(Iop_VExpandBitsTo32, UNDEF_UNKNOWN), },
+  { DEFOP(Iop_VExpandBitsTo64, UNDEF_UNKNOWN), },
 };
 
 /* Force compile time failure in case libvex_ir.h::IROp was updated

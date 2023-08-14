@@ -496,6 +496,7 @@ static IRType shadowTypeV ( IRType ty )
       case Ity_I32: 
       case Ity_I64: 
       case Ity_I128: return ty;
+      case Ity_VLen1:
       case Ity_VLen8 ... Ity_VLen64: return ty;
       case Ity_F16:  return Ity_I16;
       case Ity_F32:  return Ity_I32;
@@ -5078,6 +5079,8 @@ IRAtom* expr2vbits_Binop ( MCEnv* mce,
          return mkUifUV128(mce, narrowed, rmPCasted);
       }
 
+      case Iop_VOr32:
+      case Iop_VAnd32:  // TODO: and/or version
       case Iop_VAdd32: {
          return binary32I_v(mce, vatom1, vatom2);
       }
@@ -5098,7 +5101,7 @@ IRExpr* expr2vbits_Unop ( MCEnv* mce, IROp op, IRAtom* atom )
       future).  See comment in do_shadow_LoadG. */
    IRAtom* vatom = expr2vbits( mce, atom, HuOth );
    tl_assert(isOriginalAtom(mce,atom));
-   switch (op) {
+   switch (op & IR_OP_MASK) {
 
       case Iop_Abs64Fx2:
       case Iop_Neg64Fx2:
@@ -5522,6 +5525,15 @@ IRExpr* expr2vbits_Unop ( MCEnv* mce, IROp op, IRAtom* atom )
       case Iop_PwAddL8Sx16:
          return mkPCast16x8(mce,
                assignNew('V', mce, Ity_V128, unop(op, mkPCast8x16(mce, vatom))));
+
+      case Iop_VNot32:
+         return vatom; // TODO
+      case Iop_VExpandBitsTo8 ... Iop_VExpandBitsTo32: {
+         IRType base = Ity_VLen8 + (op & IR_OP_MASK) - Iop_VExpandBitsTo8;
+         UInt vl = VLofVecIROp(op);
+         IRType dst_ty = typeofVecIR (vl, base);
+         return assignNew('V', mce, dst_ty, unop(op, vatom));
+      }
 
       case Iop_I64UtoF32:
       default:

@@ -600,6 +600,15 @@ RISCV64Instr* RISCV64Instr_VALU(RISCV64VALUOp op, Int vl, HReg dst, HReg src1, H
    return i;
 }
 
+RISCV64Instr* RISCV64Instr_VMV(HReg dst, HReg src)
+{
+   RISCV64Instr* i      = LibVEX_Alloc_inline(sizeof(RISCV64Instr));
+   i->tag               = RISCV64in_VMV;
+   i->RISCV64in.VMV.dst = dst;
+   i->RISCV64in.VMV.src = src;
+   return i;
+}
+
 RISCV64Instr* RISCV64Instr_CSRRW(HReg dst, HReg src, UInt csr)
 {
    RISCV64Instr* i        = LibVEX_Alloc_inline(sizeof(RISCV64Instr));
@@ -894,6 +903,12 @@ void ppRISCV64Instr(const RISCV64Instr* i, Bool mode64)
       ppHRegRISCV64(i->RISCV64in.VALU.src1);
       vex_printf(", ");
       ppHRegRISCV64(i->RISCV64in.VALU.src2);
+      return;
+   case RISCV64in_VMV:
+      vex_printf("%-7s ", "vmv");
+      ppHRegRISCV64(i->RISCV64in.VMV.dst);
+      vex_printf(", ");
+      ppHRegRISCV64(i->RISCV64in.VMV.src);
       return;
    case RISCV64in_CSRRW:
       vex_printf("csrrw   ");
@@ -1260,6 +1275,10 @@ void getRegUsage_RISCV64Instr(HRegUsage* u, const RISCV64Instr* i, Bool mode64)
       addHRegUse(u, HRmRead, i->RISCV64in.VALU.src1);
       addHRegUse(u, HRmRead, i->RISCV64in.VALU.src2);
       return;
+   case RISCV64in_VMV:
+      addHRegUse(u, HRmWrite, i->RISCV64in.VMV.dst);
+      addHRegUse(u, HRmRead, i->RISCV64in.VMV.src);
+      return;
    case RISCV64in_VLoad:
       addHRegUse(u, HRmWrite, i->RISCV64in.VLoad.dst);
       addHRegUse(u, HRmRead, i->RISCV64in.VLoad.base);
@@ -1495,6 +1514,10 @@ void mapRegs_RISCV64Instr(HRegRemap* m, RISCV64Instr* i, Bool mode64)
       mapReg(m, &i->RISCV64in.VALU.dst);
       mapReg(m, &i->RISCV64in.VALU.src1);
       mapReg(m, &i->RISCV64in.VALU.src2);
+      return;
+   case RISCV64in_VMV:
+      mapReg(m, &i->RISCV64in.VMV.dst);
+      mapReg(m, &i->RISCV64in.VMV.src);
       return;
    case RISCV64in_VLoad:
       mapReg(m, &i->RISCV64in.VLoad.dst);
@@ -1959,6 +1982,22 @@ emit_opivv(UChar* p, UInt funct6, UInt vd, UInt vs1, UInt vs2, UInt vm)
    the_insn |= vd << 7;
    the_insn |= 0b000 << 12;
    the_insn |= vs1 << 15;
+   the_insn |= vs2 << 20;
+   the_insn |= vm << 25;
+   the_insn |= funct6 << 26;
+
+   return emit32(p, the_insn);
+}
+
+static UChar*
+emit_opivi(UChar* p, UInt funct6, UInt vd, UInt imm, UInt vs2, UInt vm)
+{
+   UInt the_insn = 0;
+
+   the_insn |= 0b1010111;
+   the_insn |= vd << 7;
+   the_insn |= 0b011 << 12;
+   the_insn |= imm << 15;
    the_insn |= vs2 << 20;
    the_insn |= vm << 25;
    the_insn |= funct6 << 26;
@@ -3048,6 +3087,12 @@ Int emit_RISCV64Instr(/*MB_MOD*/ Bool*    is_profInc,
          goto bad;
       }
       p = emit_opivv(p, func6, dst, src1, src2, 1 /*vm*/);
+      goto done;
+   }
+   case RISCV64in_VMV: {
+      UInt dst = vregEnc(i->RISCV64in.VMV.dst);
+      UInt src = vregEnc(i->RISCV64in.VMV.src);
+      p = emit_opivi(p, 0b100111, dst, 0b00000, src, 1);  // vmv1r
       goto done;
    }
    default:

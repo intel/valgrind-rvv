@@ -240,6 +240,7 @@ typedef
       Ity_F128,  /* 128-bit floating point; implementation defined */
       Ity_V128,  /* 128-bit SIMD */
       Ity_V256,   /* 256-bit SIMD */
+      Ity_VLen1,
       Ity_VLen8,
       Ity_VLen16,
       Ity_VLen32,
@@ -2074,6 +2075,9 @@ typedef
       Iop_VAdd8, Iop_VAdd16, Iop_VAdd32, Iop_VAdd64,
       Iop_VOr8, Iop_VOr16, Iop_VOr32, Iop_VOr64,
       Iop_VCmpNEZ8, Iop_VCmpNEZ16, Iop_VCmpNEZ32, Iop_VCmpNEZ64,
+      Iop_VAnd8, Iop_VAnd16, Iop_VAnd32, Iop_VAnd64,
+      Iop_VNot8, Iop_VNot16, Iop_VNot32, Iop_VNot64,
+      Iop_VExpandBitsTo8, Iop_VExpandBitsTo16, Iop_VExpandBitsTo32, Iop_VExpandBitsTo64,
 
       Iop_LAST      /* must be the last enumerator */
    }
@@ -2084,7 +2088,8 @@ extern void ppIROp ( IROp );
 
 extern Int sizeofVecIROp ( IROp op );
 extern Int VLofVecIROp ( IROp op);
-extern IRType typeofVecIR ( UInt vl, IRType ty );
+extern IRType typeofVecIR ( UInt vl, IRType base );
+extern IROp opofVecIR ( UInt vl, IROp base );
 
 /* For a given operand return the types of its arguments and its result. */
 extern void typeOfPrimop ( IROp op,

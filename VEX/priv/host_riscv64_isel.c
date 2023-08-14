@@ -80,7 +80,7 @@ typedef struct {
    /* Constant -- are set at the start and do not change. */
    IRTypeEnv* type_env;
 
-   HReg* vregmap;
+   HReg* vregmaps[8];  // TODO
    HReg* vregmapHI;
    Int   n_vregmap;
 
@@ -96,11 +96,23 @@ typedef struct {
    IRExpr* previous_rm;
 } ISelEnv;
 
+#define vregmap vregmaps[0]
+#define vregmapHI vregmaps[1]
+
 static HReg lookupIRTemp(ISelEnv* env, IRTemp tmp)
 {
    vassert(tmp >= 0);
    vassert(tmp < env->n_vregmap);
    return env->vregmap[tmp];
+}
+
+static void lookupIRTempVec(HReg vec[], Int nregs, ISelEnv* env, IRTemp tmp)
+{
+   vassert(tmp >= 0);
+   vassert(tmp < env->n_vregmap);
+   for (int i = 0; i < nregs; ++i) {
+      vec[i] = env->vregmaps[i][tmp];
+   }
 }
 
 static void addInstr(ISelEnv* env, RISCV64Instr* instr)
@@ -1334,6 +1346,40 @@ static void h_Iop_VCmpNEZ32(void *dst, void *src, ULong len)
    }
 }
 
+static void h_Iop_VAnd32(void *dst, void *srcL, void *srcR, ULong len)
+{
+   int *d = dst;
+   int *s1 = srcL;
+   int *s2 = srcR;
+
+   for (int i = 0; i < len; ++i) {
+      d[i] = s1[i] & s2[i];
+   }
+}
+
+static void h_Iop_VNot32(void *dst, void *src, ULong len)
+{
+   int *d = dst;
+   int *s = src;
+
+   for (int i = 0; i < len; ++i) {
+      d[i] = ~s[i];
+   }
+}
+
+static void h_Iop_VExpandBitsTo32(void *dst, void *src, ULong len)
+{
+   int *d = dst;
+   char *s = src;
+
+   for (int i = 0; i < len; i += 8) {
+      for (int j = i, bit = 0; j < len && bit < 8; ++j, ++bit) {
+         d[j] = (*s & (1 << bit)) ? -1 : 0;
+      }
+      ++s;
+   }
+}
+
 struct Iop_handler {
    const char* name;
    const void* fn;
@@ -1343,6 +1389,9 @@ static const struct Iop_handler IOP_HANDLERS[] = {
    [Iop_VAdd32]    = {"Iop_VAdd32", h_Iop_VAdd32},
    [Iop_VOr32]     = {"Iop_VOr32",  h_Iop_VOr32},
    [Iop_VCmpNEZ32] = {"Iop_VCmpNEZ32", h_Iop_VCmpNEZ32},
+   [Iop_VAnd32]    = {"Iop_VAnd32", h_Iop_VAnd32},
+   [Iop_VNot32]    = {"Iop_VNot32", h_Iop_VNot32},
+   [Iop_VExpandBitsTo32]     = {"Iop_VExpandBitsTo32",  h_Iop_VExpandBitsTo32},
    [Iop_LAST] = {"Iop_LAST", 0}
 };
 
@@ -1471,7 +1520,7 @@ static void iselVecExpr_R_wrk(HReg dst[], ISelEnv* env, IRExpr* e)
    Int vl = VLofVecIRType(ty);
    Int sz = sizeofVecIRType(ty);
    Int vlen_b = VLEN / 8;
-   Int nregs = sz / vlen_b;  // assume sz is multple time of vlen_b
+   Int nregs = (sz + vlen_b - 1) / vlen_b;
    Int vl_ldst64 = vlen_b / 8;
 
    for (int i = 0; i < nregs; ++i) {
@@ -1479,6 +1528,10 @@ static void iselVecExpr_R_wrk(HReg dst[], ISelEnv* env, IRExpr* e)
    }
 
    switch (e->tag) {
+      case Iex_RdTmp: {
+         lookupIRTempVec(dst, nregs, env, e->Iex.RdTmp.tmp);
+         return;
+      }
       case Iex_Get: {
          HReg base = newVRegI(env);
          Int  off  = e->Iex.Get.offset - BASEBLOCK_OFFSET_ADJUSTMENT;
@@ -2043,6 +2096,21 @@ static void iselStmt(ISelEnv* env, IRStmt* stmt)
          addInstr(env, RISCV64Instr_FpMove(RISCV64op_FMV_D, dst, src));
          return;
       }
+      IRType vty = ty & IR_TYPE_MASK;
+      if (vty >= Ity_VLen1 && vty <= Ity_VLen64) {
+         Int sz = sizeofVecIRType(ty);
+         Int vlen_b = VLEN / 8;
+         Int nregs = sz / vlen_b;
+
+         HReg dst[8];
+         HReg src[8];
+         iselVecExpr_R(src, env, stmt->Ist.WrTmp.data);
+         lookupIRTempVec(dst, nregs, env, stmt->Ist.WrTmp.tmp);
+         for (int i = 0; i < nregs; ++i) {
+            addInstr(env, RISCV64Instr_VMV(dst[i], src[i]));
+         }
+         return;
+      }
       break;
    }
 
@@ -2391,6 +2459,9 @@ HInstrArray* iselSB_RISCV64(const IRSB*        bb,
    env->n_vregmap = bb->tyenv->types_used;
    env->vregmap   = LibVEX_Alloc_inline(env->n_vregmap * sizeof(HReg));
    env->vregmapHI = LibVEX_Alloc_inline(env->n_vregmap * sizeof(HReg));
+   for (i = 0; i < 8; ++i) {
+      env->vregmaps[i] = LibVEX_Alloc_inline(env->n_vregmap * sizeof(HReg));
+   }
 
    /* and finally ... */
    env->chainingAllowed = chainingAllowed;
@@ -2418,8 +2489,13 @@ HInstrArray* iselSB_RISCV64(const IRSB*        bb,
       case Ity_F64:
          hreg = mkHReg(True, HRcFlt64, 0, j++);
          break;
+      case Ity_VLen1:
       case Ity_VLen8 ... Ity_VLen64:
          hreg = mkHReg(True, HRcVecVLen, 0, j++);
+         hregHI = mkHReg(True, HRcVecVLen, 0, j++);
+         for (int g = 2; g < 8; ++g) {
+            env->vregmaps[g][i] = mkHReg(True, HRcVecVLen, 0, j++);
+         }
          break;
       default:
          ppIRType(bb->tyenv->types[i]);
