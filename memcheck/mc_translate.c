@@ -716,8 +716,15 @@ static IRAtom* mkUifUVLen8 ( MCEnv* mce, IRAtom* a1, IRAtom* a2 ) {
    tl_assert(isShadowAtom(mce,a1));
    tl_assert(isShadowAtom(mce,a2));
 
-   IRType ty = typeOfIRExpr(mce->sb->tyenv, a1);
-   IROp op = Iop_VOr8 | (ty & IR_TYPE_VL_MASK);
+   IROp bop = Iop_VOr8_vv;
+   // ty1 may be not vector
+   IRType ty1 = typeOfIRExpr(mce->sb->tyenv, a1) & IR_TYPE_MASK;
+   if (!(ty1 >= Ity_VLen1 && ty1 <= Ity_VLen64)) {
+      bop = Iop_VOr8_vx;
+   }
+
+   IRType ty = typeOfIRExpr(mce->sb->tyenv, a2);
+   IROp op = bop | (ty & IR_TYPE_VL_MASK);
    return assignNew('V', mce, ty, binop(op, a1, a2));
 }
 
@@ -725,8 +732,15 @@ static IRAtom* mkUifUVLen16 ( MCEnv* mce, IRAtom* a1, IRAtom* a2 ) {
    tl_assert(isShadowAtom(mce,a1));
    tl_assert(isShadowAtom(mce,a2));
 
-   IRType ty = typeOfIRExpr(mce->sb->tyenv, a1);
-   IROp op = Iop_VOr16 | (ty & IR_TYPE_VL_MASK);
+   IROp bop = Iop_VOr16_vv;
+   // ty1 may be not vector
+   IRType ty1 = typeOfIRExpr(mce->sb->tyenv, a1) & IR_TYPE_MASK;
+   if (!(ty1 >= Ity_VLen1 && ty1 <= Ity_VLen64)) {
+      bop = Iop_VOr16_vx;
+   }
+
+   IRType ty = typeOfIRExpr(mce->sb->tyenv, a2);
+   IROp op = bop | (ty & IR_TYPE_VL_MASK);
    return assignNew('V', mce, ty, binop(op, a1, a2));
 }
 
@@ -734,8 +748,15 @@ static IRAtom* mkUifUVLen32 ( MCEnv* mce, IRAtom* a1, IRAtom* a2 ) {
    tl_assert(isShadowAtom(mce,a1));
    tl_assert(isShadowAtom(mce,a2));
 
-   IRType ty = typeOfIRExpr(mce->sb->tyenv, a1);
-   IROp op = Iop_VOr32 | (ty & IR_TYPE_VL_MASK);
+   IROp bop = Iop_VOr32_vv;
+   // ty1 may be not vector
+   IRType ty1 = typeOfIRExpr(mce->sb->tyenv, a1) & IR_TYPE_MASK;
+   if (!(ty1 >= Ity_VLen1 && ty1 <= Ity_VLen64)) {
+      bop = Iop_VOr32_vx;
+   }
+
+   IRType ty = typeOfIRExpr(mce->sb->tyenv, a2);
+   IROp op = bop | (ty & IR_TYPE_VL_MASK);
    return assignNew('V', mce, ty, binop(op, a1, a2));
 }
 
@@ -743,8 +764,15 @@ static IRAtom* mkUifUVLen64 ( MCEnv* mce, IRAtom* a1, IRAtom* a2 ) {
    tl_assert(isShadowAtom(mce,a1));
    tl_assert(isShadowAtom(mce,a2));
 
-   IRType ty = typeOfIRExpr(mce->sb->tyenv, a1);
-   IROp op = Iop_VOr64 | (ty & IR_TYPE_VL_MASK);
+   IROp bop = Iop_VOr64_vv;
+   // ty1 may be not vector
+   IRType ty1 = typeOfIRExpr(mce->sb->tyenv, a1) & IR_TYPE_MASK;
+   if (!(ty1 >= Ity_VLen1 && ty1 <= Ity_VLen64)) {
+      bop = Iop_VOr64_vx;
+   }
+
+   IRType ty = typeOfIRExpr(mce->sb->tyenv, a2);
+   IROp op = bop | (ty & IR_TYPE_VL_MASK);
    return assignNew('V', mce, ty, binop(op, a1, a2));
 }
 
@@ -2619,12 +2647,47 @@ static IRAtom* mkPCast8x4 ( MCEnv* mce, IRAtom* at )
    return assignNew('V', mce, Ity_I32, unop(Iop_CmpNEZ8x4, at));
 }
 
+static IRAtom* mkPCast8_v ( MCEnv* mce, IRAtom* at )
+{
+   IRType ty = typeOfIRExpr(mce->sb->tyenv, at);
+   UInt vl = ty >> IR_TYPE_VL_OFFSET;
+   IROp op = Iop_VCmpNEZ8 | (vl << IR_OP_VL_OFFSET);
+   return assignNew('V', mce, ty, unop(op, at));
+}
+
+static IRAtom* mkPCast16_v ( MCEnv* mce, IRAtom* at )
+{
+   IRType ty = typeOfIRExpr(mce->sb->tyenv, at);
+   UInt vl = ty >> IR_TYPE_VL_OFFSET;
+   IROp op = Iop_VCmpNEZ16 | (vl << IR_OP_VL_OFFSET);
+   return assignNew('V', mce, ty, unop(op, at));
+}
+
 static IRAtom* mkPCast32_v ( MCEnv* mce, IRAtom* at )
 {
    IRType ty = typeOfIRExpr(mce->sb->tyenv, at);
    UInt vl = ty >> IR_TYPE_VL_OFFSET;
    IROp op = Iop_VCmpNEZ32 | (vl << IR_OP_VL_OFFSET);
    return assignNew('V', mce, ty, unop(op, at));
+}
+
+static IRAtom* mkPCast64_v ( MCEnv* mce, IRAtom* at )
+{
+   IRType ty = typeOfIRExpr(mce->sb->tyenv, at);
+   UInt vl = ty >> IR_TYPE_VL_OFFSET;
+   IROp op = Iop_VCmpNEZ64 | (vl << IR_OP_VL_OFFSET);
+   return assignNew('V', mce, ty, unop(op, at));
+}
+
+static IRAtom* mkPCast_v ( MCEnv* mce, IRAtom* at, int sew )
+{
+   switch (sew) {
+   case  8: return mkPCast8_v(mce, at);
+   case 16: return mkPCast16_v(mce, at);
+   case 32: return mkPCast32_v(mce, at);
+   case 64: return mkPCast64_v(mce, at);
+   default: VG_(tool_panic)("memcheck:mkPCast_v");
+   }
 }
 
 /* Here's a simple scheme capable of handling ops derived from SSE1
@@ -3272,12 +3335,51 @@ IRAtom* binary128Ix1 ( MCEnv* mce, IRAtom* vatom1, IRAtom* vatom2 )
 }
 
 static
+IRAtom* binary8I_v ( MCEnv* mce, IRAtom* vatom1, IRAtom* vatom2 )
+{
+   IRAtom* at;
+   at = mkUifUVLen8(mce, vatom1, vatom2);
+   at = mkPCast8_v(mce, at);
+   return at;
+}
+
+static
+IRAtom* binary16I_v ( MCEnv* mce, IRAtom* vatom1, IRAtom* vatom2 )
+{
+   IRAtom* at;
+   at = mkUifUVLen16(mce, vatom1, vatom2);
+   at = mkPCast16_v(mce, at);
+   return at;
+}
+
+static
 IRAtom* binary32I_v ( MCEnv* mce, IRAtom* vatom1, IRAtom* vatom2 )
 {
    IRAtom* at;
    at = mkUifUVLen32(mce, vatom1, vatom2);
    at = mkPCast32_v(mce, at);
    return at;
+}
+
+static
+IRAtom* binary64I_v ( MCEnv* mce, IRAtom* vatom1, IRAtom* vatom2 )
+{
+   IRAtom* at;
+   at = mkUifUVLen64(mce, vatom1, vatom2);
+   at = mkPCast64_v(mce, at);
+   return at;
+}
+
+static
+IRAtom* binary_v ( MCEnv* mce, IRAtom* vatom1, IRAtom* vatom2, UInt sew )
+{
+   switch (sew) {
+   case  8: return binary8I_v(mce, vatom1, vatom2);
+   case 16: return binary16I_v(mce, vatom1, vatom2);
+   case 32: return binary32I_v(mce, vatom1, vatom2);
+   case 64: return binary64I_v(mce, vatom1, vatom2);
+   default: VG_(tool_panic)("memcheck:binary_v");
+   }
 }
 
 /* --- 64-bit versions --- */
@@ -3578,7 +3680,8 @@ IRAtom* expr2vbits_Binop ( MCEnv* mce,
    tl_assert(isShadowAtom(mce,vatom2));
    tl_assert(sameKindedAtoms(atom1,vatom1));
    tl_assert(sameKindedAtoms(atom2,vatom2));
-   switch (op & IR_OP_MASK) {
+   IROp bop = op & IR_OP_MASK;
+   switch (bop) {
 
       /* 32-bit SIMD */
 
@@ -5079,11 +5182,28 @@ IRAtom* expr2vbits_Binop ( MCEnv* mce,
          return mkUifUV128(mce, narrowed, rmPCasted);
       }
 
-      case Iop_VOr32:
-      case Iop_VAnd32:  // TODO: and/or version
-      case Iop_VAdd32: {
-         return binary32I_v(mce, vatom1, vatom2);
-      }
+      case Iop_VAdd8_vv ... Iop_VAdd64_vv:
+         return binary_v(mce, vatom1, vatom2, 8 << (bop - Iop_VAdd8_vv));
+      case Iop_VAdd8_vx ... Iop_VAdd64_vx:
+         return binary_v(mce, vatom1, vatom2, 8 << (bop - Iop_VAdd8_vx));
+      case Iop_VAdd8_vi ... Iop_VAdd64_vi:
+         return mkPCast_v(mce, vatom2, 8 << (bop - Iop_VAdd8_vi));
+
+      // TODO: vv/vx version or and/or should be reconsidered
+      case Iop_VOr8_vv ... Iop_VOr64_vv:
+         return binary_v(mce, vatom1, vatom2, 8 << (bop - Iop_VOr8_vv));
+      case Iop_VOr8_vx ... Iop_VOr64_vx:
+         return binary_v(mce, vatom1, vatom2, 8 << (bop - Iop_VOr8_vx));
+      case Iop_VOr8_vi ... Iop_VOr64_vi:
+         return mkPCast_v(mce, vatom2, 8 << (bop - Iop_VOr8_vi));
+
+      case Iop_VAnd8_vv ... Iop_VAnd64_vv:
+         return binary_v(mce, vatom1, vatom2, 8 << (bop - Iop_VAnd8_vv));
+      case Iop_VAnd8_vx ... Iop_VAnd64_vx:
+         return binary_v(mce, vatom1, vatom2, 8 << (bop - Iop_VAnd8_vx));
+      case Iop_VAnd8_vi ... Iop_VAnd64_vi:
+         return mkPCast_v(mce, vatom2, 8 << (bop - Iop_VAnd8_vi));
+
       default:
          ppIROp(op);
          VG_(tool_panic)("memcheck:expr2vbits_Binop");

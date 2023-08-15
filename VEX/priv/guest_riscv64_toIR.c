@@ -3710,15 +3710,23 @@ static Int sewToIndex(UInt sew)
    return index;
 }
 
-static Bool dis_vadd_vv(/*MB_OUT*/ DisResult* dres,
-                        /*OUT*/ IRSB*         irsb,
-                        UInt                  insn,
-                        Addr                  guest_pc_curr_instr,
-                        VexGuestRISCV64State* guest)
+enum V_VXI {
+   V_V = 0,
+   V_X,
+   V_I
+};
+
+static Bool dis_rvv_v_vxi(/*MB_OUT*/ DisResult* dres,
+                          /*OUT*/ IRSB*         irsb,
+                          UInt                  insn,
+                          Addr                  guest_pc_curr_instr,
+                          VexGuestRISCV64State* guest,
+                          IROp                  base_op,
+                          enum V_VXI            vxi)
 {
    UInt vm = INSN(25, 25);
    UInt vs2 = INSN(24, 20);
-   UInt vs1 = INSN(19, 15);
+   UInt s1 = INSN(19, 15);
    UInt vd = INSN(11, 7);
 
    UInt vma = SLICE_UInt(guest->guest_vtype, 7, 7);
@@ -3726,8 +3734,19 @@ static Bool dis_vadd_vv(/*MB_OUT*/ DisResult* dres,
    Int index = sewToIndex(sew);
    UInt vl = guest->guest_vl;
    IRType ty = typeofVecIR(vl, Ity_VLen8 + index);
-   IRExpr* res = binop(opofVecIR(vl, Iop_VAdd8 + index),
-                       getVReg(vs2, 0, ty), getVReg(vs1, 0, ty));
+
+   IRExpr* es1;
+   if (vxi == V_V) {
+      es1 = getVReg(s1, 0, ty);
+   } else if (vxi == V_X) {
+      es1 = getIReg64(s1);
+   } else if (vxi == V_I) {
+      Long imm = sext_slice_ulong(insn, 19, 15);
+      es1 = mkU64(imm);
+   }
+
+   IRExpr* res = binop(opofVecIR(vl, base_op + index),
+                       es1, getVReg(vs2, 0, ty));
    if (vm == 0) {
       IRType mask_ty = typeofVecIR(vl, Ity_VLen1);
       IRExpr* mask = unop(opofVecIR(vl, Iop_VExpandBitsTo8 + index),
@@ -3735,13 +3754,13 @@ static Bool dis_vadd_vv(/*MB_OUT*/ DisResult* dres,
 
       if (vma == 0) { // undisturbed, read it first
          IRExpr* origin = getVReg(vd, 0, ty);
-         IRExpr* inactive = binop(opofVecIR(vl, Iop_VAnd8 + index),
+         IRExpr* inactive = binop(opofVecIR(vl, Iop_VAnd8_vv + index),
                                   unop(opofVecIR(vl, Iop_VNot8 + index), mask),
                                   origin);
-         IRExpr* active = binop(opofVecIR(vl, Iop_VAnd8 + index), mask, res);
-         res = binop(opofVecIR(vl, Iop_VOr8 + index), active, inactive);
+         IRExpr* active = binop(opofVecIR(vl, Iop_VAnd8_vv + index), mask, res);
+         res = binop(opofVecIR(vl, Iop_VOr8_vv + index), active, inactive);
       } else { // agnostic, set to 1
-         res = binop(opofVecIR(vl, Iop_VOr8 + index),
+         res = binop(opofVecIR(vl, Iop_VOr8_vv + index),
                      unop(opofVecIR(vl, Iop_VNot8 + index), mask),
                      res);
       }
@@ -3749,6 +3768,36 @@ static Bool dis_vadd_vv(/*MB_OUT*/ DisResult* dres,
    putVReg(irsb, vd, 0, res);
 
    return True;
+}
+
+static Bool dis_rvv_vv(/*MB_OUT*/ DisResult* dres,
+                        /*OUT*/ IRSB*         irsb,
+                        UInt                  insn,
+                        Addr                  guest_pc_curr_instr,
+                        VexGuestRISCV64State* guest,
+                        IROp                  base_op)
+{
+   return dis_rvv_v_vxi(dres, irsb, insn, guest_pc_curr_instr, guest, base_op, V_V);
+}
+
+static Bool dis_rvv_vx(/*MB_OUT*/ DisResult* dres,
+                        /*OUT*/ IRSB*         irsb,
+                        UInt                  insn,
+                        Addr                  guest_pc_curr_instr,
+                        VexGuestRISCV64State* guest,
+                        IROp                  base_op)
+{
+   return dis_rvv_v_vxi(dres, irsb, insn, guest_pc_curr_instr, guest, base_op, V_X);
+}
+
+static Bool dis_rvv_vi(/*MB_OUT*/ DisResult* dres,
+                        /*OUT*/ IRSB*         irsb,
+                        UInt                  insn,
+                        Addr                  guest_pc_curr_instr,
+                        VexGuestRISCV64State* guest,
+                        IROp                  base_op)
+{
+   return dis_rvv_v_vxi(dres, irsb, insn, guest_pc_curr_instr, guest, base_op, V_I);
 }
 
 static Bool dis_vmsne_vv(/*MB_OUT*/ DisResult* dres,
@@ -4043,7 +4092,11 @@ static Bool dis_opivv(/*MB_OUT*/ DisResult* dres,
 
    switch (funct6) {
    case 0b000000:
-      return dis_vadd_vv(dres, irsb, insn, guest_pc_curr_instr, guest);
+      return dis_rvv_vv(dres, irsb, insn, guest_pc_curr_instr, guest, Iop_VAdd8_vv);
+   case 0b001010:
+      return dis_rvv_vv(dres, irsb, insn, guest_pc_curr_instr, guest, Iop_VOr8_vv);
+   case 0b001001:
+      return dis_rvv_vv(dres, irsb, insn, guest_pc_curr_instr, guest, Iop_VAnd8_vv);
    case 0b011001:
       return dis_vmsne_vv(dres, irsb, insn, guest_pc_curr_instr, guest);
    default:
@@ -4099,6 +4152,12 @@ static Bool dis_opivi(/*MB_OUT*/ DisResult* dres,
    UInt vm = INSN(25, 25);
 
    switch (funct6) {
+   case 0b000000:
+      return dis_rvv_vi(dres, irsb, insn, guest_pc_curr_instr, guest, Iop_VAdd8_vi);
+   case 0b001010:
+      return dis_rvv_vi(dres, irsb, insn, guest_pc_curr_instr, guest, Iop_VOr8_vi);
+   case 0b001001:
+      return dis_rvv_vi(dres, irsb, insn, guest_pc_curr_instr, guest, Iop_VAnd8_vi);
    case 0b011000:
       return dis_vmseq_vi(dres, irsb, insn, guest_pc_curr_instr, guest);
    case 0b010111:
@@ -4120,6 +4179,12 @@ static Bool dis_opivx(/*MB_OUT*/ DisResult* dres,
    UInt funct6 = INSN(31, 26);
 
    switch (funct6) {
+   case 0b000000:
+      return dis_rvv_vx(dres, irsb, insn, guest_pc_curr_instr, guest, Iop_VAdd8_vx);
+   case 0b001010:
+      return dis_rvv_vx(dres, irsb, insn, guest_pc_curr_instr, guest, Iop_VOr8_vx);
+   case 0b001001:
+      return dis_rvv_vx(dres, irsb, insn, guest_pc_curr_instr, guest, Iop_VAnd8_vx);
    case 0b011110:
       return dis_vmsgtu_vx(dres, irsb, insn, guest_pc_curr_instr, guest);
    default:

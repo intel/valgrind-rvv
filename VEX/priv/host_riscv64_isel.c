@@ -1314,28 +1314,6 @@ static void iselInt128Expr(HReg* rHi, HReg* rLo, ISelEnv* env, IRExpr* e)
    vassert(hregIsVirtual(*rLo));
 }
 
-static void h_Iop_VAdd32(void *dst, void *srcL, void *srcR, ULong len)
-{
-   int *d = dst;
-   int *s1 = srcL;
-   int *s2 = srcR;
-
-   for (int i = 0; i < len; ++i) {
-      d[i] = s1[i] + s2[i];
-   }
-}
-
-static void h_Iop_VOr32(void *dst, void *srcL, void *srcR, ULong len)
-{
-   int *d = dst;
-   int *s1 = srcL;
-   int *s2 = srcR;
-
-   for (int i = 0; i < len; ++i) {
-      d[i] = s1[i] | s2[i];
-   }
-}
-
 static void h_Iop_VCmpNEZ32(void *dst, void *src, ULong len)
 {
    int *d = dst;
@@ -1343,17 +1321,6 @@ static void h_Iop_VCmpNEZ32(void *dst, void *src, ULong len)
 
    for (int i = 0; i < len; ++i) {
       d[i] = (s[i] != 0) ? -1 : 0;
-   }
-}
-
-static void h_Iop_VAnd32(void *dst, void *srcL, void *srcR, ULong len)
-{
-   int *d = dst;
-   int *s1 = srcL;
-   int *s2 = srcR;
-
-   for (int i = 0; i < len; ++i) {
-      d[i] = s1[i] & s2[i];
    }
 }
 
@@ -1380,16 +1347,155 @@ static void h_Iop_VExpandBitsTo32(void *dst, void *src, ULong len)
    }
 }
 
+#define RVVCALL(macro, ...)  macro(__VA_ARGS__)
+
+typedef Char int8_t;
+typedef Short int16_t;
+typedef Int int32_t;
+typedef Long int64_t;
+
+#define OP_SSS_B int8_t, int8_t, int8_t, int8_t, int8_t
+#define OP_SSS_H int16_t, int16_t, int16_t, int16_t, int16_t
+#define OP_SSS_W int32_t, int32_t, int32_t, int32_t, int32_t
+#define OP_SSS_D int64_t, int64_t, int64_t, int64_t, int64_t
+
+#define DO_AND(N, M)  (N & M)
+#define DO_OR(N, M)   (N | M)
+#define DO_ADD(N, M)  (N + M)
+
+#define OPIVV2(NAME, TD, T1, T2, TX1, TX2, OP)                \
+static void do_##NAME(void *vd, void *vs1, void *vs2, int i)  \
+{                                                             \
+   TX1 s1 = *((T1 *)vs1 + i);                                 \
+   TX2 s2 = *((T2 *)vs2 + i);                                 \
+   *((TD *)vd + i) = OP(s2, s1);                              \
+}
+
+RVVCALL(OPIVV2, VAnd8_vv, OP_SSS_B, DO_AND)
+RVVCALL(OPIVV2, VAnd16_vv, OP_SSS_H, DO_AND)
+RVVCALL(OPIVV2, VAnd32_vv, OP_SSS_W, DO_AND)
+RVVCALL(OPIVV2, VAnd64_vv, OP_SSS_D, DO_AND)
+
+RVVCALL(OPIVV2, VOr8_vv, OP_SSS_B, DO_OR)
+RVVCALL(OPIVV2, VOr16_vv, OP_SSS_H, DO_OR)
+RVVCALL(OPIVV2, VOr32_vv, OP_SSS_W, DO_OR)
+RVVCALL(OPIVV2, VOr64_vv, OP_SSS_D, DO_OR)
+
+RVVCALL(OPIVV2, VAdd8_vv, OP_SSS_B, DO_ADD)
+RVVCALL(OPIVV2, VAdd16_vv, OP_SSS_H, DO_ADD)
+RVVCALL(OPIVV2, VAdd32_vv, OP_SSS_W, DO_ADD)
+RVVCALL(OPIVV2, VAdd64_vv, OP_SSS_D, DO_ADD)
+
+typedef void opivv2_fn(void *vd, void *vs1, void *vs2, int i);
+
+static void do_vext_vv(void *vd, void *vs1, void *vs2, opivv2_fn *fn, int len)
+{
+   for (int i = 0; i < len; ++i) {
+      fn(vd, vs1, vs2, i);
+   }
+}
+
+#define GEN_VEXT_VV(NAME)                                          \
+static void h_Iop_##NAME(void *vd, void *vs1, void *vs2, int len)  \
+{                                                                  \
+    do_vext_vv(vd, vs1, vs2, do_##NAME, len);                      \
+}
+
+GEN_VEXT_VV(VAnd8_vv)
+GEN_VEXT_VV(VAnd16_vv)
+GEN_VEXT_VV(VAnd32_vv)
+GEN_VEXT_VV(VAnd64_vv)
+
+GEN_VEXT_VV(VOr8_vv)
+GEN_VEXT_VV(VOr16_vv)
+GEN_VEXT_VV(VOr32_vv)
+GEN_VEXT_VV(VOr64_vv)
+
+GEN_VEXT_VV(VAdd8_vv)
+GEN_VEXT_VV(VAdd16_vv)
+GEN_VEXT_VV(VAdd32_vv)
+GEN_VEXT_VV(VAdd64_vv)
+/*
+ * (T1)s1 gives the real operator type.
+ * (TX1)(T1)s1 expands the operator type of widen or narrow operations.
+ */
+#define OPIVX2(NAME, TD, T1, T2, TX1, TX2, OP)             \
+static void do_##NAME(void *vd, Long s1, void *vs2, int i) \
+{                                                          \
+    TX2 s2 = *((T2 *)vs2 + i);                             \
+    *((TD *)vd + i) = OP(s2, (TX1)(T1)s1);                 \
+}
+
+RVVCALL(OPIVX2, VAnd8_vx, OP_SSS_B, DO_AND)
+RVVCALL(OPIVX2, VAnd16_vx, OP_SSS_H, DO_AND)
+RVVCALL(OPIVX2, VAnd32_vx, OP_SSS_W, DO_AND)
+RVVCALL(OPIVX2, VAnd64_vx, OP_SSS_D, DO_AND)
+
+RVVCALL(OPIVX2, VOr8_vx, OP_SSS_B, DO_OR)
+RVVCALL(OPIVX2, VOr16_vx, OP_SSS_H, DO_OR)
+RVVCALL(OPIVX2, VOr32_vx, OP_SSS_W, DO_OR)
+RVVCALL(OPIVX2, VOr64_vx, OP_SSS_D, DO_OR)
+
+RVVCALL(OPIVX2, VAdd8_vx, OP_SSS_B, DO_ADD)
+RVVCALL(OPIVX2, VAdd16_vx, OP_SSS_H, DO_ADD)
+RVVCALL(OPIVX2, VAdd32_vx, OP_SSS_W, DO_ADD)
+RVVCALL(OPIVX2, VAdd64_vx, OP_SSS_D, DO_ADD)
+
+typedef void opivx2_fn(void *vd, Long s1, void *vs2, int i);
+
+static void do_vext_vx(void *vd, Long s1, void *vs2, opivx2_fn *fn, int len)
+{
+   for (int i = 0; i < len; ++i) {
+      fn(vd, s1, vs2, i);
+   }
+}
+
+#define GEN_VEXT_VX(NAME)                                        \
+static void h_Iop_##NAME(void *vd, Long s1, void *vs2, int len)  \
+{                                                                \
+    do_vext_vx(vd, s1, vs2, do_##NAME, len);                     \
+}
+
+GEN_VEXT_VX(VAnd8_vx)
+GEN_VEXT_VX(VAnd16_vx)
+GEN_VEXT_VX(VAnd32_vx)
+GEN_VEXT_VX(VAnd64_vx)
+
+GEN_VEXT_VX(VOr8_vx)
+GEN_VEXT_VX(VOr16_vx)
+GEN_VEXT_VX(VOr32_vx)
+GEN_VEXT_VX(VOr64_vx)
+
+GEN_VEXT_VX(VAdd8_vx)
+GEN_VEXT_VX(VAdd16_vx)
+GEN_VEXT_VX(VAdd32_vx)
+GEN_VEXT_VX(VAdd64_vx)
+
 struct Iop_handler {
    const char* name;
    const void* fn;
 };
 
+#define H_V_VX(op) \
+   [Iop_V##op##8_vv]  = {"Iop_V" #op "8_vv", h_Iop_V##op##8_vv},   \
+   [Iop_V##op##16_vv] = {"Iop_V" #op "16_vv", h_Iop_V##op##16_vv}, \
+   [Iop_V##op##32_vv] = {"Iop_V" #op "32_vv", h_Iop_V##op##32_vv}, \
+   [Iop_V##op##64_vv] = {"Iop_V" #op "64_vv", h_Iop_V##op##64_vv}, \
+   [Iop_V##op##8_vx]  = {"Iop_V" #op "8_vx", h_Iop_V##op##8_vx},   \
+   [Iop_V##op##16_vx] = {"Iop_V" #op "16_vx", h_Iop_V##op##16_vx}, \
+   [Iop_V##op##32_vx] = {"Iop_V" #op "32_vx", h_Iop_V##op##32_vx}, \
+   [Iop_V##op##64_vx] = {"Iop_V" #op "64_vx", h_Iop_V##op##64_vx}, \
+   [Iop_V##op##8_vi]  = {"Iop_V" #op "8_vi", h_Iop_V##op##8_vx},   \
+   [Iop_V##op##16_vi] = {"Iop_V" #op "16_vi", h_Iop_V##op##16_vx}, \
+   [Iop_V##op##32_vi] = {"Iop_V" #op "32_vi", h_Iop_V##op##32_vx}, \
+   [Iop_V##op##64_vi] = {"Iop_V" #op "64_vi", h_Iop_V##op##64_vx}
+
 static const struct Iop_handler IOP_HANDLERS[] = {
-   [Iop_VAdd32]    = {"Iop_VAdd32", h_Iop_VAdd32},
-   [Iop_VOr32]     = {"Iop_VOr32",  h_Iop_VOr32},
+   H_V_VX(And),
+   H_V_VX(Or),
+   H_V_VX(Add),
+
    [Iop_VCmpNEZ32] = {"Iop_VCmpNEZ32", h_Iop_VCmpNEZ32},
-   [Iop_VAnd32]    = {"Iop_VAnd32", h_Iop_VAnd32},
    [Iop_VNot32]    = {"Iop_VNot32", h_Iop_VNot32},
    [Iop_VExpandBitsTo32]     = {"Iop_VExpandBitsTo32",  h_Iop_VExpandBitsTo32},
    [Iop_LAST] = {"Iop_LAST", 0}
@@ -1439,11 +1545,11 @@ static void loadVecReg(ISelEnv* env, HReg dst[], Int nregs, HReg addr)
    }
 }
 
-static void iselVecExpr_R_wrk_unop(HReg dst[], ISelEnv* env, IRExpr* e)
+static Bool iselVecExpr_R_wrk_unop(HReg dst[], ISelEnv* env, IRExpr* e)
 {
    const void* fn = IOP_HANDLERS[e->Iex.Unop.op & IR_OP_MASK].fn;
    if (fn == 0) {
-      return;
+      return False;
    }
 
    IRType ty = typeOfIRExpr(env->type_env, e);
@@ -1473,13 +1579,14 @@ static void iselVecExpr_R_wrk_unop(HReg dst[], ISelEnv* env, IRExpr* e)
    loadVecReg(env, dst, nregs, argp);
 
    adjust_sp(env, MAX_ARGS_STACK_SIZE);
+   return True;
 }
 
-static void iselVecExpr_R_wrk_binop(HReg dst[], ISelEnv* env, IRExpr* e)
+static Bool iselVecExpr_R_wrk_binop_vv(HReg dst[], ISelEnv* env, IRExpr* e)
 {
    const void* fn = IOP_HANDLERS[e->Iex.Unop.op & IR_OP_MASK].fn;
    if (fn == 0) {
-      return;
+      return False;
    }
 
    IRType ty = typeOfIRExpr(env->type_env, e);
@@ -1488,10 +1595,10 @@ static void iselVecExpr_R_wrk_binop(HReg dst[], ISelEnv* env, IRExpr* e)
    Int vlen_b = VLEN / 8;
    Int nregs = sz / vlen_b;
 
-   HReg srcL[MAX_REGS] = {0};
-   HReg srcR[MAX_REGS] = {0};
-   iselVecExpr_R(srcL, env, e->Iex.Binop.arg2);
-   iselVecExpr_R(srcR, env, e->Iex.Binop.arg1);
+   HReg src1[MAX_REGS] = {0};
+   HReg src2[MAX_REGS] = {0};
+   iselVecExpr_R(src1, env, e->Iex.Binop.arg1);
+   iselVecExpr_R(src2, env, e->Iex.Binop.arg2);
 
    HReg argp = newVRegI(env);
 
@@ -1502,16 +1609,55 @@ static void iselVecExpr_R_wrk_binop(HReg dst[], ISelEnv* env, IRExpr* e)
    addInstr(env, RISCV64Instr_ALUImm(RISCV64op_ANDI, argp, argp, ~(Int)15));
 
    addInstr(env, RISCV64Instr_ALUImm(RISCV64op_ADDI, hregRISCV64_x10(), argp, 0));                 // a0 - dst
-   addInstr(env, RISCV64Instr_ALUImm(RISCV64op_ADDI, hregRISCV64_x11(), argp, sz));                // a1 - srcL
-   addInstr(env, RISCV64Instr_ALUImm(RISCV64op_ADDI, hregRISCV64_x12(), argp, sz * 2));            // a2 - srcR
+   addInstr(env, RISCV64Instr_ALUImm(RISCV64op_ADDI, hregRISCV64_x11(), argp, sz));                // a1 - src1
+   addInstr(env, RISCV64Instr_ALUImm(RISCV64op_ADDI, hregRISCV64_x12(), argp, sz * 2));            // a2 - src2
    addInstr(env, RISCV64Instr_ALUImm(RISCV64op_ADDI, hregRISCV64_x13(), hregRISCV64_x0(), vl));    // a3 - vl
 
-   storeVecReg(env, srcL, nregs, hregRISCV64_x11());
-   storeVecReg(env, srcR, nregs, hregRISCV64_x12());
+   storeVecReg(env, src1, nregs, hregRISCV64_x11());
+   storeVecReg(env, src2, nregs, hregRISCV64_x12());
    addInstr(env, RISCV64Instr_Call(mk_RetLoc_simple(RLPri_None), (Addr64) fn, INVALID_HREG, 4, 0));
    loadVecReg(env, dst, nregs, argp);
 
    adjust_sp(env, MAX_ARGS_STACK_SIZE);
+   return True;
+}
+
+static Bool iselVecExpr_R_wrk_binop_vx(HReg dst[], ISelEnv* env, IRExpr* e)
+{
+   const void* fn = IOP_HANDLERS[e->Iex.Unop.op & IR_OP_MASK].fn;
+   if (fn == 0) {
+      return False;
+   }
+
+   IRType ty = typeOfIRExpr(env->type_env, e);
+   Int vl = VLofVecIRType(ty);
+   Int sz = sizeofVecIRType(ty);
+   Int vlen_b = VLEN / 8;
+   Int nregs = sz / vlen_b;
+
+   HReg src1 = iselIntExpr_R(env, e->Iex.Binop.arg1);
+   HReg src2[MAX_REGS] = {0};
+   iselVecExpr_R(src2, env, e->Iex.Binop.arg2);
+
+   HReg argp = newVRegI(env);
+
+   adjust_sp(env, -MAX_ARGS_STACK_SIZE);
+   addInstr(env, RISCV64Instr_MV(argp, hregRISCV64_x2()));
+
+   addInstr(env, RISCV64Instr_ALUImm(RISCV64op_ADDI, argp, argp, 15));
+   addInstr(env, RISCV64Instr_ALUImm(RISCV64op_ANDI, argp, argp, ~(Int)15));
+
+   addInstr(env, RISCV64Instr_ALUImm(RISCV64op_ADDI, hregRISCV64_x10(), argp, 0));                 // a0 - dst
+   addInstr(env, RISCV64Instr_MV(hregRISCV64_x11(), src1));                                        // a1 - src1
+   addInstr(env, RISCV64Instr_ALUImm(RISCV64op_ADDI, hregRISCV64_x12(), argp, sz));                // a2 - src2
+   addInstr(env, RISCV64Instr_ALUImm(RISCV64op_ADDI, hregRISCV64_x13(), hregRISCV64_x0(), vl));    // a3 - vl
+
+   storeVecReg(env, src2, nregs, hregRISCV64_x12());
+   addInstr(env, RISCV64Instr_Call(mk_RetLoc_simple(RLPri_None), (Addr64) fn, INVALID_HREG, 4, 0));
+   loadVecReg(env, dst, nregs, argp);
+
+   adjust_sp(env, MAX_ARGS_STACK_SIZE);
+   return True;
 }
 
 static void iselVecExpr_R_wrk(HReg dst[], ISelEnv* env, IRExpr* e)
@@ -1546,8 +1692,8 @@ static void iselVecExpr_R_wrk(HReg dst[], ISelEnv* env, IRExpr* e)
       }
 
       case Iex_Unop: {
-         iselVecExpr_R_wrk_unop(dst, env, e);
-         if (!hregIsInvalid(dst[0])) {
+         Bool ret = iselVecExpr_R_wrk_unop(dst, env, e);
+         if (ret == True) {
             return;
          }
 
@@ -1568,8 +1714,17 @@ static void iselVecExpr_R_wrk(HReg dst[], ISelEnv* env, IRExpr* e)
          break;
       }
       case Iex_Binop: {
-         iselVecExpr_R_wrk_binop(dst, env, e);
-         if (!hregIsInvalid(dst[0])) {
+         Bool ret = False;
+         IROp bop = e->Iex.Binop.op & IR_OP_MASK;
+         if (bop > Iop_VV2_Start && bop < Iop_VV2_End) {
+            ret = iselVecExpr_R_wrk_binop_vv(dst, env, e);
+         } else if (bop > Iop_VX2_Start && bop < Iop_VX2_End) {
+            ret = iselVecExpr_R_wrk_binop_vx(dst, env, e);
+         } else if (bop > Iop_VI2_Start && bop < Iop_VI2_End) {
+            ret = iselVecExpr_R_wrk_binop_vx(dst, env, e);
+         }
+
+         if (ret == True) {
             return;
          }
 

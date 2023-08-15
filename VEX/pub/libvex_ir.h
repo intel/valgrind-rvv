@@ -2072,11 +2072,35 @@ typedef
       Iop_Max64Fx4, Iop_Min64Fx4,
       Iop_Rotx32, Iop_Rotx64,
 
-      Iop_VAdd8, Iop_VAdd16, Iop_VAdd32, Iop_VAdd64,
-      Iop_VOr8, Iop_VOr16, Iop_VOr32, Iop_VOr64,
-      Iop_VCmpNEZ8, Iop_VCmpNEZ16, Iop_VCmpNEZ32, Iop_VCmpNEZ64,
-      Iop_VAnd8, Iop_VAnd16, Iop_VAnd32, Iop_VAnd64,
+#define IOPVV2(op) \
+      Iop_V##op##8_vv, Iop_V##op##16_vv, Iop_V##op##32_vv, Iop_V##op##64_vv
+
+#define IOPVX2(op) \
+      Iop_V##op##8_vx, Iop_V##op##16_vx, Iop_V##op##32_vx, Iop_V##op##64_vx
+
+#define IOPVI2(op) \
+      Iop_V##op##8_vi, Iop_V##op##16_vi, Iop_V##op##32_vi, Iop_V##op##64_vi
+
+      Iop_VV2_Start,
+      IOPVV2(Add),
+      IOPVV2(Or),
+      IOPVV2(And),
+      Iop_VV2_End,
+
+      Iop_VX2_Start,
+      IOPVX2(Add),
+      IOPVX2(Or),
+      IOPVX2(And),
+      Iop_VX2_End,
+
+      Iop_VI2_Start,
+      IOPVI2(Add),
+      IOPVI2(Or),
+      IOPVI2(And),
+      Iop_VI2_End,
+
       Iop_VNot8, Iop_VNot16, Iop_VNot32, Iop_VNot64,
+      Iop_VCmpNEZ8, Iop_VCmpNEZ16, Iop_VCmpNEZ32, Iop_VCmpNEZ64,
       Iop_VExpandBitsTo8, Iop_VExpandBitsTo16, Iop_VExpandBitsTo32, Iop_VExpandBitsTo64,
 
       Iop_LAST      /* must be the last enumerator */

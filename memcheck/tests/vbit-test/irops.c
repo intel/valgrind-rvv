@@ -1189,22 +1189,37 @@ static irop_t irops[] = {
   { DEFOP(Iop_ReinterpI128asF128, UNDEF_ALL_64x2), .ppc64 = 1, .ppc32 = 1 },
   { DEFOP(Iop_ReinterpV128asI128, UNDEF_ALL_64x2), .ppc64 = 1, .ppc32 = 1 },
   { DEFOP(Iop_ReinterpI128asV128, UNDEF_ALL_64x2), .ppc64 = 1, .ppc32 = 1 },
-  { DEFOP(Iop_VAdd8, UNDEF_UNKNOWN), },
-  { DEFOP(Iop_VAdd16, UNDEF_UNKNOWN), },
-  { DEFOP(Iop_VAdd32, UNDEF_UNKNOWN), },
-  { DEFOP(Iop_VAdd64, UNDEF_UNKNOWN), },
-  { DEFOP(Iop_VOr8, UNDEF_UNKNOWN), },
-  { DEFOP(Iop_VOr16, UNDEF_UNKNOWN), },
-  { DEFOP(Iop_VOr32, UNDEF_UNKNOWN), },
-  { DEFOP(Iop_VOr64, UNDEF_UNKNOWN), },
+
+#define DEFOP_VV2(op) \
+  { DEFOP(Iop_V##op##8_vv, UNDEF_UNKNOWN), },  \
+  { DEFOP(Iop_V##op##16_vv, UNDEF_UNKNOWN), }, \
+  { DEFOP(Iop_V##op##32_vv, UNDEF_UNKNOWN), }, \
+  { DEFOP(Iop_V##op##64_vv, UNDEF_UNKNOWN), }, \
+  { DEFOP(Iop_V##op##8_vx, UNDEF_UNKNOWN), },  \
+  { DEFOP(Iop_V##op##16_vx, UNDEF_UNKNOWN), }, \
+  { DEFOP(Iop_V##op##32_vx, UNDEF_UNKNOWN), }, \
+  { DEFOP(Iop_V##op##64_vx, UNDEF_UNKNOWN), }, \
+  { DEFOP(Iop_V##op##8_vi, UNDEF_UNKNOWN), },  \
+  { DEFOP(Iop_V##op##16_vi, UNDEF_UNKNOWN), }, \
+  { DEFOP(Iop_V##op##32_vi, UNDEF_UNKNOWN), }, \
+  { DEFOP(Iop_V##op##64_vi, UNDEF_UNKNOWN), }
+
+  DEFOP_VV2(Add),
+  DEFOP_VV2(Or),
+  DEFOP_VV2(And),
+
+  /* These are fake ones */
+  { DEFOP(Iop_VV2_Start, UNDEF_UNKNOWN), },
+  { DEFOP(Iop_VV2_End, UNDEF_UNKNOWN), },
+  { DEFOP(Iop_VX2_Start, UNDEF_UNKNOWN), },
+  { DEFOP(Iop_VX2_End, UNDEF_UNKNOWN), },
+  { DEFOP(Iop_VI2_Start, UNDEF_UNKNOWN), },
+  { DEFOP(Iop_VI2_End, UNDEF_UNKNOWN), },
+
   { DEFOP(Iop_VCmpNEZ8, UNDEF_UNKNOWN), },
   { DEFOP(Iop_VCmpNEZ16, UNDEF_UNKNOWN), },
   { DEFOP(Iop_VCmpNEZ32, UNDEF_UNKNOWN), },
   { DEFOP(Iop_VCmpNEZ64, UNDEF_UNKNOWN), },
-  { DEFOP(Iop_VAnd8, UNDEF_UNKNOWN), },
-  { DEFOP(Iop_VAnd16, UNDEF_UNKNOWN), },
-  { DEFOP(Iop_VAnd32, UNDEF_UNKNOWN), },
-  { DEFOP(Iop_VAnd64, UNDEF_UNKNOWN), },
   { DEFOP(Iop_VNot8, UNDEF_UNKNOWN), },
   { DEFOP(Iop_VNot16, UNDEF_UNKNOWN), },
   { DEFOP(Iop_VNot32, UNDEF_UNKNOWN), },
