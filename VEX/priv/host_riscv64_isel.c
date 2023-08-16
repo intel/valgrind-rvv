@@ -1362,6 +1362,8 @@ typedef Long int64_t;
 #define DO_AND(N, M)  (N & M)
 #define DO_OR(N, M)   (N | M)
 #define DO_ADD(N, M)  (N + M)
+#define DO_SUB(N, M)  (N - M)
+#define DO_RSUB(N, M) (M - N)
 
 #define OPIVV2(NAME, TD, T1, T2, TX1, TX2, OP)                \
 static void do_##NAME(void *vd, void *vs1, void *vs2, int i)  \
@@ -1385,6 +1387,11 @@ RVVCALL(OPIVV2, VAdd8_vv, OP_SSS_B, DO_ADD)
 RVVCALL(OPIVV2, VAdd16_vv, OP_SSS_H, DO_ADD)
 RVVCALL(OPIVV2, VAdd32_vv, OP_SSS_W, DO_ADD)
 RVVCALL(OPIVV2, VAdd64_vv, OP_SSS_D, DO_ADD)
+
+RVVCALL(OPIVV2, VSub8_vv, OP_SSS_B, DO_SUB)
+RVVCALL(OPIVV2, VSub16_vv, OP_SSS_H, DO_SUB)
+RVVCALL(OPIVV2, VSub32_vv, OP_SSS_W, DO_SUB)
+RVVCALL(OPIVV2, VSub64_vv, OP_SSS_D, DO_SUB)
 
 typedef void opivv2_fn(void *vd, void *vs1, void *vs2, int i);
 
@@ -1415,6 +1422,11 @@ GEN_VEXT_VV(VAdd8_vv)
 GEN_VEXT_VV(VAdd16_vv)
 GEN_VEXT_VV(VAdd32_vv)
 GEN_VEXT_VV(VAdd64_vv)
+
+GEN_VEXT_VV(VSub8_vv)
+GEN_VEXT_VV(VSub16_vv)
+GEN_VEXT_VV(VSub32_vv)
+GEN_VEXT_VV(VSub64_vv)
 /*
  * (T1)s1 gives the real operator type.
  * (TX1)(T1)s1 expands the operator type of widen or narrow operations.
@@ -1440,6 +1452,16 @@ RVVCALL(OPIVX2, VAdd8_vx, OP_SSS_B, DO_ADD)
 RVVCALL(OPIVX2, VAdd16_vx, OP_SSS_H, DO_ADD)
 RVVCALL(OPIVX2, VAdd32_vx, OP_SSS_W, DO_ADD)
 RVVCALL(OPIVX2, VAdd64_vx, OP_SSS_D, DO_ADD)
+
+RVVCALL(OPIVX2, VSub8_vx, OP_SSS_B, DO_SUB)
+RVVCALL(OPIVX2, VSub16_vx, OP_SSS_H, DO_SUB)
+RVVCALL(OPIVX2, VSub32_vx, OP_SSS_W, DO_SUB)
+RVVCALL(OPIVX2, VSub64_vx, OP_SSS_D, DO_SUB)
+
+RVVCALL(OPIVX2, VRsub8_vx, OP_SSS_B, DO_RSUB)
+RVVCALL(OPIVX2, VRsub16_vx, OP_SSS_H, DO_RSUB)
+RVVCALL(OPIVX2, VRsub32_vx, OP_SSS_W, DO_RSUB)
+RVVCALL(OPIVX2, VRsub64_vx, OP_SSS_D, DO_RSUB)
 
 typedef void opivx2_fn(void *vd, Long s1, void *vs2, int i);
 
@@ -1471,29 +1493,63 @@ GEN_VEXT_VX(VAdd16_vx)
 GEN_VEXT_VX(VAdd32_vx)
 GEN_VEXT_VX(VAdd64_vx)
 
+GEN_VEXT_VX(VSub8_vx)
+GEN_VEXT_VX(VSub16_vx)
+GEN_VEXT_VX(VSub32_vx)
+GEN_VEXT_VX(VSub64_vx)
+
+GEN_VEXT_VX(VRsub8_vx)
+GEN_VEXT_VX(VRsub16_vx)
+GEN_VEXT_VX(VRsub32_vx)
+GEN_VEXT_VX(VRsub64_vx)
+
 struct Iop_handler {
    const char* name;
    const void* fn;
 };
 
-#define H_V_VX(op) \
+#define H_V_V(op) \
    [Iop_V##op##8_vv]  = {"Iop_V" #op "8_vv", h_Iop_V##op##8_vv},   \
    [Iop_V##op##16_vv] = {"Iop_V" #op "16_vv", h_Iop_V##op##16_vv}, \
    [Iop_V##op##32_vv] = {"Iop_V" #op "32_vv", h_Iop_V##op##32_vv}, \
-   [Iop_V##op##64_vv] = {"Iop_V" #op "64_vv", h_Iop_V##op##64_vv}, \
+   [Iop_V##op##64_vv] = {"Iop_V" #op "64_vv", h_Iop_V##op##64_vv}
+
+#define H_V_X(op) \
    [Iop_V##op##8_vx]  = {"Iop_V" #op "8_vx", h_Iop_V##op##8_vx},   \
    [Iop_V##op##16_vx] = {"Iop_V" #op "16_vx", h_Iop_V##op##16_vx}, \
    [Iop_V##op##32_vx] = {"Iop_V" #op "32_vx", h_Iop_V##op##32_vx}, \
-   [Iop_V##op##64_vx] = {"Iop_V" #op "64_vx", h_Iop_V##op##64_vx}, \
+   [Iop_V##op##64_vx] = {"Iop_V" #op "64_vx", h_Iop_V##op##64_vx}
+
+#define H_V_I(op) \
    [Iop_V##op##8_vi]  = {"Iop_V" #op "8_vi", h_Iop_V##op##8_vx},   \
    [Iop_V##op##16_vi] = {"Iop_V" #op "16_vi", h_Iop_V##op##16_vx}, \
    [Iop_V##op##32_vi] = {"Iop_V" #op "32_vi", h_Iop_V##op##32_vx}, \
    [Iop_V##op##64_vi] = {"Iop_V" #op "64_vi", h_Iop_V##op##64_vx}
 
+#define H_V_VX(op) \
+   H_V_V(op), \
+   H_V_X(op)
+
+#define H_V_VI(op) \
+   H_V_V(op), \
+   H_V_I(op)
+
+#define H_V_XI(op) \
+   H_V_X(op), \
+   H_V_I(op)
+
+#define H_V_VXI(op) \
+   H_V_V(op), \
+   H_V_X(op), \
+   H_V_I(op)
+
 static const struct Iop_handler IOP_HANDLERS[] = {
-   H_V_VX(And),
-   H_V_VX(Or),
-   H_V_VX(Add),
+   H_V_VXI(And),
+   H_V_VXI(Or),
+   H_V_VXI(Add),
+
+   H_V_VX(Sub),
+   H_V_XI(Rsub),
 
    [Iop_VCmpNEZ32] = {"Iop_VCmpNEZ32", h_Iop_VCmpNEZ32},
    [Iop_VNot32]    = {"Iop_VNot32", h_Iop_VNot32},

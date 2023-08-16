@@ -5204,6 +5204,16 @@ IRAtom* expr2vbits_Binop ( MCEnv* mce,
       case Iop_VAnd8_vi ... Iop_VAnd64_vi:
          return mkPCast_v(mce, vatom2, 8 << (bop - Iop_VAnd8_vi));
 
+      case Iop_VSub8_vv ... Iop_VSub64_vv:
+         return binary_v(mce, vatom1, vatom2, 8 << (bop - Iop_VSub8_vv));
+      case Iop_VSub8_vx ... Iop_VSub64_vx:
+         return binary_v(mce, vatom1, vatom2, 8 << (bop - Iop_VSub8_vx));
+
+      case Iop_VRsub8_vx ... Iop_VRsub64_vx:
+         return binary_v(mce, vatom1, vatom2, 8 << (bop - Iop_VRsub8_vx));
+      case Iop_VRsub8_vi ... Iop_VRsub64_vi:
+         return mkPCast_v(mce, vatom2, 8 << (bop - Iop_VRsub8_vi));
+
       default:
          ppIROp(op);
          VG_(tool_panic)("memcheck:expr2vbits_Binop");

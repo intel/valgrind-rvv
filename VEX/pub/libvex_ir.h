@@ -2085,18 +2085,22 @@ typedef
       IOPVV2(Add),
       IOPVV2(Or),
       IOPVV2(And),
+      IOPVV2(Sub),
       Iop_VV2_End,
 
       Iop_VX2_Start,
       IOPVX2(Add),
       IOPVX2(Or),
       IOPVX2(And),
+      IOPVX2(Sub),
+      IOPVX2(Rsub),
       Iop_VX2_End,
 
       Iop_VI2_Start,
       IOPVI2(Add),
       IOPVI2(Or),
       IOPVI2(And),
+      IOPVI2(Rsub),
       Iop_VI2_End,
 
       Iop_VNot8, Iop_VNot16, Iop_VNot32, Iop_VNot64,

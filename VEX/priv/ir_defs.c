@@ -182,24 +182,38 @@ void ppIROp ( IROp op )
          str = "ExpCmpNE"; base = Iop_ExpCmpNE8; break;
       case Iop_Not8 ... Iop_Not64:
          str = "Not"; base = Iop_Not8; break;
+
       case Iop_VAdd8_vv ... Iop_VAdd64_vv:
          str = "VAdd_vv"; base = Iop_VAdd8_vv; break;
       case Iop_VAdd8_vx ... Iop_VAdd64_vx:
          str = "VAdd_vx"; base = Iop_VAdd8_vx; break;
       case Iop_VAdd8_vi ... Iop_VAdd64_vi:
          str = "VAdd_vi"; base = Iop_VAdd8_vi; break;
+
       case Iop_VOr8_vv ... Iop_VOr64_vv:
          str = "VOr_vv"; base = Iop_VOr8_vv; break;
       case Iop_VOr8_vx ... Iop_VOr64_vx:
          str = "VOr_vx"; base = Iop_VOr8_vx; break;
       case Iop_VOr8_vi ... Iop_VOr64_vi:
          str = "VOr_vi"; base = Iop_VOr8_vi; break;
+
       case Iop_VAnd8_vv ... Iop_VAnd64_vv:
          str = "VAnd_vv"; base = Iop_VAnd8_vv; break;
       case Iop_VAnd8_vx ... Iop_VAnd64_vx:
          str = "VAnd_vx"; base = Iop_VAnd8_vx; break;
       case Iop_VAnd8_vi ... Iop_VAnd64_vi:
          str = "VAnd_vi"; base = Iop_VAnd8_vi; break;
+
+      case Iop_VSub8_vv ... Iop_VSub64_vv:
+         str = "VSub_vv"; base = Iop_VSub8_vv; break;
+      case Iop_VSub8_vx ... Iop_VSub64_vx:
+         str = "VSub_vx"; base = Iop_VSub8_vx; break;
+
+      case Iop_VRsub8_vx ... Iop_VRsub64_vx:
+         str = "VRsub_vx"; base = Iop_VRsub8_vx; break;
+      case Iop_VRsub8_vi ... Iop_VRsub64_vi:
+         str = "VRsub_vi"; base = Iop_VRsub8_vi; break;
+
       case Iop_VCmpNEZ8 ... Iop_VCmpNEZ64:
          str = "VCmpNEZ"; base = Iop_VCmpNEZ8; break;
       case Iop_VNot8 ... Iop_VNot64:
@@ -1875,15 +1889,24 @@ Bool primopMightTrap ( IROp op )
    case Iop_Max64Fx4: case Iop_Min64Fx4:
    case Iop_Rotx32: case Iop_Rotx64:
    case Iop_2xMultU64Add128CarryOut:
+
    case Iop_VAdd8_vv ... Iop_VAdd64_vv:
    case Iop_VAdd8_vx ... Iop_VAdd64_vx:
    case Iop_VAdd8_vi ... Iop_VAdd64_vi:
+
    case Iop_VOr8_vv ... Iop_VOr64_vv:
    case Iop_VOr8_vx ... Iop_VOr64_vx:
    case Iop_VOr8_vi ... Iop_VOr64_vi:
+
    case Iop_VAnd8_vv ... Iop_VAnd64_vv:
    case Iop_VAnd8_vx ... Iop_VAnd64_vx:
    case Iop_VAnd8_vi ... Iop_VAnd64_vi:
+
+   case Iop_VSub8_vv ... Iop_VSub64_vv:
+   case Iop_VSub8_vx ... Iop_VSub64_vx:
+
+   case Iop_VRsub8_vx ... Iop_VRsub64_vx:
+   case Iop_VRsub8_vi ... Iop_VRsub64_vi:
 
    case Iop_VCmpNEZ8 ... Iop_VCmpNEZ64:
    case Iop_VNot8 ... Iop_VNot64:
@@ -4284,6 +4307,16 @@ void typeOfPrimop ( IROp op,
          VEC_VXI_BINARY(Iop_VAnd8_vx);
       case Iop_VAnd8_vi    ... Iop_VAnd64_vi:
          VEC_VXI_BINARY(Iop_VAnd8_vi);
+
+      case Iop_VSub8_vv    ... Iop_VSub64_vv:
+         VEC_VV_BINARY(Iop_VSub8_vv);
+      case Iop_VSub8_vx    ... Iop_VSub64_vx:
+         VEC_VXI_BINARY(Iop_VSub8_vx);
+
+      case Iop_VRsub8_vx    ... Iop_VRsub64_vx:
+         VEC_VXI_BINARY(Iop_VRsub8_vx);
+      case Iop_VRsub8_vi    ... Iop_VRsub64_vi:
+         VEC_VXI_BINARY(Iop_VRsub8_vi);
 
       case Iop_VCmpNEZ8 ... Iop_VCmpNEZ64:
          VEC_UNARY(Iop_VCmpNEZ8);

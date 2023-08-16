@@ -1190,23 +1190,42 @@ static irop_t irops[] = {
   { DEFOP(Iop_ReinterpV128asI128, UNDEF_ALL_64x2), .ppc64 = 1, .ppc32 = 1 },
   { DEFOP(Iop_ReinterpI128asV128, UNDEF_ALL_64x2), .ppc64 = 1, .ppc32 = 1 },
 
-#define DEFOP_VV2(op) \
+#define DEFOP_V_V(op) \
   { DEFOP(Iop_V##op##8_vv, UNDEF_UNKNOWN), },  \
   { DEFOP(Iop_V##op##16_vv, UNDEF_UNKNOWN), }, \
   { DEFOP(Iop_V##op##32_vv, UNDEF_UNKNOWN), }, \
-  { DEFOP(Iop_V##op##64_vv, UNDEF_UNKNOWN), }, \
+  { DEFOP(Iop_V##op##64_vv, UNDEF_UNKNOWN), }
+
+#define DEFOP_V_X(op) \
   { DEFOP(Iop_V##op##8_vx, UNDEF_UNKNOWN), },  \
   { DEFOP(Iop_V##op##16_vx, UNDEF_UNKNOWN), }, \
   { DEFOP(Iop_V##op##32_vx, UNDEF_UNKNOWN), }, \
-  { DEFOP(Iop_V##op##64_vx, UNDEF_UNKNOWN), }, \
+  { DEFOP(Iop_V##op##64_vx, UNDEF_UNKNOWN), }
+
+#define DEFOP_V_I(op) \
   { DEFOP(Iop_V##op##8_vi, UNDEF_UNKNOWN), },  \
   { DEFOP(Iop_V##op##16_vi, UNDEF_UNKNOWN), }, \
   { DEFOP(Iop_V##op##32_vi, UNDEF_UNKNOWN), }, \
   { DEFOP(Iop_V##op##64_vi, UNDEF_UNKNOWN), }
 
-  DEFOP_VV2(Add),
-  DEFOP_VV2(Or),
-  DEFOP_VV2(And),
+#define DEFOP_V_VX(op) \
+  DEFOP_V_V(op), \
+  DEFOP_V_X(op)
+
+#define DEFOP_V_XI(op) \
+  DEFOP_V_X(op), \
+  DEFOP_V_I(op)
+
+#define DEFOP_V_VXI(op) \
+  DEFOP_V_V(op), \
+  DEFOP_V_X(op), \
+  DEFOP_V_I(op)
+
+  DEFOP_V_VXI(Add),
+  DEFOP_V_VXI(Or),
+  DEFOP_V_VXI(And),
+  DEFOP_V_VX(Sub),
+  DEFOP_V_XI(Rsub),
 
   /* These are fake ones */
   { DEFOP(Iop_VV2_Start, UNDEF_UNKNOWN), },
