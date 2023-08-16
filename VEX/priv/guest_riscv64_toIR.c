@@ -4148,6 +4148,14 @@ static Bool dis_opmvv(/*MB_OUT*/ DisResult* dres,
          return False;
       }
       return False;
+   case 0b100000:
+      return dis_rvv_vv(dres, irsb, insn, guest_pc_curr_instr, guest, Iop_VDivu8_vv);
+   case 0b100001:
+      return dis_rvv_vv(dres, irsb, insn, guest_pc_curr_instr, guest, Iop_VDiv8_vv);
+   case 0b100010:
+      return dis_rvv_vv(dres, irsb, insn, guest_pc_curr_instr, guest, Iop_VRemu8_vv);
+   case 0b100011:
+      return dis_rvv_vv(dres, irsb, insn, guest_pc_curr_instr, guest, Iop_VRem8_vv);
    case 0b100101:
       return dis_rvv_vv(dres, irsb, insn, guest_pc_curr_instr, guest, Iop_VMul8_vv);
    case 0b100111:
@@ -4239,6 +4247,14 @@ static Bool dis_opmvx(/*MB_OUT*/ DisResult* dres,
    UInt funct6 = INSN(31, 26);
 
    switch (funct6) {
+   case 0b100000:
+      return dis_rvv_vx(dres, irsb, insn, guest_pc_curr_instr, guest, Iop_VDivu8_vx);
+   case 0b100001:
+      return dis_rvv_vx(dres, irsb, insn, guest_pc_curr_instr, guest, Iop_VDiv8_vx);
+   case 0b100010:
+      return dis_rvv_vx(dres, irsb, insn, guest_pc_curr_instr, guest, Iop_VRemu8_vx);
+   case 0b100011:
+      return dis_rvv_vx(dres, irsb, insn, guest_pc_curr_instr, guest, Iop_VRem8_vx);
    case 0b100101:
       return dis_rvv_vx(dres, irsb, insn, guest_pc_curr_instr, guest, Iop_VMul8_vx);
    case 0b100111:

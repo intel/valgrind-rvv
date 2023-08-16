@@ -5256,6 +5256,23 @@ IRAtom* expr2vbits_Binop ( MCEnv* mce,
       case Iop_VMulhsu8_vx ... Iop_VMulhsu64_vx:
          return binary_v(mce, vatom1, vatom2, 8 << (bop - Iop_VMulhsu8_vx));
 
+      case Iop_VDivu8_vv ... Iop_VDivu64_vv:
+         return binary_v(mce, vatom1, vatom2, 8 << (bop - Iop_VDivu8_vv));
+      case Iop_VDivu8_vx ... Iop_VDivu64_vx:
+         return binary_v(mce, vatom1, vatom2, 8 << (bop - Iop_VDivu8_vx));
+      case Iop_VDiv8_vv ... Iop_VDiv64_vv:
+         return binary_v(mce, vatom1, vatom2, 8 << (bop - Iop_VDiv8_vv));
+      case Iop_VDiv8_vx ... Iop_VDiv64_vx:
+         return binary_v(mce, vatom1, vatom2, 8 << (bop - Iop_VDiv8_vx));
+      case Iop_VRemu8_vv ... Iop_VRemu64_vv:
+         return binary_v(mce, vatom1, vatom2, 8 << (bop - Iop_VRemu8_vv));
+      case Iop_VRemu8_vx ... Iop_VRemu64_vx:
+         return binary_v(mce, vatom1, vatom2, 8 << (bop - Iop_VRemu8_vx));
+      case Iop_VRem8_vv ... Iop_VRem64_vv:
+         return binary_v(mce, vatom1, vatom2, 8 << (bop - Iop_VRem8_vv));
+      case Iop_VRem8_vx ... Iop_VRem64_vx:
+         return binary_v(mce, vatom1, vatom2, 8 << (bop - Iop_VRem8_vx));
+
       default:
          ppIROp(op);
          VG_(tool_panic)("memcheck:expr2vbits_Binop");

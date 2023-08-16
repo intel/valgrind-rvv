@@ -1386,6 +1386,18 @@ typedef ULong uint64_t;
 
 #define DO_MUL(N, M)  (N * M)
 
+#ifndef unlikely
+#define unlikely(x) (x)
+#endif
+
+/* Vector Integer Divide Instructions */
+#define DO_DIVU(N, M) (unlikely(M == 0) ? (__typeof(N))(-1) : N / M)
+#define DO_REMU(N, M) (unlikely(M == 0) ? N : N % M)
+#define DO_DIV(N, M)  (unlikely(M == 0) ? (__typeof(N))(-1) : \
+        unlikely((N == -N) && (M == (__typeof(N))(-1))) ? N : N / M)
+#define DO_REM(N, M)  (unlikely(M == 0) ? N : \
+        unlikely((N == -N) && (M == (__typeof(N))(-1))) ? 0 : N % M)
+
 /** BEGIN: high bits of multiply **/
 
 /* Many of helpers for vector are copied from QEMU */
@@ -1609,6 +1621,23 @@ RVVCALL(OPIVV2, VMulhsu16_vv, OP_SUS_H, do_mulhsu_h)
 RVVCALL(OPIVV2, VMulhsu32_vv, OP_SUS_W, do_mulhsu_w)
 RVVCALL(OPIVV2, VMulhsu64_vv, OP_SUS_D, do_mulhsu_d)
 
+RVVCALL(OPIVV2, VDivu8_vv, OP_UUU_B, DO_DIVU)
+RVVCALL(OPIVV2, VDivu16_vv, OP_UUU_H, DO_DIVU)
+RVVCALL(OPIVV2, VDivu32_vv, OP_UUU_W, DO_DIVU)
+RVVCALL(OPIVV2, VDivu64_vv, OP_UUU_D, DO_DIVU)
+RVVCALL(OPIVV2, VDiv8_vv, OP_SSS_B, DO_DIV)
+RVVCALL(OPIVV2, VDiv16_vv, OP_SSS_H, DO_DIV)
+RVVCALL(OPIVV2, VDiv32_vv, OP_SSS_W, DO_DIV)
+RVVCALL(OPIVV2, VDiv64_vv, OP_SSS_D, DO_DIV)
+RVVCALL(OPIVV2, VRemu8_vv, OP_UUU_B, DO_REMU)
+RVVCALL(OPIVV2, VRemu16_vv, OP_UUU_H, DO_REMU)
+RVVCALL(OPIVV2, VRemu32_vv, OP_UUU_W, DO_REMU)
+RVVCALL(OPIVV2, VRemu64_vv, OP_UUU_D, DO_REMU)
+RVVCALL(OPIVV2, VRem8_vv, OP_SSS_B, DO_REM)
+RVVCALL(OPIVV2, VRem16_vv, OP_SSS_H, DO_REM)
+RVVCALL(OPIVV2, VRem32_vv, OP_SSS_W, DO_REM)
+RVVCALL(OPIVV2, VRem64_vv, OP_SSS_D, DO_REM)
+
 typedef void opivv2_fn(void *vd, void *vs1, void *vs2, int i);
 
 static void do_vext_vv(void *vd, void *vs1, void *vs2, opivv2_fn *fn, int len)
@@ -1683,6 +1712,23 @@ GEN_VEXT_VV(VMulhsu8_vv)
 GEN_VEXT_VV(VMulhsu16_vv)
 GEN_VEXT_VV(VMulhsu32_vv)
 GEN_VEXT_VV(VMulhsu64_vv)
+
+GEN_VEXT_VV(VDivu8_vv)
+GEN_VEXT_VV(VDivu16_vv)
+GEN_VEXT_VV(VDivu32_vv)
+GEN_VEXT_VV(VDivu64_vv)
+GEN_VEXT_VV(VDiv8_vv)
+GEN_VEXT_VV(VDiv16_vv)
+GEN_VEXT_VV(VDiv32_vv)
+GEN_VEXT_VV(VDiv64_vv)
+GEN_VEXT_VV(VRemu8_vv)
+GEN_VEXT_VV(VRemu16_vv)
+GEN_VEXT_VV(VRemu32_vv)
+GEN_VEXT_VV(VRemu64_vv)
+GEN_VEXT_VV(VRem8_vv)
+GEN_VEXT_VV(VRem16_vv)
+GEN_VEXT_VV(VRem32_vv)
+GEN_VEXT_VV(VRem64_vv)
 
 /*
  * (T1)s1 gives the real operator type.
@@ -1759,6 +1805,23 @@ RVVCALL(OPIVX2, VMulhsu8_vx, OP_SUS_B, do_mulhsu_b)
 RVVCALL(OPIVX2, VMulhsu16_vx, OP_SUS_H, do_mulhsu_h)
 RVVCALL(OPIVX2, VMulhsu32_vx, OP_SUS_W, do_mulhsu_w)
 RVVCALL(OPIVX2, VMulhsu64_vx, OP_SUS_D, do_mulhsu_d)
+
+RVVCALL(OPIVX2, VDivu8_vx, OP_UUU_B, DO_DIVU)
+RVVCALL(OPIVX2, VDivu16_vx, OP_UUU_H, DO_DIVU)
+RVVCALL(OPIVX2, VDivu32_vx, OP_UUU_W, DO_DIVU)
+RVVCALL(OPIVX2, VDivu64_vx, OP_UUU_D, DO_DIVU)
+RVVCALL(OPIVX2, VDiv8_vx, OP_SSS_B, DO_DIV)
+RVVCALL(OPIVX2, VDiv16_vx, OP_SSS_H, DO_DIV)
+RVVCALL(OPIVX2, VDiv32_vx, OP_SSS_W, DO_DIV)
+RVVCALL(OPIVX2, VDiv64_vx, OP_SSS_D, DO_DIV)
+RVVCALL(OPIVX2, VRemu8_vx, OP_UUU_B, DO_REMU)
+RVVCALL(OPIVX2, VRemu16_vx, OP_UUU_H, DO_REMU)
+RVVCALL(OPIVX2, VRemu32_vx, OP_UUU_W, DO_REMU)
+RVVCALL(OPIVX2, VRemu64_vx, OP_UUU_D, DO_REMU)
+RVVCALL(OPIVX2, VRem8_vx, OP_SSS_B, DO_REM)
+RVVCALL(OPIVX2, VRem16_vx, OP_SSS_H, DO_REM)
+RVVCALL(OPIVX2, VRem32_vx, OP_SSS_W, DO_REM)
+RVVCALL(OPIVX2, VRem64_vx, OP_SSS_D, DO_REM)
 
 typedef void opivx2_fn(void *vd, Long s1, void *vs2, int i);
 
@@ -1840,6 +1903,23 @@ GEN_VEXT_VX(VMulhsu16_vx)
 GEN_VEXT_VX(VMulhsu32_vx)
 GEN_VEXT_VX(VMulhsu64_vx)
 
+GEN_VEXT_VX(VDivu8_vx)
+GEN_VEXT_VX(VDivu16_vx)
+GEN_VEXT_VX(VDivu32_vx)
+GEN_VEXT_VX(VDivu64_vx)
+GEN_VEXT_VX(VDiv8_vx)
+GEN_VEXT_VX(VDiv16_vx)
+GEN_VEXT_VX(VDiv32_vx)
+GEN_VEXT_VX(VDiv64_vx)
+GEN_VEXT_VX(VRemu8_vx)
+GEN_VEXT_VX(VRemu16_vx)
+GEN_VEXT_VX(VRemu32_vx)
+GEN_VEXT_VX(VRemu64_vx)
+GEN_VEXT_VX(VRem8_vx)
+GEN_VEXT_VX(VRem16_vx)
+GEN_VEXT_VX(VRem32_vx)
+GEN_VEXT_VX(VRem64_vx)
+
 struct Iop_handler {
    const char* name;
    const void* fn;
@@ -1898,6 +1978,11 @@ static const struct Iop_handler IOP_HANDLERS[] = {
    H_V_VX(Mulh),
    H_V_VX(Mulhu),
    H_V_VX(Mulhsu),
+
+   H_V_VX(Divu),
+   H_V_VX(Div),
+   H_V_VX(Remu),
+   H_V_VX(Rem),
 
    [Iop_VCmpNEZ32] = {"Iop_VCmpNEZ32", h_Iop_VCmpNEZ32},
    [Iop_VNot32]    = {"Iop_VNot32", h_Iop_VNot32},

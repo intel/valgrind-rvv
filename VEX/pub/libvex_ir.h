@@ -2095,6 +2095,10 @@ typedef
       IOPVV2(Mulh),
       IOPVV2(Mulhu),
       IOPVV2(Mulhsu),
+      IOPVV2(Divu),
+      IOPVV2(Div),
+      IOPVV2(Remu),
+      IOPVV2(Rem),
       Iop_VV2_End,
 
       Iop_VX2_Start,
@@ -2112,6 +2116,10 @@ typedef
       IOPVX2(Mulh),
       IOPVX2(Mulhu),
       IOPVX2(Mulhsu),
+      IOPVX2(Divu),
+      IOPVX2(Div),
+      IOPVX2(Remu),
+      IOPVX2(Rem),
       Iop_VX2_End,
 
       Iop_VI2_Start,
