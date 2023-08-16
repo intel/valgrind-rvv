@@ -4347,6 +4347,26 @@ void typeOfPrimop ( IROp op,
       case Iop_VMax8_vx    ... Iop_VMax64_vx:
          VEC_VXI_BINARY(Iop_VMax8_vx);
 
+      case Iop_VMul8_vv    ... Iop_VMul64_vv:
+         VEC_VV_BINARY(Iop_VMul8_vv);
+      case Iop_VMul8_vx    ... Iop_VMul64_vx:
+         VEC_VXI_BINARY(Iop_VMul8_vx);
+
+      case Iop_VMulh8_vv    ... Iop_VMulh64_vv:
+         VEC_VV_BINARY(Iop_VMulh8_vv);
+      case Iop_VMulh8_vx    ... Iop_VMulh64_vx:
+         VEC_VXI_BINARY(Iop_VMulh8_vx);
+
+      case Iop_VMulhu8_vv    ... Iop_VMulhu64_vv:
+         VEC_VV_BINARY(Iop_VMulhu8_vv);
+      case Iop_VMulhu8_vx    ... Iop_VMulhu64_vx:
+         VEC_VXI_BINARY(Iop_VMulhu8_vx);
+
+      case Iop_VMulhsu8_vv    ... Iop_VMulhsu64_vv:
+         VEC_VV_BINARY(Iop_VMulhsu8_vv);
+      case Iop_VMulhsu8_vx    ... Iop_VMulhsu64_vx:
+         VEC_VXI_BINARY(Iop_VMulhsu8_vx);
+
       case Iop_VCmpNEZ8 ... Iop_VCmpNEZ64:
          VEC_UNARY(Iop_VCmpNEZ8);
       case Iop_VNot8 ... Iop_VNot64:

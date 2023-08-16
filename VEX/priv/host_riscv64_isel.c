@@ -1368,6 +1368,11 @@ typedef ULong uint64_t;
 #define OP_UUU_W uint32_t, uint32_t, uint32_t, uint32_t, uint32_t
 #define OP_UUU_D uint64_t, uint64_t, uint64_t, uint64_t, uint64_t
 
+#define OP_SUS_B int8_t, uint8_t, int8_t, uint8_t, int8_t
+#define OP_SUS_H int16_t, uint16_t, int16_t, uint16_t, int16_t
+#define OP_SUS_W int32_t, uint32_t, int32_t, uint32_t, int32_t
+#define OP_SUS_D int64_t, uint64_t, int64_t, uint64_t, int64_t
+
 #define DO_AND(N, M)  (N & M)
 #define DO_OR(N, M)   (N | M)
 #define DO_XOR(N, M)  (N ^ M)
@@ -1378,6 +1383,163 @@ typedef ULong uint64_t;
 /* Signed min/max */
 #define DO_MAX(N, M)  ((N) >= (M) ? (N) : (M))
 #define DO_MIN(N, M)  ((N) >= (M) ? (M) : (N))
+
+#define DO_MUL(N, M)  (N * M)
+
+/** BEGIN: high bits of multiply **/
+
+/* Many of helpers for vector are copied from QEMU */
+
+/* Long integer helpers */
+static inline void mul64(uint64_t *plow, uint64_t *phigh,
+                         uint64_t a, uint64_t b)
+{
+    typedef union {
+        uint64_t ll;
+        struct {
+#if HOST_BIG_ENDIAN
+            uint32_t high, low;
+#else
+            uint32_t low, high;
+#endif
+        } l;
+    } LL;
+    LL rl, rm, rn, rh, a0, b0;
+    uint64_t c;
+
+    a0.ll = a;
+    b0.ll = b;
+
+    rl.ll = (uint64_t)a0.l.low * b0.l.low;
+    rm.ll = (uint64_t)a0.l.low * b0.l.high;
+    rn.ll = (uint64_t)a0.l.high * b0.l.low;
+    rh.ll = (uint64_t)a0.l.high * b0.l.high;
+
+    c = (uint64_t)rl.l.high + rm.l.low + rn.l.low;
+    rl.l.high = c;
+    c >>= 32;
+    c = c + rm.l.high + rn.l.high + rh.l.low;
+    rh.l.low = c;
+    rh.l.high += (uint32_t)(c >> 32);
+
+    *plow = rl.ll;
+    *phigh = rh.ll;
+}
+
+/* Unsigned 64x64 -> 128 multiplication */
+static void mulu64 (uint64_t *plow, uint64_t *phigh, uint64_t a, uint64_t b)
+{
+    mul64(plow, phigh, a, b);
+}
+
+/* Signed 64x64 -> 128 multiplication */
+static void muls64 (uint64_t *plow, uint64_t *phigh, int64_t a, int64_t b)
+{
+    uint64_t rh;
+
+    mul64(plow, &rh, a, b);
+
+    /* Adjust for signs.  */
+    if (b < 0) {
+        rh -= a;
+    }
+    if (a < 0) {
+        rh -= b;
+    }
+    *phigh = rh;
+}
+
+static int8_t do_mulh_b(int8_t s2, int8_t s1)
+{
+    return (int16_t)s2 * (int16_t)s1 >> 8;
+}
+
+static int16_t do_mulh_h(int16_t s2, int16_t s1)
+{
+    return (int32_t)s2 * (int32_t)s1 >> 16;
+}
+
+static int32_t do_mulh_w(int32_t s2, int32_t s1)
+{
+    return (int64_t)s2 * (int64_t)s1 >> 32;
+}
+
+static int64_t do_mulh_d(int64_t s2, int64_t s1)
+{
+    uint64_t hi_64, lo_64;
+
+    muls64(&lo_64, &hi_64, s1, s2);
+    return hi_64;
+}
+
+static uint8_t do_mulhu_b(uint8_t s2, uint8_t s1)
+{
+    return (uint16_t)s2 * (uint16_t)s1 >> 8;
+}
+
+static uint16_t do_mulhu_h(uint16_t s2, uint16_t s1)
+{
+    return (uint32_t)s2 * (uint32_t)s1 >> 16;
+}
+
+static uint32_t do_mulhu_w(uint32_t s2, uint32_t s1)
+{
+    return (uint64_t)s2 * (uint64_t)s1 >> 32;
+}
+
+static uint64_t do_mulhu_d(uint64_t s2, uint64_t s1)
+{
+    uint64_t hi_64, lo_64;
+
+    mulu64(&lo_64, &hi_64, s2, s1);
+    return hi_64;
+}
+
+static int8_t do_mulhsu_b(int8_t s2, uint8_t s1)
+{
+    return (int16_t)s2 * (uint16_t)s1 >> 8;
+}
+
+static int16_t do_mulhsu_h(int16_t s2, uint16_t s1)
+{
+    return (int32_t)s2 * (uint32_t)s1 >> 16;
+}
+
+static int32_t do_mulhsu_w(int32_t s2, uint32_t s1)
+{
+    return (int64_t)s2 * (uint64_t)s1 >> 32;
+}
+
+/*
+ * Let  A = signed operand,
+ *      B = unsigned operand
+ *      P = mulu64(A, B), unsigned product
+ *
+ * LET  X = 2 ** 64  - A, 2's complement of A
+ *      SP = signed product
+ * THEN
+ *      IF A < 0
+ *          SP = -X * B
+ *             = -(2 ** 64 - A) * B
+ *             = A * B - 2 ** 64 * B
+ *             = P - 2 ** 64 * B
+ *      ELSE
+ *          SP = P
+ * THEN
+ *      HI_P -= (A < 0 ? B : 0)
+ */
+
+static int64_t do_mulhsu_d(int64_t s2, uint64_t s1)
+{
+    uint64_t hi_64, lo_64;
+
+    mulu64(&lo_64, &hi_64, s2, s1);
+
+    hi_64 -= s2 < 0 ? s1 : 0;
+    return hi_64;
+}
+
+/** END: high bits of multiply **/
 
 #define OPIVV2(NAME, TD, T1, T2, TX1, TX2, OP)                \
 static void do_##NAME(void *vd, void *vs1, void *vs2, int i)  \
@@ -1429,6 +1591,23 @@ RVVCALL(OPIVV2, VMax8_vv, OP_SSS_B, DO_MAX)
 RVVCALL(OPIVV2, VMax16_vv, OP_SSS_H, DO_MAX)
 RVVCALL(OPIVV2, VMax32_vv, OP_SSS_W, DO_MAX)
 RVVCALL(OPIVV2, VMax64_vv, OP_SSS_D, DO_MAX)
+
+RVVCALL(OPIVV2, VMul8_vv, OP_SSS_B, DO_MUL)
+RVVCALL(OPIVV2, VMul16_vv, OP_SSS_H, DO_MUL)
+RVVCALL(OPIVV2, VMul32_vv, OP_SSS_W, DO_MUL)
+RVVCALL(OPIVV2, VMul64_vv, OP_SSS_D, DO_MUL)
+RVVCALL(OPIVV2, VMulh8_vv, OP_SSS_B, do_mulh_b)
+RVVCALL(OPIVV2, VMulh16_vv, OP_SSS_H, do_mulh_h)
+RVVCALL(OPIVV2, VMulh32_vv, OP_SSS_W, do_mulh_w)
+RVVCALL(OPIVV2, VMulh64_vv, OP_SSS_D, do_mulh_d)
+RVVCALL(OPIVV2, VMulhu8_vv, OP_UUU_B, do_mulhu_b)
+RVVCALL(OPIVV2, VMulhu16_vv, OP_UUU_H, do_mulhu_h)
+RVVCALL(OPIVV2, VMulhu32_vv, OP_UUU_W, do_mulhu_w)
+RVVCALL(OPIVV2, VMulhu64_vv, OP_UUU_D, do_mulhu_d)
+RVVCALL(OPIVV2, VMulhsu8_vv, OP_SUS_B, do_mulhsu_b)
+RVVCALL(OPIVV2, VMulhsu16_vv, OP_SUS_H, do_mulhsu_h)
+RVVCALL(OPIVV2, VMulhsu32_vv, OP_SUS_W, do_mulhsu_w)
+RVVCALL(OPIVV2, VMulhsu64_vv, OP_SUS_D, do_mulhsu_d)
 
 typedef void opivv2_fn(void *vd, void *vs1, void *vs2, int i);
 
@@ -1488,6 +1667,23 @@ GEN_VEXT_VV(VMax16_vv)
 GEN_VEXT_VV(VMax32_vv)
 GEN_VEXT_VV(VMax64_vv)
 
+GEN_VEXT_VV(VMul8_vv)
+GEN_VEXT_VV(VMul16_vv)
+GEN_VEXT_VV(VMul32_vv)
+GEN_VEXT_VV(VMul64_vv)
+GEN_VEXT_VV(VMulh8_vv)
+GEN_VEXT_VV(VMulh16_vv)
+GEN_VEXT_VV(VMulh32_vv)
+GEN_VEXT_VV(VMulh64_vv)
+GEN_VEXT_VV(VMulhu8_vv)
+GEN_VEXT_VV(VMulhu16_vv)
+GEN_VEXT_VV(VMulhu32_vv)
+GEN_VEXT_VV(VMulhu64_vv)
+GEN_VEXT_VV(VMulhsu8_vv)
+GEN_VEXT_VV(VMulhsu16_vv)
+GEN_VEXT_VV(VMulhsu32_vv)
+GEN_VEXT_VV(VMulhsu64_vv)
+
 /*
  * (T1)s1 gives the real operator type.
  * (TX1)(T1)s1 expands the operator type of widen or narrow operations.
@@ -1546,6 +1742,23 @@ RVVCALL(OPIVX2, VMax8_vx, OP_SSS_B, DO_MAX)
 RVVCALL(OPIVX2, VMax16_vx, OP_SSS_H, DO_MAX)
 RVVCALL(OPIVX2, VMax32_vx, OP_SSS_W, DO_MAX)
 RVVCALL(OPIVX2, VMax64_vx, OP_SSS_D, DO_MAX)
+
+RVVCALL(OPIVX2, VMul8_vx, OP_SSS_B, DO_MUL)
+RVVCALL(OPIVX2, VMul16_vx, OP_SSS_H, DO_MUL)
+RVVCALL(OPIVX2, VMul32_vx, OP_SSS_W, DO_MUL)
+RVVCALL(OPIVX2, VMul64_vx, OP_SSS_D, DO_MUL)
+RVVCALL(OPIVX2, VMulh8_vx, OP_SSS_B, do_mulh_b)
+RVVCALL(OPIVX2, VMulh16_vx, OP_SSS_H, do_mulh_h)
+RVVCALL(OPIVX2, VMulh32_vx, OP_SSS_W, do_mulh_w)
+RVVCALL(OPIVX2, VMulh64_vx, OP_SSS_D, do_mulh_d)
+RVVCALL(OPIVX2, VMulhu8_vx, OP_UUU_B, do_mulhu_b)
+RVVCALL(OPIVX2, VMulhu16_vx, OP_UUU_H, do_mulhu_h)
+RVVCALL(OPIVX2, VMulhu32_vx, OP_UUU_W, do_mulhu_w)
+RVVCALL(OPIVX2, VMulhu64_vx, OP_UUU_D, do_mulhu_d)
+RVVCALL(OPIVX2, VMulhsu8_vx, OP_SUS_B, do_mulhsu_b)
+RVVCALL(OPIVX2, VMulhsu16_vx, OP_SUS_H, do_mulhsu_h)
+RVVCALL(OPIVX2, VMulhsu32_vx, OP_SUS_W, do_mulhsu_w)
+RVVCALL(OPIVX2, VMulhsu64_vx, OP_SUS_D, do_mulhsu_d)
 
 typedef void opivx2_fn(void *vd, Long s1, void *vs2, int i);
 
@@ -1610,6 +1823,23 @@ GEN_VEXT_VX(VMax16_vx)
 GEN_VEXT_VX(VMax32_vx)
 GEN_VEXT_VX(VMax64_vx)
 
+GEN_VEXT_VX(VMul8_vx)
+GEN_VEXT_VX(VMul16_vx)
+GEN_VEXT_VX(VMul32_vx)
+GEN_VEXT_VX(VMul64_vx)
+GEN_VEXT_VX(VMulh8_vx)
+GEN_VEXT_VX(VMulh16_vx)
+GEN_VEXT_VX(VMulh32_vx)
+GEN_VEXT_VX(VMulh64_vx)
+GEN_VEXT_VX(VMulhu8_vx)
+GEN_VEXT_VX(VMulhu16_vx)
+GEN_VEXT_VX(VMulhu32_vx)
+GEN_VEXT_VX(VMulhu64_vx)
+GEN_VEXT_VX(VMulhsu8_vx)
+GEN_VEXT_VX(VMulhsu16_vx)
+GEN_VEXT_VX(VMulhsu32_vx)
+GEN_VEXT_VX(VMulhsu64_vx)
+
 struct Iop_handler {
    const char* name;
    const void* fn;
@@ -1663,6 +1893,11 @@ static const struct Iop_handler IOP_HANDLERS[] = {
    H_V_VX(Minu),
    H_V_VX(Max),
    H_V_VX(Maxu),
+
+   H_V_VX(Mul),
+   H_V_VX(Mulh),
+   H_V_VX(Mulhu),
+   H_V_VX(Mulhsu),
 
    [Iop_VCmpNEZ32] = {"Iop_VCmpNEZ32", h_Iop_VCmpNEZ32},
    [Iop_VNot32]    = {"Iop_VNot32", h_Iop_VNot32},

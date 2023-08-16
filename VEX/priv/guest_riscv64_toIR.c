@@ -4148,6 +4148,14 @@ static Bool dis_opmvv(/*MB_OUT*/ DisResult* dres,
          return False;
       }
       return False;
+   case 0b100101:
+      return dis_rvv_vv(dres, irsb, insn, guest_pc_curr_instr, guest, Iop_VMul8_vv);
+   case 0b100111:
+      return dis_rvv_vv(dres, irsb, insn, guest_pc_curr_instr, guest, Iop_VMulh8_vv);
+   case 0b100100:
+      return dis_rvv_vv(dres, irsb, insn, guest_pc_curr_instr, guest, Iop_VMulhu8_vv);
+   case 0b100110:
+      return dis_rvv_vv(dres, irsb, insn, guest_pc_curr_instr, guest, Iop_VMulhsu8_vv);
    default:
       return False;
    }
@@ -4228,6 +4236,20 @@ static Bool dis_opmvx(/*MB_OUT*/ DisResult* dres,
                       Addr                  guest_pc_curr_instr,
                       VexGuestRISCV64State* guest)
 {
+   UInt funct6 = INSN(31, 26);
+
+   switch (funct6) {
+   case 0b100101:
+      return dis_rvv_vx(dres, irsb, insn, guest_pc_curr_instr, guest, Iop_VMul8_vx);
+   case 0b100111:
+      return dis_rvv_vx(dres, irsb, insn, guest_pc_curr_instr, guest, Iop_VMulh8_vx);
+   case 0b100100:
+      return dis_rvv_vx(dres, irsb, insn, guest_pc_curr_instr, guest, Iop_VMulhu8_vx);
+   case 0b100110:
+      return dis_rvv_vx(dres, irsb, insn, guest_pc_curr_instr, guest, Iop_VMulhsu8_vx);
+   default:
+      return False;
+   }
    return False;
 }
 
