@@ -5221,6 +5221,24 @@ IRAtom* expr2vbits_Binop ( MCEnv* mce,
       case Iop_VRsub8_vi ... Iop_VRsub64_vi:
          return mkPCast_v(mce, vatom2, 8 << (bop - Iop_VRsub8_vi));
 
+      case Iop_VMinu8_vv ... Iop_VMinu64_vv:
+         return binary_v(mce, vatom1, vatom2, 8 << (bop - Iop_VMinu8_vv));
+      case Iop_VMinu8_vx ... Iop_VMinu64_vx:
+         return binary_v(mce, vatom1, vatom2, 8 << (bop - Iop_VMinu8_vx));
+      case Iop_VMin8_vv ... Iop_VMin64_vv:
+         return binary_v(mce, vatom1, vatom2, 8 << (bop - Iop_VMin8_vv));
+      case Iop_VMin8_vx ... Iop_VMin64_vx:
+         return binary_v(mce, vatom1, vatom2, 8 << (bop - Iop_VMin8_vx));
+
+      case Iop_VMaxu8_vv ... Iop_VMaxu64_vv:
+         return binary_v(mce, vatom1, vatom2, 8 << (bop - Iop_VMaxu8_vv));
+      case Iop_VMaxu8_vx ... Iop_VMaxu64_vx:
+         return binary_v(mce, vatom1, vatom2, 8 << (bop - Iop_VMaxu8_vx));
+      case Iop_VMax8_vv ... Iop_VMax64_vv:
+         return binary_v(mce, vatom1, vatom2, 8 << (bop - Iop_VMax8_vv));
+      case Iop_VMax8_vx ... Iop_VMax64_vx:
+         return binary_v(mce, vatom1, vatom2, 8 << (bop - Iop_VMax8_vx));
+
       default:
          ppIROp(op);
          VG_(tool_panic)("memcheck:expr2vbits_Binop");

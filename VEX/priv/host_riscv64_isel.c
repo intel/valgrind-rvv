@@ -1353,11 +1353,20 @@ typedef Char int8_t;
 typedef Short int16_t;
 typedef Int int32_t;
 typedef Long int64_t;
+typedef UChar uint8_t;
+typedef UShort uint16_t;
+typedef UInt uint32_t;
+typedef ULong uint64_t;
 
 #define OP_SSS_B int8_t, int8_t, int8_t, int8_t, int8_t
 #define OP_SSS_H int16_t, int16_t, int16_t, int16_t, int16_t
 #define OP_SSS_W int32_t, int32_t, int32_t, int32_t, int32_t
 #define OP_SSS_D int64_t, int64_t, int64_t, int64_t, int64_t
+
+#define OP_UUU_B uint8_t, uint8_t, uint8_t, uint8_t, uint8_t
+#define OP_UUU_H uint16_t, uint16_t, uint16_t, uint16_t, uint16_t
+#define OP_UUU_W uint32_t, uint32_t, uint32_t, uint32_t, uint32_t
+#define OP_UUU_D uint64_t, uint64_t, uint64_t, uint64_t, uint64_t
 
 #define DO_AND(N, M)  (N & M)
 #define DO_OR(N, M)   (N | M)
@@ -1365,6 +1374,10 @@ typedef Long int64_t;
 #define DO_ADD(N, M)  (N + M)
 #define DO_SUB(N, M)  (N - M)
 #define DO_RSUB(N, M) (M - N)
+
+/* Signed min/max */
+#define DO_MAX(N, M)  ((N) >= (M) ? (N) : (M))
+#define DO_MIN(N, M)  ((N) >= (M) ? (M) : (N))
 
 #define OPIVV2(NAME, TD, T1, T2, TX1, TX2, OP)                \
 static void do_##NAME(void *vd, void *vs1, void *vs2, int i)  \
@@ -1398,6 +1411,24 @@ RVVCALL(OPIVV2, VSub8_vv, OP_SSS_B, DO_SUB)
 RVVCALL(OPIVV2, VSub16_vv, OP_SSS_H, DO_SUB)
 RVVCALL(OPIVV2, VSub32_vv, OP_SSS_W, DO_SUB)
 RVVCALL(OPIVV2, VSub64_vv, OP_SSS_D, DO_SUB)
+
+RVVCALL(OPIVV2, VMinu8_vv, OP_UUU_B, DO_MIN)
+RVVCALL(OPIVV2, VMinu16_vv, OP_UUU_H, DO_MIN)
+RVVCALL(OPIVV2, VMinu32_vv, OP_UUU_W, DO_MIN)
+RVVCALL(OPIVV2, VMinu64_vv, OP_UUU_D, DO_MIN)
+RVVCALL(OPIVV2, VMin8_vv, OP_SSS_B, DO_MIN)
+RVVCALL(OPIVV2, VMin16_vv, OP_SSS_H, DO_MIN)
+RVVCALL(OPIVV2, VMin32_vv, OP_SSS_W, DO_MIN)
+RVVCALL(OPIVV2, VMin64_vv, OP_SSS_D, DO_MIN)
+
+RVVCALL(OPIVV2, VMaxu8_vv, OP_UUU_B, DO_MAX)
+RVVCALL(OPIVV2, VMaxu16_vv, OP_UUU_H, DO_MAX)
+RVVCALL(OPIVV2, VMaxu32_vv, OP_UUU_W, DO_MAX)
+RVVCALL(OPIVV2, VMaxu64_vv, OP_UUU_D, DO_MAX)
+RVVCALL(OPIVV2, VMax8_vv, OP_SSS_B, DO_MAX)
+RVVCALL(OPIVV2, VMax16_vv, OP_SSS_H, DO_MAX)
+RVVCALL(OPIVV2, VMax32_vv, OP_SSS_W, DO_MAX)
+RVVCALL(OPIVV2, VMax64_vv, OP_SSS_D, DO_MAX)
 
 typedef void opivv2_fn(void *vd, void *vs1, void *vs2, int i);
 
@@ -1438,6 +1469,25 @@ GEN_VEXT_VV(VSub8_vv)
 GEN_VEXT_VV(VSub16_vv)
 GEN_VEXT_VV(VSub32_vv)
 GEN_VEXT_VV(VSub64_vv)
+
+GEN_VEXT_VV(VMinu8_vv)
+GEN_VEXT_VV(VMinu16_vv)
+GEN_VEXT_VV(VMinu32_vv)
+GEN_VEXT_VV(VMinu64_vv)
+GEN_VEXT_VV(VMin8_vv)
+GEN_VEXT_VV(VMin16_vv)
+GEN_VEXT_VV(VMin32_vv)
+GEN_VEXT_VV(VMin64_vv)
+
+GEN_VEXT_VV(VMaxu8_vv)
+GEN_VEXT_VV(VMaxu16_vv)
+GEN_VEXT_VV(VMaxu32_vv)
+GEN_VEXT_VV(VMaxu64_vv)
+GEN_VEXT_VV(VMax8_vv)
+GEN_VEXT_VV(VMax16_vv)
+GEN_VEXT_VV(VMax32_vv)
+GEN_VEXT_VV(VMax64_vv)
+
 /*
  * (T1)s1 gives the real operator type.
  * (TX1)(T1)s1 expands the operator type of widen or narrow operations.
@@ -1478,6 +1528,24 @@ RVVCALL(OPIVX2, VRsub8_vx, OP_SSS_B, DO_RSUB)
 RVVCALL(OPIVX2, VRsub16_vx, OP_SSS_H, DO_RSUB)
 RVVCALL(OPIVX2, VRsub32_vx, OP_SSS_W, DO_RSUB)
 RVVCALL(OPIVX2, VRsub64_vx, OP_SSS_D, DO_RSUB)
+
+RVVCALL(OPIVX2, VMinu8_vx, OP_UUU_B, DO_MIN)
+RVVCALL(OPIVX2, VMinu16_vx, OP_UUU_H, DO_MIN)
+RVVCALL(OPIVX2, VMinu32_vx, OP_UUU_W, DO_MIN)
+RVVCALL(OPIVX2, VMinu64_vx, OP_UUU_D, DO_MIN)
+RVVCALL(OPIVX2, VMin8_vx, OP_SSS_B, DO_MIN)
+RVVCALL(OPIVX2, VMin16_vx, OP_SSS_H, DO_MIN)
+RVVCALL(OPIVX2, VMin32_vx, OP_SSS_W, DO_MIN)
+RVVCALL(OPIVX2, VMin64_vx, OP_SSS_D, DO_MIN)
+
+RVVCALL(OPIVX2, VMaxu8_vx, OP_UUU_B, DO_MAX)
+RVVCALL(OPIVX2, VMaxu16_vx, OP_UUU_H, DO_MAX)
+RVVCALL(OPIVX2, VMaxu32_vx, OP_UUU_W, DO_MAX)
+RVVCALL(OPIVX2, VMaxu64_vx, OP_UUU_D, DO_MAX)
+RVVCALL(OPIVX2, VMax8_vx, OP_SSS_B, DO_MAX)
+RVVCALL(OPIVX2, VMax16_vx, OP_SSS_H, DO_MAX)
+RVVCALL(OPIVX2, VMax32_vx, OP_SSS_W, DO_MAX)
+RVVCALL(OPIVX2, VMax64_vx, OP_SSS_D, DO_MAX)
 
 typedef void opivx2_fn(void *vd, Long s1, void *vs2, int i);
 
@@ -1523,6 +1591,24 @@ GEN_VEXT_VX(VRsub8_vx)
 GEN_VEXT_VX(VRsub16_vx)
 GEN_VEXT_VX(VRsub32_vx)
 GEN_VEXT_VX(VRsub64_vx)
+
+GEN_VEXT_VX(VMinu8_vx)
+GEN_VEXT_VX(VMinu16_vx)
+GEN_VEXT_VX(VMinu32_vx)
+GEN_VEXT_VX(VMinu64_vx)
+GEN_VEXT_VX(VMin8_vx)
+GEN_VEXT_VX(VMin16_vx)
+GEN_VEXT_VX(VMin32_vx)
+GEN_VEXT_VX(VMin64_vx)
+
+GEN_VEXT_VX(VMaxu8_vx)
+GEN_VEXT_VX(VMaxu16_vx)
+GEN_VEXT_VX(VMaxu32_vx)
+GEN_VEXT_VX(VMaxu64_vx)
+GEN_VEXT_VX(VMax8_vx)
+GEN_VEXT_VX(VMax16_vx)
+GEN_VEXT_VX(VMax32_vx)
+GEN_VEXT_VX(VMax64_vx)
 
 struct Iop_handler {
    const char* name;
@@ -1572,6 +1658,11 @@ static const struct Iop_handler IOP_HANDLERS[] = {
 
    H_V_VX(Sub),
    H_V_XI(Rsub),
+
+   H_V_VX(Min),
+   H_V_VX(Minu),
+   H_V_VX(Max),
+   H_V_VX(Maxu),
 
    [Iop_VCmpNEZ32] = {"Iop_VCmpNEZ32", h_Iop_VCmpNEZ32},
    [Iop_VNot32]    = {"Iop_VNot32", h_Iop_VNot32},
