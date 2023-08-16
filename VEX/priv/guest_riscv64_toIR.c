@@ -4097,6 +4097,8 @@ static Bool dis_opivv(/*MB_OUT*/ DisResult* dres,
       return dis_rvv_vv(dres, irsb, insn, guest_pc_curr_instr, guest, Iop_VSub8_vv);
    case 0b001010:
       return dis_rvv_vv(dres, irsb, insn, guest_pc_curr_instr, guest, Iop_VOr8_vv);
+   case 0b001011:
+      return dis_rvv_vv(dres, irsb, insn, guest_pc_curr_instr, guest, Iop_VXor8_vv);
    case 0b001001:
       return dis_rvv_vv(dres, irsb, insn, guest_pc_curr_instr, guest, Iop_VAnd8_vv);
    case 0b011001:
@@ -4160,6 +4162,8 @@ static Bool dis_opivi(/*MB_OUT*/ DisResult* dres,
       return dis_rvv_vi(dres, irsb, insn, guest_pc_curr_instr, guest, Iop_VRsub8_vi);
    case 0b001010:
       return dis_rvv_vi(dres, irsb, insn, guest_pc_curr_instr, guest, Iop_VOr8_vi);
+   case 0b001011:
+      return dis_rvv_vi(dres, irsb, insn, guest_pc_curr_instr, guest, Iop_VXor8_vi);
    case 0b001001:
       return dis_rvv_vi(dres, irsb, insn, guest_pc_curr_instr, guest, Iop_VAnd8_vi);
    case 0b011000:
@@ -4191,6 +4195,8 @@ static Bool dis_opivx(/*MB_OUT*/ DisResult* dres,
       return dis_rvv_vx(dres, irsb, insn, guest_pc_curr_instr, guest, Iop_VRsub8_vx);
    case 0b001010:
       return dis_rvv_vx(dres, irsb, insn, guest_pc_curr_instr, guest, Iop_VOr8_vx);
+   case 0b001011:
+      return dis_rvv_vx(dres, irsb, insn, guest_pc_curr_instr, guest, Iop_VXor8_vx);
    case 0b001001:
       return dis_rvv_vx(dres, irsb, insn, guest_pc_curr_instr, guest, Iop_VAnd8_vx);
    case 0b011110:

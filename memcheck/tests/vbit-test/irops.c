@@ -1223,6 +1223,7 @@ static irop_t irops[] = {
 
   DEFOP_V_VXI(Add),
   DEFOP_V_VXI(Or),
+  DEFOP_V_VXI(Xor),
   DEFOP_V_VXI(And),
   DEFOP_V_VX(Sub),
   DEFOP_V_XI(Rsub),

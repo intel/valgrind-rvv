@@ -1898,6 +1898,10 @@ Bool primopMightTrap ( IROp op )
    case Iop_VOr8_vx ... Iop_VOr64_vx:
    case Iop_VOr8_vi ... Iop_VOr64_vi:
 
+   case Iop_VXor8_vv ... Iop_VXor64_vv:
+   case Iop_VXor8_vx ... Iop_VXor64_vx:
+   case Iop_VXor8_vi ... Iop_VXor64_vi:
+
    case Iop_VAnd8_vv ... Iop_VAnd64_vv:
    case Iop_VAnd8_vx ... Iop_VAnd64_vx:
    case Iop_VAnd8_vi ... Iop_VAnd64_vi:
@@ -4300,6 +4304,13 @@ void typeOfPrimop ( IROp op,
          VEC_VXI_BINARY(Iop_VOr8_vx);
       case Iop_VOr8_vi     ... Iop_VOr64_vi:
          VEC_VXI_BINARY(Iop_VOr8_vi);
+
+      case Iop_VXor8_vv    ... Iop_VXor64_vv:
+         VEC_VV_BINARY(Iop_VXor8_vv);
+      case Iop_VXor8_vx    ... Iop_VXor64_vx:
+         VEC_VXI_BINARY(Iop_VXor8_vx);
+      case Iop_VXor8_vi    ... Iop_VXor64_vi:
+         VEC_VXI_BINARY(Iop_VXor8_vi);
 
       case Iop_VAnd8_vv    ... Iop_VAnd64_vv:
          VEC_VV_BINARY(Iop_VAnd8_vv);

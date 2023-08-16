@@ -5197,6 +5197,13 @@ IRAtom* expr2vbits_Binop ( MCEnv* mce,
       case Iop_VOr8_vi ... Iop_VOr64_vi:
          return mkPCast_v(mce, vatom2, 8 << (bop - Iop_VOr8_vi));
 
+      case Iop_VXor8_vv ... Iop_VXor64_vv:
+         return binary_v(mce, vatom1, vatom2, 8 << (bop - Iop_VXor8_vv));
+      case Iop_VXor8_vx ... Iop_VXor64_vx:
+         return binary_v(mce, vatom1, vatom2, 8 << (bop - Iop_VXor8_vx));
+      case Iop_VXor8_vi ... Iop_VXor64_vi:
+         return mkPCast_v(mce, vatom2, 8 << (bop - Iop_VXor8_vi));
+
       case Iop_VAnd8_vv ... Iop_VAnd64_vv:
          return binary_v(mce, vatom1, vatom2, 8 << (bop - Iop_VAnd8_vv));
       case Iop_VAnd8_vx ... Iop_VAnd64_vx:
