@@ -1314,39 +1314,6 @@ static void iselInt128Expr(HReg* rHi, HReg* rLo, ISelEnv* env, IRExpr* e)
    vassert(hregIsVirtual(*rLo));
 }
 
-static void h_Iop_VCmpNEZ32(void *dst, void *src, ULong len)
-{
-   int *d = dst;
-   int *s = src;
-
-   for (int i = 0; i < len; ++i) {
-      d[i] = (s[i] != 0) ? -1 : 0;
-   }
-}
-
-static void h_Iop_VNot32(void *dst, void *src, ULong len)
-{
-   int *d = dst;
-   int *s = src;
-
-   for (int i = 0; i < len; ++i) {
-      d[i] = ~s[i];
-   }
-}
-
-static void h_Iop_VExpandBitsTo32(void *dst, void *src, ULong len)
-{
-   int *d = dst;
-   char *s = src;
-
-   for (int i = 0; i < len; i += 8) {
-      for (int j = i, bit = 0; j < len && bit < 8; ++j, ++bit) {
-         d[j] = (*s & (1 << bit)) ? -1 : 0;
-      }
-      ++s;
-   }
-}
-
 #define RVVCALL(macro, ...)  macro(__VA_ARGS__)
 
 typedef Char int8_t;
@@ -1358,6 +1325,13 @@ typedef UShort uint16_t;
 typedef UInt uint32_t;
 typedef ULong uint64_t;
 
+/* (TD, T2, TX2) */
+#define OP_SS_B int8_t, int8_t, int8_t
+#define OP_SS_H int16_t, int16_t, int16_t
+#define OP_SS_W int32_t, int32_t, int32_t
+#define OP_SS_D int64_t, int64_t, int64_t
+
+/* (TD, T1, T2, TX1, TX2) */
 #define OP_SSS_B int8_t, int8_t, int8_t, int8_t, int8_t
 #define OP_SSS_H int16_t, int16_t, int16_t, int16_t, int16_t
 #define OP_SSS_W int32_t, int32_t, int32_t, int32_t, int32_t
@@ -1552,6 +1526,63 @@ static int64_t do_mulhsu_d(int64_t s2, uint64_t s1)
 }
 
 /** END: high bits of multiply **/
+
+#define DO_NOT(N)    (~N)
+#define DO_CMPNEZ(N) ((N != 0) ? -1LL : 0)
+
+#define OPIVV1(NAME, TD, T2, TX2, OP)                  \
+static void do_##NAME(void *vd, void *vs2, int i)      \
+{                                                      \
+    TX2 s2 = *((T2 *)vs2 + i);                         \
+    *((TD *)vd + i) = OP(s2);                          \
+}
+
+RVVCALL(OPIVV1, VNot8, OP_SS_B, DO_NOT)
+RVVCALL(OPIVV1, VNot16, OP_SS_H, DO_NOT)
+RVVCALL(OPIVV1, VNot32, OP_SS_W, DO_NOT)
+RVVCALL(OPIVV1, VNot64, OP_SS_D, DO_NOT)
+
+RVVCALL(OPIVV1, VCmpNEZ8, OP_SS_B, DO_CMPNEZ)
+RVVCALL(OPIVV1, VCmpNEZ16, OP_SS_H, DO_CMPNEZ)
+RVVCALL(OPIVV1, VCmpNEZ32, OP_SS_W, DO_CMPNEZ)
+RVVCALL(OPIVV1, VCmpNEZ64, OP_SS_D, DO_CMPNEZ)
+
+#define GEN_VEXT_V(NAME)                               \
+static void h_Iop_##NAME(void *vd, void *vs2, int len) \
+{                                                      \
+   for (int i = 0; i < len; ++i) {                     \
+      do_##NAME(vd, vs2, i);                           \
+   }                                                   \
+}
+
+GEN_VEXT_V(VNot8)
+GEN_VEXT_V(VNot16)
+GEN_VEXT_V(VNot32)
+GEN_VEXT_V(VNot64)
+
+GEN_VEXT_V(VCmpNEZ8)
+GEN_VEXT_V(VCmpNEZ16)
+GEN_VEXT_V(VCmpNEZ32)
+GEN_VEXT_V(VCmpNEZ64)
+
+#define GEN_VEXT_V_EXPANDBIT(TD, BITS)                                  \
+static void h_Iop_VExpandBitsTo##BITS(void *dst, void *src, int len)    \
+{                                                                       \
+   TD *d = dst;                                                         \
+   char *s = src;                                                       \
+                                                                        \
+   for (int i = 0; i < len; i += 8) {                                   \
+      for (int j = i, bit = 0; j < len && bit < 8; ++j, ++bit) {        \
+         d[j] = (*s & (1 << bit)) ? -1LL : 0;                           \
+      }                                                                 \
+      ++s;                                                              \
+   }                                                                    \
+}
+
+GEN_VEXT_V_EXPANDBIT(int8_t, 8)
+GEN_VEXT_V_EXPANDBIT(int16_t, 16)
+GEN_VEXT_V_EXPANDBIT(int32_t, 32)
+GEN_VEXT_V_EXPANDBIT(int64_t, 64)
 
 #define OPIVV2(NAME, TD, T1, T2, TX1, TX2, OP)                \
 static void do_##NAME(void *vd, void *vs1, void *vs2, int i)  \
@@ -1925,6 +1956,12 @@ struct Iop_handler {
    const void* fn;
 };
 
+#define H_V1(op) \
+   [Iop_V##op##8]  = {"Iop_V" #op "8", h_Iop_V##op##8},   \
+   [Iop_V##op##16] = {"Iop_V" #op "16", h_Iop_V##op##16}, \
+   [Iop_V##op##32] = {"Iop_V" #op "32", h_Iop_V##op##32}, \
+   [Iop_V##op##64] = {"Iop_V" #op "64", h_Iop_V##op##64}
+
 #define H_V_V(op) \
    [Iop_V##op##8_vv]  = {"Iop_V" #op "8_vv", h_Iop_V##op##8_vv},   \
    [Iop_V##op##16_vv] = {"Iop_V" #op "16_vv", h_Iop_V##op##16_vv}, \
@@ -1984,9 +2021,10 @@ static const struct Iop_handler IOP_HANDLERS[] = {
    H_V_VX(Remu),
    H_V_VX(Rem),
 
-   [Iop_VCmpNEZ32] = {"Iop_VCmpNEZ32", h_Iop_VCmpNEZ32},
-   [Iop_VNot32]    = {"Iop_VNot32", h_Iop_VNot32},
-   [Iop_VExpandBitsTo32]     = {"Iop_VExpandBitsTo32",  h_Iop_VExpandBitsTo32},
+   H_V1(Not),
+   H_V1(CmpNEZ),
+   H_V1(ExpandBitsTo),
+
    [Iop_LAST] = {"Iop_LAST", 0}
 };
 

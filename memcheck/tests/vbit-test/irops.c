@@ -1190,6 +1190,12 @@ static irop_t irops[] = {
   { DEFOP(Iop_ReinterpV128asI128, UNDEF_ALL_64x2), .ppc64 = 1, .ppc32 = 1 },
   { DEFOP(Iop_ReinterpI128asV128, UNDEF_ALL_64x2), .ppc64 = 1, .ppc32 = 1 },
 
+#define DEFOP_V(op) \
+  { DEFOP(Iop_V##op##8, UNDEF_UNKNOWN), },  \
+  { DEFOP(Iop_V##op##16, UNDEF_UNKNOWN), }, \
+  { DEFOP(Iop_V##op##32, UNDEF_UNKNOWN), }, \
+  { DEFOP(Iop_V##op##64, UNDEF_UNKNOWN), }
+
 #define DEFOP_V_V(op) \
   { DEFOP(Iop_V##op##8_vv, UNDEF_UNKNOWN), },  \
   { DEFOP(Iop_V##op##16_vv, UNDEF_UNKNOWN), }, \
@@ -1250,18 +1256,9 @@ static irop_t irops[] = {
   { DEFOP(Iop_VI2_Start, UNDEF_UNKNOWN), },
   { DEFOP(Iop_VI2_End, UNDEF_UNKNOWN), },
 
-  { DEFOP(Iop_VCmpNEZ8, UNDEF_UNKNOWN), },
-  { DEFOP(Iop_VCmpNEZ16, UNDEF_UNKNOWN), },
-  { DEFOP(Iop_VCmpNEZ32, UNDEF_UNKNOWN), },
-  { DEFOP(Iop_VCmpNEZ64, UNDEF_UNKNOWN), },
-  { DEFOP(Iop_VNot8, UNDEF_UNKNOWN), },
-  { DEFOP(Iop_VNot16, UNDEF_UNKNOWN), },
-  { DEFOP(Iop_VNot32, UNDEF_UNKNOWN), },
-  { DEFOP(Iop_VNot64, UNDEF_UNKNOWN), },
-  { DEFOP(Iop_VExpandBitsTo8, UNDEF_UNKNOWN), },
-  { DEFOP(Iop_VExpandBitsTo16, UNDEF_UNKNOWN), },
-  { DEFOP(Iop_VExpandBitsTo32, UNDEF_UNKNOWN), },
-  { DEFOP(Iop_VExpandBitsTo64, UNDEF_UNKNOWN), },
+  DEFOP_V(CmpNEZ),
+  DEFOP_V(Not),
+  DEFOP_V(ExpandBitsTo),
 };
 
 /* Force compile time failure in case libvex_ir.h::IROp was updated
