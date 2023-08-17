@@ -1912,6 +1912,34 @@ Bool primopMightTrap ( IROp op )
    case Iop_VRsub8_vx ... Iop_VRsub64_vx:
    case Iop_VRsub8_vi ... Iop_VRsub64_vi:
 
+   case Iop_VMseq8_vv ... Iop_VMseq64_vv:
+   case Iop_VMseq8_vx ... Iop_VMseq64_vx:
+   case Iop_VMseq8_vi ... Iop_VMseq64_vi:
+
+   case Iop_VMsne8_vv ... Iop_VMsne64_vv:
+   case Iop_VMsne8_vx ... Iop_VMsne64_vx:
+   case Iop_VMsne8_vi ... Iop_VMsne64_vi:
+
+   case Iop_VMsltu8_vv ... Iop_VMsltu64_vv:
+   case Iop_VMsltu8_vx ... Iop_VMsltu64_vx:
+
+   case Iop_VMslt8_vv ... Iop_VMslt64_vv:
+   case Iop_VMslt8_vx ... Iop_VMslt64_vx:
+
+   case Iop_VMsleu8_vv ... Iop_VMsleu64_vv:
+   case Iop_VMsleu8_vx ... Iop_VMsleu64_vx:
+   case Iop_VMsleu8_vi ... Iop_VMsleu64_vi:
+
+   case Iop_VMsle8_vv ... Iop_VMsle64_vv:
+   case Iop_VMsle8_vx ... Iop_VMsle64_vx:
+   case Iop_VMsle8_vi ... Iop_VMsle64_vi:
+
+   case Iop_VMsgtu8_vx ... Iop_VMsgtu64_vx:
+   case Iop_VMsgtu8_vi ... Iop_VMsgtu64_vi:
+
+   case Iop_VMsgt8_vx ... Iop_VMsgt64_vx:
+   case Iop_VMsgt8_vi ... Iop_VMsgt64_vi:
+
    case Iop_VCmpNEZ8 ... Iop_VCmpNEZ64:
    case Iop_VNot8 ... Iop_VNot64:
    case Iop_VExpandBitsTo8 ... Iop_VExpandBitsTo64:
@@ -3209,6 +3237,24 @@ void typeOfPrimop ( IROp op,
 #  define UNARY_COMPARISON(_ta)                                \
      *t_dst = Ity_I1; *t_arg1 = (_ta); break;
 
+#  define VEC_VVto1_BINARY(bop_base) \
+      { \
+         IRType base = Ity_VLen8 + bop - bop_base; \
+         UInt vl = VLofVecIROp(op); \
+         IRType ty = typeofVecIR (vl, base); \
+         IRType dst_ty = typeofVecIR (vl, Ity_VLen1); \
+         BINARY(ty, ty, dst_ty); \
+      }
+
+#  define VEC_VXIto1_BINARY(bop_base) \
+      { \
+         IRType base = Ity_VLen8 + bop - bop_base; \
+         UInt vl = VLofVecIROp(op); \
+         IRType ty = typeofVecIR (vl, base); \
+         IRType dst_ty = typeofVecIR (vl, Ity_VLen1); \
+         BINARY(Ity_I64, ty, dst_ty); \
+      }
+
 #  define VEC_VV_BINARY(bop_base) \
       { \
          IRType base = Ity_VLen8 + bop - bop_base; \
@@ -4386,6 +4432,54 @@ void typeOfPrimop ( IROp op,
          VEC_VV_BINARY(Iop_VRem8_vv);
       case Iop_VRem8_vx    ... Iop_VRem64_vx:
          VEC_VXI_BINARY(Iop_VRem8_vx);
+
+      case Iop_VMseq8_vv    ... Iop_VMseq64_vv:
+         VEC_VVto1_BINARY(Iop_VMseq8_vv);
+      case Iop_VMseq8_vx    ... Iop_VMseq64_vx:
+         VEC_VXIto1_BINARY(Iop_VMseq8_vx);
+      case Iop_VMseq8_vi    ... Iop_VMseq64_vi:
+         VEC_VXIto1_BINARY(Iop_VMseq8_vi);
+
+      case Iop_VMsne8_vv    ... Iop_VMsne64_vv:
+         VEC_VVto1_BINARY(Iop_VMsne8_vv);
+      case Iop_VMsne8_vx    ... Iop_VMsne64_vx:
+         VEC_VXIto1_BINARY(Iop_VMsne8_vx);
+      case Iop_VMsne8_vi    ... Iop_VMsne64_vi:
+         VEC_VXIto1_BINARY(Iop_VMsne8_vi);
+
+      case Iop_VMsltu8_vv    ... Iop_VMsltu64_vv:
+         VEC_VVto1_BINARY(Iop_VMsltu8_vv);
+      case Iop_VMsltu8_vx    ... Iop_VMsltu64_vx:
+         VEC_VXIto1_BINARY(Iop_VMsltu8_vx);
+
+      case Iop_VMslt8_vv    ... Iop_VMslt64_vv:
+         VEC_VVto1_BINARY(Iop_VMslt8_vv);
+      case Iop_VMslt8_vx    ... Iop_VMslt64_vx:
+         VEC_VXIto1_BINARY(Iop_VMslt8_vx);
+
+      case Iop_VMsleu8_vv    ... Iop_VMsleu64_vv:
+         VEC_VVto1_BINARY(Iop_VMsleu8_vv);
+      case Iop_VMsleu8_vx    ... Iop_VMsleu64_vx:
+         VEC_VXIto1_BINARY(Iop_VMsleu8_vx);
+      case Iop_VMsleu8_vi    ... Iop_VMsleu64_vi:
+         VEC_VXIto1_BINARY(Iop_VMsleu8_vi);
+
+      case Iop_VMsle8_vv    ... Iop_VMsle64_vv:
+         VEC_VVto1_BINARY(Iop_VMsle8_vv);
+      case Iop_VMsle8_vx    ... Iop_VMsle64_vx:
+         VEC_VXIto1_BINARY(Iop_VMsle8_vx);
+      case Iop_VMsle8_vi    ... Iop_VMsle64_vi:
+         VEC_VXIto1_BINARY(Iop_VMsle8_vi);
+
+      case Iop_VMsgtu8_vx    ... Iop_VMsgtu64_vx:
+         VEC_VXIto1_BINARY(Iop_VMsgtu8_vx);
+      case Iop_VMsgtu8_vi    ... Iop_VMsgtu64_vi:
+         VEC_VXIto1_BINARY(Iop_VMsgtu8_vi);
+
+      case Iop_VMsgt8_vx    ... Iop_VMsgt64_vx:
+         VEC_VXIto1_BINARY(Iop_VMsgt8_vx);
+      case Iop_VMsgt8_vi    ... Iop_VMsgt64_vi:
+         VEC_VXIto1_BINARY(Iop_VMsgt8_vi);
 
       case Iop_VCmpNEZ8 ... Iop_VCmpNEZ64:
          VEC_UNARY(Iop_VCmpNEZ8);

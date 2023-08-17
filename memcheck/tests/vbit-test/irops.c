@@ -1248,6 +1248,15 @@ static irop_t irops[] = {
   DEFOP_V_VX(Remu),
   DEFOP_V_VX(Rem),
 
+  DEFOP_V_VXI(Mseq),
+  DEFOP_V_VXI(Msne),
+  DEFOP_V_VX(Msltu),
+  DEFOP_V_VX(Mslt),
+  DEFOP_V_VXI(Msleu),
+  DEFOP_V_VXI(Msle),
+  DEFOP_V_XI(Msgtu),
+  DEFOP_V_XI(Msgt),
+
   /* These are fake ones */
   { DEFOP(Iop_VV2_Start, UNDEF_UNKNOWN), },
   { DEFOP(Iop_VV2_End, UNDEF_UNKNOWN), },

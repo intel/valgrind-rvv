@@ -1951,6 +1951,120 @@ GEN_VEXT_VX(VRem16_vx)
 GEN_VEXT_VX(VRem32_vx)
 GEN_VEXT_VX(VRem64_vx)
 
+static inline uint64_t deposit64(uint64_t value, int start, int length,
+                                 uint64_t fieldval)
+{
+   uint64_t mask;
+   mask = (~0ULL >> (64 - length)) << start;
+   return (value & ~mask) | ((fieldval << start) & mask);
+}
+
+static inline void vext_set_elem_mask(void *v0, int index,
+                                      uint8_t value)
+{
+   int idx = index / 64;
+   int pos = index % 64;
+   uint64_t old = ((uint64_t *)v0)[idx];
+   ((uint64_t *)v0)[idx] = deposit64(old, pos, 1, value);
+}
+
+/* Vector Integer Comparison Instructions */
+#define DO_MSEQ(N, M) (N == M)
+#define DO_MSNE(N, M) (N != M)
+#define DO_MSLT(N, M) (N < M)
+#define DO_MSLE(N, M) (N <= M)
+#define DO_MSGT(N, M) (N > M)
+
+#define GEN_VEXT_CMP_VV(NAME, ETYPE, DO_OP)                       \
+static void h_Iop_##NAME(void *vd, void *vs1, void *vs2, int len) \
+{                                                                 \
+   for (int i = 0; i < len; ++i) {                                \
+      ETYPE s1 = *((ETYPE *)vs1 + i);                             \
+      ETYPE s2 = *((ETYPE *)vs2 + i);                             \
+      vext_set_elem_mask(vd, i, DO_OP(s2, s1));                   \
+   }                                                              \
+}
+
+GEN_VEXT_CMP_VV(VMseq8_vv, uint8_t,  DO_MSEQ)
+GEN_VEXT_CMP_VV(VMseq16_vv, uint16_t, DO_MSEQ)
+GEN_VEXT_CMP_VV(VMseq32_vv, uint32_t, DO_MSEQ)
+GEN_VEXT_CMP_VV(VMseq64_vv, uint64_t, DO_MSEQ)
+
+GEN_VEXT_CMP_VV(VMsne8_vv, uint8_t,  DO_MSNE)
+GEN_VEXT_CMP_VV(VMsne16_vv, uint16_t, DO_MSNE)
+GEN_VEXT_CMP_VV(VMsne32_vv, uint32_t, DO_MSNE)
+GEN_VEXT_CMP_VV(VMsne64_vv, uint64_t, DO_MSNE)
+
+GEN_VEXT_CMP_VV(VMsltu8_vv, uint8_t,  DO_MSLT)
+GEN_VEXT_CMP_VV(VMsltu16_vv, uint16_t, DO_MSLT)
+GEN_VEXT_CMP_VV(VMsltu32_vv, uint32_t, DO_MSLT)
+GEN_VEXT_CMP_VV(VMsltu64_vv, uint64_t, DO_MSLT)
+
+GEN_VEXT_CMP_VV(VMslt8_vv, int8_t,  DO_MSLT)
+GEN_VEXT_CMP_VV(VMslt16_vv, int16_t, DO_MSLT)
+GEN_VEXT_CMP_VV(VMslt32_vv, int32_t, DO_MSLT)
+GEN_VEXT_CMP_VV(VMslt64_vv, int64_t, DO_MSLT)
+
+GEN_VEXT_CMP_VV(VMsleu8_vv, uint8_t,  DO_MSLE)
+GEN_VEXT_CMP_VV(VMsleu16_vv, uint16_t, DO_MSLE)
+GEN_VEXT_CMP_VV(VMsleu32_vv, uint32_t, DO_MSLE)
+GEN_VEXT_CMP_VV(VMsleu64_vv, uint64_t, DO_MSLE)
+
+GEN_VEXT_CMP_VV(VMsle8_vv, int8_t,  DO_MSLE)
+GEN_VEXT_CMP_VV(VMsle16_vv, int16_t, DO_MSLE)
+GEN_VEXT_CMP_VV(VMsle32_vv, int32_t, DO_MSLE)
+GEN_VEXT_CMP_VV(VMsle64_vv, int64_t, DO_MSLE)
+
+#define GEN_VEXT_CMP_VX(NAME, ETYPE, DO_OP)                             \
+static void h_Iop_##NAME(void *vd, Long s1, void *vs2, int len)         \
+{                                                                       \
+   for (int i = 0; i < len; ++i) {                                      \
+      ETYPE s2 = *((ETYPE *)vs2 + i);                                   \
+      vext_set_elem_mask(vd, i,                                         \
+              DO_OP(s2, (ETYPE)(Long)s1));                              \
+   }                                                                    \
+}
+
+GEN_VEXT_CMP_VX(VMseq8_vx, uint8_t,  DO_MSEQ)
+GEN_VEXT_CMP_VX(VMseq16_vx, uint16_t, DO_MSEQ)
+GEN_VEXT_CMP_VX(VMseq32_vx, uint32_t, DO_MSEQ)
+GEN_VEXT_CMP_VX(VMseq64_vx, uint64_t, DO_MSEQ)
+
+GEN_VEXT_CMP_VX(VMsne8_vx, uint8_t,  DO_MSNE)
+GEN_VEXT_CMP_VX(VMsne16_vx, uint16_t, DO_MSNE)
+GEN_VEXT_CMP_VX(VMsne32_vx, uint32_t, DO_MSNE)
+GEN_VEXT_CMP_VX(VMsne64_vx, uint64_t, DO_MSNE)
+
+GEN_VEXT_CMP_VX(VMsltu8_vx, uint8_t,  DO_MSLT)
+GEN_VEXT_CMP_VX(VMsltu16_vx, uint16_t, DO_MSLT)
+GEN_VEXT_CMP_VX(VMsltu32_vx, uint32_t, DO_MSLT)
+GEN_VEXT_CMP_VX(VMsltu64_vx, uint64_t, DO_MSLT)
+
+GEN_VEXT_CMP_VX(VMslt8_vx, int8_t,  DO_MSLT)
+GEN_VEXT_CMP_VX(VMslt16_vx, int16_t, DO_MSLT)
+GEN_VEXT_CMP_VX(VMslt32_vx, int32_t, DO_MSLT)
+GEN_VEXT_CMP_VX(VMslt64_vx, int64_t, DO_MSLT)
+
+GEN_VEXT_CMP_VX(VMsleu8_vx, uint8_t,  DO_MSLE)
+GEN_VEXT_CMP_VX(VMsleu16_vx, uint16_t, DO_MSLE)
+GEN_VEXT_CMP_VX(VMsleu32_vx, uint32_t, DO_MSLE)
+GEN_VEXT_CMP_VX(VMsleu64_vx, uint64_t, DO_MSLE)
+
+GEN_VEXT_CMP_VX(VMsle8_vx, int8_t,  DO_MSLE)
+GEN_VEXT_CMP_VX(VMsle16_vx, int16_t, DO_MSLE)
+GEN_VEXT_CMP_VX(VMsle32_vx, int32_t, DO_MSLE)
+GEN_VEXT_CMP_VX(VMsle64_vx, int64_t, DO_MSLE)
+
+GEN_VEXT_CMP_VX(VMsgtu8_vx, uint8_t,  DO_MSGT)
+GEN_VEXT_CMP_VX(VMsgtu16_vx, uint16_t, DO_MSGT)
+GEN_VEXT_CMP_VX(VMsgtu32_vx, uint32_t, DO_MSGT)
+GEN_VEXT_CMP_VX(VMsgtu64_vx, uint64_t, DO_MSGT)
+
+GEN_VEXT_CMP_VX(VMsgt8_vx, int8_t,  DO_MSGT)
+GEN_VEXT_CMP_VX(VMsgt16_vx, int16_t, DO_MSGT)
+GEN_VEXT_CMP_VX(VMsgt32_vx, int32_t, DO_MSGT)
+GEN_VEXT_CMP_VX(VMsgt64_vx, int64_t, DO_MSGT)
+
 struct Iop_handler {
    const char* name;
    const void* fn;
@@ -2020,6 +2134,15 @@ static const struct Iop_handler IOP_HANDLERS[] = {
    H_V_VX(Div),
    H_V_VX(Remu),
    H_V_VX(Rem),
+
+   H_V_VXI(Mseq),
+   H_V_VXI(Msne),
+   H_V_VX(Msltu),
+   H_V_VX(Mslt),
+   H_V_VXI(Msleu),
+   H_V_VXI(Msle),
+   H_V_XI(Msgtu),
+   H_V_XI(Msgt),
 
    H_V1(Not),
    H_V1(CmpNEZ),
@@ -2190,7 +2313,7 @@ static Bool iselVecExpr_R_wrk_binop_vx(HReg dst[], ISelEnv* env, IRExpr* e)
 static void iselVecExpr_R_wrk(HReg dst[], ISelEnv* env, IRExpr* e)
 {
    IRType ty = typeOfIRExpr(env->type_env, e);
-   Int vl = VLofVecIRType(ty);
+   //Int vl = VLofVecIRType(ty);
    Int sz = sizeofVecIRType(ty);
    Int vlen_b = VLEN / 8;
    Int nregs = (sz + vlen_b - 1) / vlen_b;
@@ -2737,7 +2860,7 @@ static void iselStmt(ISelEnv* env, IRStmt* stmt)
       }
       IRType vty = tyd & IR_TYPE_MASK;
       if (vty >= Ity_VLen8 && vty <= Ity_VLen64) {
-         Int vl = VLofVecIRType(tyd);
+         //Int vl = VLofVecIRType(tyd);
          Int sz = sizeofVecIRType(tyd);
          Int vlen_b = VLEN / 8;
          Int nregs = sz / vlen_b;
