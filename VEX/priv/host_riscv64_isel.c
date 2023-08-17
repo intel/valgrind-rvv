@@ -99,6 +99,13 @@ typedef struct {
 #define vregmap vregmaps[0]
 #define vregmapHI vregmaps[1]
 
+#define MAX(a, b) \
+   ({ __typeof__ (a) _a = (a); \
+       __typeof__ (b) _b = (b); \
+     _a > _b ? _a : _b; })
+
+#define ROUND_UP(a, b)  (((a) + (b) - 1) / (b))
+
 static HReg lookupIRTemp(ISelEnv* env, IRTemp tmp)
 {
    vassert(tmp >= 0);
@@ -1955,6 +1962,7 @@ static inline uint64_t deposit64(uint64_t value, int start, int length,
                                  uint64_t fieldval)
 {
    uint64_t mask;
+   vassert(start >= 0 && length > 0 && length <= 64 - start);
    mask = (~0ULL >> (64 - length)) << start;
    return (value & ~mask) | ((fieldval << start) & mask);
 }
@@ -2169,7 +2177,7 @@ static void adjust_sp(ISelEnv* env, Long n)
 
 static void storeVecReg(ISelEnv* env, HReg src[], Int nregs, HReg addr)
 {
-   Int vlen_b = VLEN / 8;
+   const Int vlen_b = VLEN / 8;
    Int vl_ldst64 = vlen_b / 8;
 
    HReg tmp = newVRegI(env);
@@ -2183,7 +2191,7 @@ static void storeVecReg(ISelEnv* env, HReg src[], Int nregs, HReg addr)
 
 static void loadVecReg(ISelEnv* env, HReg dst[], Int nregs, HReg addr)
 {
-   Int vlen_b = VLEN / 8;
+   const Int vlen_b = VLEN / 8;
    Int vl_ldst64 = vlen_b / 8;
 
    HReg tmp = newVRegI(env);
@@ -2202,11 +2210,18 @@ static Bool iselVecExpr_R_wrk_unop(HReg dst[], ISelEnv* env, IRExpr* e)
       return False;
    }
 
-   IRType ty = typeOfIRExpr(env->type_env, e);
-   Int vl = VLofVecIRType(ty);
-   Int sz = sizeofVecIRType(ty);
-   Int vlen_b = VLEN / 8;
-   Int nregs = sz / vlen_b;
+   const Int vlen_b = VLEN / 8;
+   IRType dst_ty = typeOfIRExpr(env->type_env, e);
+   Int vl = VLofVecIRType(dst_ty);
+
+   Int dst_sz = sizeofVecIRType(dst_ty);
+   Int dst_nregs = ROUND_UP(dst_sz, vlen_b);
+
+   IRType src_ty = typeOfIRExpr(env->type_env, e->Iex.Unop.arg);
+   Int src_sz = sizeofVecIRType(src_ty);
+   Int src_nregs = ROUND_UP(src_sz, vlen_b);
+
+   Int sz = MAX(src_sz, dst_sz);
 
    HReg src[MAX_REGS] = {0};
    iselVecExpr_R(src, env, e->Iex.Unop.arg);
@@ -2224,9 +2239,9 @@ static Bool iselVecExpr_R_wrk_unop(HReg dst[], ISelEnv* env, IRExpr* e)
    addInstr(env, RISCV64Instr_ALUImm(RISCV64op_ADDI, hregRISCV64_x11(), argp, sz));                // a1 - src
    addInstr(env, RISCV64Instr_ALUImm(RISCV64op_ADDI, hregRISCV64_x12(), hregRISCV64_x0(), vl));    // a2 - vl
 
-   storeVecReg(env, src, nregs, hregRISCV64_x11());
+   storeVecReg(env, src, src_nregs, hregRISCV64_x11());
    addInstr(env, RISCV64Instr_Call(mk_RetLoc_simple(RLPri_None), (Addr64) fn, INVALID_HREG, 3, 0));
-   loadVecReg(env, dst, nregs, argp);
+   loadVecReg(env, dst, dst_nregs, argp);
 
    adjust_sp(env, MAX_ARGS_STACK_SIZE);
    return True;
@@ -2239,11 +2254,23 @@ static Bool iselVecExpr_R_wrk_binop_vv(HReg dst[], ISelEnv* env, IRExpr* e)
       return False;
    }
 
-   IRType ty = typeOfIRExpr(env->type_env, e);
-   Int vl = VLofVecIRType(ty);
-   Int sz = sizeofVecIRType(ty);
-   Int vlen_b = VLEN / 8;
-   Int nregs = sz / vlen_b;
+   const Int vlen_b = VLEN / 8;
+   IRType dst_ty = typeOfIRExpr(env->type_env, e);
+   Int vl = VLofVecIRType(dst_ty);
+
+   Int dst_sz = sizeofVecIRType(dst_ty);
+   Int dst_nregs = ROUND_UP(dst_sz, vlen_b);
+
+   IRType src1_ty = typeOfIRExpr(env->type_env, e->Iex.Binop.arg2);
+   Int src1_sz = sizeofVecIRType(src1_ty);
+   Int src1_nregs = ROUND_UP(src1_sz, vlen_b);
+
+   IRType src2_ty = typeOfIRExpr(env->type_env, e->Iex.Binop.arg2);
+   Int src2_sz = sizeofVecIRType(src2_ty);
+   Int src2_nregs = ROUND_UP(src2_sz, vlen_b);
+
+   Int sz = MAX(src1_sz, src2_sz);
+   sz = MAX(sz, dst_sz);
 
    HReg src1[MAX_REGS] = {0};
    HReg src2[MAX_REGS] = {0};
@@ -2263,10 +2290,10 @@ static Bool iselVecExpr_R_wrk_binop_vv(HReg dst[], ISelEnv* env, IRExpr* e)
    addInstr(env, RISCV64Instr_ALUImm(RISCV64op_ADDI, hregRISCV64_x12(), argp, sz * 2));            // a2 - src2
    addInstr(env, RISCV64Instr_ALUImm(RISCV64op_ADDI, hregRISCV64_x13(), hregRISCV64_x0(), vl));    // a3 - vl
 
-   storeVecReg(env, src1, nregs, hregRISCV64_x11());
-   storeVecReg(env, src2, nregs, hregRISCV64_x12());
+   storeVecReg(env, src1, src1_nregs, hregRISCV64_x11());
+   storeVecReg(env, src2, src2_nregs, hregRISCV64_x12());
    addInstr(env, RISCV64Instr_Call(mk_RetLoc_simple(RLPri_None), (Addr64) fn, INVALID_HREG, 4, 0));
-   loadVecReg(env, dst, nregs, argp);
+   loadVecReg(env, dst, dst_nregs, argp);
 
    adjust_sp(env, MAX_ARGS_STACK_SIZE);
    return True;
@@ -2279,11 +2306,18 @@ static Bool iselVecExpr_R_wrk_binop_vx(HReg dst[], ISelEnv* env, IRExpr* e)
       return False;
    }
 
-   IRType ty = typeOfIRExpr(env->type_env, e);
-   Int vl = VLofVecIRType(ty);
-   Int sz = sizeofVecIRType(ty);
-   Int vlen_b = VLEN / 8;
-   Int nregs = sz / vlen_b;
+   const Int vlen_b = VLEN / 8;
+   IRType dst_ty = typeOfIRExpr(env->type_env, e);
+   Int vl = VLofVecIRType(dst_ty);
+
+   Int dst_sz = sizeofVecIRType(dst_ty);
+   Int dst_nregs = ROUND_UP(dst_sz, vlen_b);
+
+   IRType src2_ty = typeOfIRExpr(env->type_env, e->Iex.Binop.arg2);
+   Int src2_sz = sizeofVecIRType(src2_ty);
+   Int src2_nregs = ROUND_UP(src2_sz, vlen_b);
+
+   Int sz = MAX(dst_sz, src2_sz);
 
    HReg src1 = iselIntExpr_R(env, e->Iex.Binop.arg1);
    HReg src2[MAX_REGS] = {0};
@@ -2302,9 +2336,9 @@ static Bool iselVecExpr_R_wrk_binop_vx(HReg dst[], ISelEnv* env, IRExpr* e)
    addInstr(env, RISCV64Instr_ALUImm(RISCV64op_ADDI, hregRISCV64_x12(), argp, sz));                // a2 - src2
    addInstr(env, RISCV64Instr_ALUImm(RISCV64op_ADDI, hregRISCV64_x13(), hregRISCV64_x0(), vl));    // a3 - vl
 
-   storeVecReg(env, src2, nregs, hregRISCV64_x12());
+   storeVecReg(env, src2, src2_nregs, hregRISCV64_x12());
    addInstr(env, RISCV64Instr_Call(mk_RetLoc_simple(RLPri_None), (Addr64) fn, INVALID_HREG, 4, 0));
-   loadVecReg(env, dst, nregs, argp);
+   loadVecReg(env, dst, dst_nregs, argp);
 
    adjust_sp(env, MAX_ARGS_STACK_SIZE);
    return True;
@@ -2859,7 +2893,7 @@ static void iselStmt(ISelEnv* env, IRStmt* stmt)
          return;
       }
       IRType vty = tyd & IR_TYPE_MASK;
-      if (vty >= Ity_VLen8 && vty <= Ity_VLen64) {
+      if (vty >= Ity_VLen1 && vty <= Ity_VLen64) {
          //Int vl = VLofVecIRType(tyd);
          Int sz = sizeofVecIRType(tyd);
          Int vlen_b = VLEN / 8;
