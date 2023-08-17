@@ -214,6 +214,121 @@ void ppIROp ( IROp op )
       case Iop_VRsub8_vi ... Iop_VRsub64_vi:
          str = "VRsub_vi"; base = Iop_VRsub8_vi; break;
 
+      case Iop_VXor8_vv ... Iop_VXor64_vv:
+         str = "VXor_vv"; base = Iop_VXor8_vv; break;
+      case Iop_VXor8_vx ... Iop_VXor64_vx:
+         str = "VXor_vx"; base = Iop_VXor8_vx; break;
+      case Iop_VXor8_vi ... Iop_VXor64_vi:
+         str = "VXor_vi"; base = Iop_VXor8_vi; break;
+
+      case Iop_VMinu8_vv ... Iop_VMinu64_vv:
+         str = "VMinu_vv"; base = Iop_VMinu8_vv; break;
+      case Iop_VMinu8_vx ... Iop_VMinu64_vx:
+         str = "VMinu_vx"; base = Iop_VMinu8_vx; break;
+
+      case Iop_VMin8_vv ... Iop_VMin64_vv:
+         str = "VMin_vv"; base = Iop_VMin8_vv; break;
+      case Iop_VMin8_vx ... Iop_VMin64_vx:
+         str = "VMin_vx"; base = Iop_VMin8_vx; break;
+
+      case Iop_VMaxu8_vv ... Iop_VMaxu64_vv:
+         str = "VMaxu_vv"; base = Iop_VMaxu8_vv; break;
+      case Iop_VMaxu8_vx ... Iop_VMaxu64_vx:
+         str = "VMaxu_vx"; base = Iop_VMaxu8_vx; break;
+
+      case Iop_VMax8_vv ... Iop_VMax64_vv:
+         str = "VMax_vv"; base = Iop_VMax8_vv; break;
+      case Iop_VMax8_vx ... Iop_VMax64_vx:
+         str = "VMax_vx"; base = Iop_VMax8_vx; break;
+
+      case Iop_VMul8_vv ... Iop_VMul64_vv:
+         str = "VMul_vv"; base = Iop_VMul8_vv; break;
+      case Iop_VMul8_vx ... Iop_VMul64_vx:
+         str = "VMul_vx"; base = Iop_VMul8_vx; break;
+
+      case Iop_VMulh8_vv ... Iop_VMulh64_vv:
+         str = "VMulh_vv"; base = Iop_VMulh8_vv; break;
+      case Iop_VMulh8_vx ... Iop_VMulh64_vx:
+         str = "VMulh_vx"; base = Iop_VMulh8_vx; break;
+
+      case Iop_VMulhu8_vv ... Iop_VMulhu64_vv:
+         str = "VMulhu_vv"; base = Iop_VMulhu8_vv; break;
+      case Iop_VMulhu8_vx ... Iop_VMulhu64_vx:
+         str = "VMulhu_vx"; base = Iop_VMulhu8_vx; break;
+
+      case Iop_VMulhsu8_vv ... Iop_VMulhsu64_vv:
+         str = "VMulhsu_vv"; base = Iop_VMulhsu8_vv; break;
+      case Iop_VMulhsu8_vx ... Iop_VMulhsu64_vx:
+         str = "VMulhsu_vx"; base = Iop_VMulhsu8_vx; break;
+
+      case Iop_VDivu8_vv ... Iop_VDivu64_vv:
+         str = "VDivu_vv"; base = Iop_VDivu8_vv; break;
+      case Iop_VDivu8_vx ... Iop_VDivu64_vx:
+         str = "VDivu_vx"; base = Iop_VDivu8_vx; break;
+
+      case Iop_VDiv8_vv ... Iop_VDiv64_vv:
+         str = "VDiv_vv"; base = Iop_VDiv8_vv; break;
+      case Iop_VDiv8_vx ... Iop_VDiv64_vx:
+         str = "VDiv_vx"; base = Iop_VDiv8_vx; break;
+
+      case Iop_VRemu8_vv ... Iop_VRemu64_vv:
+         str = "VRemu_vv"; base = Iop_VRemu8_vv; break;
+      case Iop_VRemu8_vx ... Iop_VRemu64_vx:
+         str = "VRemu_vx"; base = Iop_VRemu8_vx; break;
+
+      case Iop_VRem8_vv ... Iop_VRem64_vv:
+         str = "VRem_vv"; base = Iop_VRem8_vv; break;
+      case Iop_VRem8_vx ... Iop_VRem64_vx:
+         str = "VRem_vx"; base = Iop_VRem8_vx; break;
+
+      case Iop_VMseq8_vv ... Iop_VMseq64_vv:
+         str = "VMseq_vv"; base = Iop_VMseq8_vv; break;
+      case Iop_VMseq8_vx ... Iop_VMseq64_vx:
+         str = "VMseq_vx"; base = Iop_VMseq8_vx; break;
+      case Iop_VMseq8_vi ... Iop_VMseq64_vi:
+         str = "VMseq_vi"; base = Iop_VMseq8_vi; break;
+
+      case Iop_VMsne8_vv ... Iop_VMsne64_vv:
+         str = "VMsne_vv"; base = Iop_VMsne8_vv; break;
+      case Iop_VMsne8_vx ... Iop_VMsne64_vx:
+         str = "VMsne_vx"; base = Iop_VMsne8_vx; break;
+      case Iop_VMsne8_vi ... Iop_VMsne64_vi:
+         str = "VMsne_vi"; base = Iop_VMsne8_vi; break;
+
+      case Iop_VMsltu8_vv ... Iop_VMsltu64_vv:
+         str = "VMsltu_vv"; base = Iop_VMsltu8_vv; break;
+      case Iop_VMsltu8_vx ... Iop_VMsltu64_vx:
+         str = "VMsltu_vx"; base = Iop_VMsltu8_vx; break;
+
+      case Iop_VMslt8_vv ... Iop_VMslt64_vv:
+         str = "VMslt_vv"; base = Iop_VMslt8_vv; break;
+      case Iop_VMslt8_vx ... Iop_VMslt64_vx:
+         str = "VMslt_vx"; base = Iop_VMslt8_vx; break;
+
+      case Iop_VMsleu8_vv ... Iop_VMsleu64_vv:
+         str = "VMsleu_vv"; base = Iop_VMsleu8_vv; break;
+      case Iop_VMsleu8_vx ... Iop_VMsleu64_vx:
+         str = "VMsleu_vx"; base = Iop_VMsleu8_vx; break;
+      case Iop_VMsleu8_vi ... Iop_VMsleu64_vi:
+         str = "VMsleu_vi"; base = Iop_VMsleu8_vi; break;
+
+      case Iop_VMsle8_vv ... Iop_VMsle64_vv:
+         str = "VMsle_vv"; base = Iop_VMsle8_vv; break;
+      case Iop_VMsle8_vx ... Iop_VMsle64_vx:
+         str = "VMsle_vx"; base = Iop_VMsle8_vx; break;
+      case Iop_VMsle8_vi ... Iop_VMsle64_vi:
+         str = "VMsle_vi"; base = Iop_VMsle8_vi; break;
+
+      case Iop_VMsgtu8_vx ... Iop_VMsgtu64_vx:
+         str = "VMsgtu_vx"; base = Iop_VMsgtu8_vx; break;
+      case Iop_VMsgtu8_vi ... Iop_VMsgtu64_vi:
+         str = "VMsgtu_vi"; base = Iop_VMsgtu8_vi; break;
+
+      case Iop_VMsgt8_vx ... Iop_VMsgt64_vx:
+         str = "VMsgt_vx"; base = Iop_VMsgt8_vx; break;
+      case Iop_VMsgt8_vi ... Iop_VMsgt64_vi:
+         str = "VMsgt_vi"; base = Iop_VMsgt8_vi; break;
+
       case Iop_VCmpNEZ8 ... Iop_VCmpNEZ64:
          str = "VCmpNEZ"; base = Iop_VCmpNEZ8; break;
       case Iop_VNot8 ... Iop_VNot64:
