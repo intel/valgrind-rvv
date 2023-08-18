@@ -329,6 +329,26 @@ void ppIROp ( IROp op )
       case Iop_VMsgt8_vi ... Iop_VMsgt64_vi:
          str = "VMsgt_vi"; base = Iop_VMsgt8_vi; break;
 
+      case Iop_VMacc8_vv ... Iop_VMacc64_vv:
+         str = "VMacc_vv"; base = Iop_VMacc8_vv; break;
+      case Iop_VMacc8_vx ... Iop_VMacc64_vx:
+         str = "VMacc_vx"; base = Iop_VMacc8_vx; break;
+
+      case Iop_VNmsac8_vv ... Iop_VNmsac64_vv:
+         str = "VNmsac_vv"; base = Iop_VNmsac8_vv; break;
+      case Iop_VNmsac8_vx ... Iop_VNmsac64_vx:
+         str = "VNmsac_vx"; base = Iop_VNmsac8_vx; break;
+
+      case Iop_VMadd8_vv ... Iop_VMadd64_vv:
+         str = "VMadd_vv"; base = Iop_VMadd8_vv; break;
+      case Iop_VMadd8_vx ... Iop_VMadd64_vx:
+         str = "VMadd_vx"; base = Iop_VMadd8_vx; break;
+
+      case Iop_VNmsub8_vv ... Iop_VNmsub64_vv:
+         str = "VNmsub_vv"; base = Iop_VNmsub8_vv; break;
+      case Iop_VNmsub8_vx ... Iop_VNmsub64_vx:
+         str = "VNmsub_vx"; base = Iop_VNmsub8_vx; break;
+
       case Iop_VCmpNEZ8 ... Iop_VCmpNEZ64:
          str = "VCmpNEZ"; base = Iop_VCmpNEZ8; break;
       case Iop_VNot8 ... Iop_VNot64:
@@ -2055,6 +2075,18 @@ Bool primopMightTrap ( IROp op )
    case Iop_VMsgt8_vx ... Iop_VMsgt64_vx:
    case Iop_VMsgt8_vi ... Iop_VMsgt64_vi:
 
+   case Iop_VMacc8_vv ... Iop_VMacc64_vv:
+   case Iop_VMacc8_vx ... Iop_VMacc64_vx:
+
+   case Iop_VNmsac8_vv ... Iop_VNmsac64_vv:
+   case Iop_VNmsac8_vx ... Iop_VNmsac64_vx:
+
+   case Iop_VMadd8_vv ... Iop_VMadd64_vv:
+   case Iop_VMadd8_vx ... Iop_VMadd64_vx:
+
+   case Iop_VNmsub8_vv ... Iop_VNmsub64_vv:
+   case Iop_VNmsub8_vx ... Iop_VNmsub64_vx:
+
    case Iop_VCmpNEZ8 ... Iop_VCmpNEZ64:
    case Iop_VNot8 ... Iop_VNot64:
    case Iop_VExpandBitsTo8 ... Iop_VExpandBitsTo64:
@@ -3386,6 +3418,22 @@ void typeOfPrimop ( IROp op,
          BINARY(Ity_I64, ty, ty); \
       }
 
+#  define VEC_VV_TERNARY(bop_base) \
+      { \
+         IRType base = Ity_VLen8 + bop - bop_base; \
+         UInt vl = VLofVecIROp(op); \
+         IRType ty = typeofVecIR (vl, base); \
+         TERNARY(ty, ty, ty, ty); \
+      }
+
+#  define VEC_VXI_TERNARY(bop_base) \
+      { \
+         IRType base = Ity_VLen8 + bop - bop_base; \
+         UInt vl = VLofVecIROp(op); \
+         IRType ty = typeofVecIR (vl, base); \
+         TERNARY(Ity_I64, ty, ty, ty); \
+      }
+
 #  define VEC_UNARY(bop_base) \
       { \
          IRType base = Ity_VLen8 + bop - bop_base; \
@@ -4595,6 +4643,26 @@ void typeOfPrimop ( IROp op,
          VEC_VXIto1_BINARY(Iop_VMsgt8_vx);
       case Iop_VMsgt8_vi    ... Iop_VMsgt64_vi:
          VEC_VXIto1_BINARY(Iop_VMsgt8_vi);
+
+      case Iop_VMacc8_vv    ... Iop_VMacc64_vv:
+         VEC_VV_TERNARY(Iop_VMacc8_vv);
+      case Iop_VMacc8_vx    ... Iop_VMacc64_vx:
+         VEC_VXI_TERNARY(Iop_VMacc8_vx);
+
+      case Iop_VNmsac8_vv    ... Iop_VNmsac64_vv:
+         VEC_VV_TERNARY(Iop_VNmsac8_vv);
+      case Iop_VNmsac8_vx    ... Iop_VNmsac64_vx:
+         VEC_VXI_TERNARY(Iop_VNmsac8_vx);
+
+      case Iop_VMadd8_vv    ... Iop_VMadd64_vv:
+         VEC_VV_TERNARY(Iop_VMadd8_vv);
+      case Iop_VMadd8_vx    ... Iop_VMadd64_vx:
+         VEC_VXI_TERNARY(Iop_VMadd8_vx);
+
+      case Iop_VNmsub8_vv    ... Iop_VNmsub64_vv:
+         VEC_VV_TERNARY(Iop_VNmsub8_vv);
+      case Iop_VNmsub8_vx    ... Iop_VNmsub64_vx:
+         VEC_VXI_TERNARY(Iop_VNmsub8_vx);
 
       case Iop_VCmpNEZ8 ... Iop_VCmpNEZ64:
          VEC_UNARY(Iop_VCmpNEZ8);

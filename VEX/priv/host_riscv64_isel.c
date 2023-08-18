@@ -2073,6 +2073,94 @@ GEN_VEXT_CMP_VX(VMsgt16_vx, int16_t, DO_MSGT)
 GEN_VEXT_CMP_VX(VMsgt32_vx, int32_t, DO_MSGT)
 GEN_VEXT_CMP_VX(VMsgt64_vx, int64_t, DO_MSGT)
 
+/* Vector Single-Width Integer Multiply-Add Instructions */
+#define OPIVV3(NAME, TD, T1, T2, TX1, TX2, OP)                \
+static void do_##NAME(void *vd, void *vs1, void *vs2, int i)  \
+{                                                             \
+    TX1 s1 = *((T1 *)vs1 + i);                                \
+    TX2 s2 = *((T2 *)vs2 + i);                                \
+    TD d = *((TD *)vd + i);                                   \
+    *((TD *)vd + i) = OP(s2, s1, d);                          \
+}
+
+#define DO_MACC(N, M, D) (M * N + D)
+#define DO_NMSAC(N, M, D) (-(M * N) + D)
+#define DO_MADD(N, M, D) (M * D + N)
+#define DO_NMSUB(N, M, D) (-(M * D) + N)
+RVVCALL(OPIVV3, VMacc8_vv, OP_SSS_B, DO_MACC)
+RVVCALL(OPIVV3, VMacc16_vv, OP_SSS_H, DO_MACC)
+RVVCALL(OPIVV3, VMacc32_vv, OP_SSS_W, DO_MACC)
+RVVCALL(OPIVV3, VMacc64_vv, OP_SSS_D, DO_MACC)
+RVVCALL(OPIVV3, VNmsac8_vv, OP_SSS_B, DO_NMSAC)
+RVVCALL(OPIVV3, VNmsac16_vv, OP_SSS_H, DO_NMSAC)
+RVVCALL(OPIVV3, VNmsac32_vv, OP_SSS_W, DO_NMSAC)
+RVVCALL(OPIVV3, VNmsac64_vv, OP_SSS_D, DO_NMSAC)
+RVVCALL(OPIVV3, VMadd8_vv, OP_SSS_B, DO_MADD)
+RVVCALL(OPIVV3, VMadd16_vv, OP_SSS_H, DO_MADD)
+RVVCALL(OPIVV3, VMadd32_vv, OP_SSS_W, DO_MADD)
+RVVCALL(OPIVV3, VMadd64_vv, OP_SSS_D, DO_MADD)
+RVVCALL(OPIVV3, VNmsub8_vv, OP_SSS_B, DO_NMSUB)
+RVVCALL(OPIVV3, VNmsub16_vv, OP_SSS_H, DO_NMSUB)
+RVVCALL(OPIVV3, VNmsub32_vv, OP_SSS_W, DO_NMSUB)
+RVVCALL(OPIVV3, VNmsub64_vv, OP_SSS_D, DO_NMSUB)
+GEN_VEXT_VV(VMacc8_vv)
+GEN_VEXT_VV(VMacc16_vv)
+GEN_VEXT_VV(VMacc32_vv)
+GEN_VEXT_VV(VMacc64_vv)
+GEN_VEXT_VV(VNmsac8_vv)
+GEN_VEXT_VV(VNmsac16_vv)
+GEN_VEXT_VV(VNmsac32_vv)
+GEN_VEXT_VV(VNmsac64_vv)
+GEN_VEXT_VV(VMadd8_vv)
+GEN_VEXT_VV(VMadd16_vv)
+GEN_VEXT_VV(VMadd32_vv)
+GEN_VEXT_VV(VMadd64_vv)
+GEN_VEXT_VV(VNmsub8_vv)
+GEN_VEXT_VV(VNmsub16_vv)
+GEN_VEXT_VV(VNmsub32_vv)
+GEN_VEXT_VV(VNmsub64_vv)
+
+#define OPIVX3(NAME, TD, T1, T2, TX1, TX2, OP)             \
+static void do_##NAME(void *vd, Long s1, void *vs2, int i) \
+{                                                          \
+    TX2 s2 = *((T2 *)vs2 + i);                             \
+    TD d = *((TD *)vd + i);                                \
+    *((TD *)vd + i) = OP(s2, (TX1)(T1)s1, d);              \
+}
+
+RVVCALL(OPIVX3, VMacc8_vx, OP_SSS_B, DO_MACC)
+RVVCALL(OPIVX3, VMacc16_vx, OP_SSS_H, DO_MACC)
+RVVCALL(OPIVX3, VMacc32_vx, OP_SSS_W, DO_MACC)
+RVVCALL(OPIVX3, VMacc64_vx, OP_SSS_D, DO_MACC)
+RVVCALL(OPIVX3, VNmsac8_vx, OP_SSS_B, DO_NMSAC)
+RVVCALL(OPIVX3, VNmsac16_vx, OP_SSS_H, DO_NMSAC)
+RVVCALL(OPIVX3, VNmsac32_vx, OP_SSS_W, DO_NMSAC)
+RVVCALL(OPIVX3, VNmsac64_vx, OP_SSS_D, DO_NMSAC)
+RVVCALL(OPIVX3, VMadd8_vx, OP_SSS_B, DO_MADD)
+RVVCALL(OPIVX3, VMadd16_vx, OP_SSS_H, DO_MADD)
+RVVCALL(OPIVX3, VMadd32_vx, OP_SSS_W, DO_MADD)
+RVVCALL(OPIVX3, VMadd64_vx, OP_SSS_D, DO_MADD)
+RVVCALL(OPIVX3, VNmsub8_vx, OP_SSS_B, DO_NMSUB)
+RVVCALL(OPIVX3, VNmsub16_vx, OP_SSS_H, DO_NMSUB)
+RVVCALL(OPIVX3, VNmsub32_vx, OP_SSS_W, DO_NMSUB)
+RVVCALL(OPIVX3, VNmsub64_vx, OP_SSS_D, DO_NMSUB)
+GEN_VEXT_VX(VMacc8_vx)
+GEN_VEXT_VX(VMacc16_vx)
+GEN_VEXT_VX(VMacc32_vx)
+GEN_VEXT_VX(VMacc64_vx)
+GEN_VEXT_VX(VNmsac8_vx)
+GEN_VEXT_VX(VNmsac16_vx)
+GEN_VEXT_VX(VNmsac32_vx)
+GEN_VEXT_VX(VNmsac64_vx)
+GEN_VEXT_VX(VMadd8_vx)
+GEN_VEXT_VX(VMadd16_vx)
+GEN_VEXT_VX(VMadd32_vx)
+GEN_VEXT_VX(VMadd64_vx)
+GEN_VEXT_VX(VNmsub8_vx)
+GEN_VEXT_VX(VNmsub16_vx)
+GEN_VEXT_VX(VNmsub32_vx)
+GEN_VEXT_VX(VNmsub64_vx)
+
 struct Iop_handler {
    const char* name;
    const void* fn;
@@ -2151,6 +2239,11 @@ static const struct Iop_handler IOP_HANDLERS[] = {
    H_V_VXI(Msle),
    H_V_XI(Msgtu),
    H_V_XI(Msgt),
+
+   H_V_VX(Macc),
+   H_V_VX(Nmsac),
+   H_V_VX(Madd),
+   H_V_VX(Nmsub),
 
    H_V1(Not),
    H_V1(CmpNEZ),
@@ -2249,7 +2342,7 @@ static Bool iselVecExpr_R_wrk_unop(HReg dst[], ISelEnv* env, IRExpr* e)
 
 static Bool iselVecExpr_R_wrk_binop_vv(HReg dst[], ISelEnv* env, IRExpr* e)
 {
-   const void* fn = IOP_HANDLERS[e->Iex.Unop.op & IR_OP_MASK].fn;
+   const void* fn = IOP_HANDLERS[e->Iex.Binop.op & IR_OP_MASK].fn;
    if (fn == 0) {
       return False;
    }
@@ -2301,7 +2394,7 @@ static Bool iselVecExpr_R_wrk_binop_vv(HReg dst[], ISelEnv* env, IRExpr* e)
 
 static Bool iselVecExpr_R_wrk_binop_vx(HReg dst[], ISelEnv* env, IRExpr* e)
 {
-   const void* fn = IOP_HANDLERS[e->Iex.Unop.op & IR_OP_MASK].fn;
+   const void* fn = IOP_HANDLERS[e->Iex.Binop.op & IR_OP_MASK].fn;
    if (fn == 0) {
       return False;
    }
@@ -2337,6 +2430,107 @@ static Bool iselVecExpr_R_wrk_binop_vx(HReg dst[], ISelEnv* env, IRExpr* e)
    addInstr(env, RISCV64Instr_ALUImm(RISCV64op_ADDI, hregRISCV64_x13(), hregRISCV64_x0(), vl));    // a3 - vl
 
    storeVecReg(env, src2, src2_nregs, hregRISCV64_x12());
+   addInstr(env, RISCV64Instr_Call(mk_RetLoc_simple(RLPri_None), (Addr64) fn, INVALID_HREG, 4, 0));
+   loadVecReg(env, dst, dst_nregs, argp);
+
+   adjust_sp(env, MAX_ARGS_STACK_SIZE);
+   return True;
+}
+
+static Bool iselVecExpr_R_wrk_triop_vv(HReg dst[], ISelEnv* env, IRExpr* e)
+{
+   const void* fn = IOP_HANDLERS[e->Iex.Triop.details->op & IR_OP_MASK].fn;
+   if (fn == 0) {
+      return False;
+   }
+
+   const Int vlen_b = VLEN / 8;
+   IRType dst_ty = typeOfIRExpr(env->type_env, e);
+   Int vl = VLofVecIRType(dst_ty);
+
+   Int dst_sz = sizeofVecIRType(dst_ty);
+   Int dst_nregs = ROUND_UP(dst_sz, vlen_b);
+
+   IRType src1_ty = typeOfIRExpr(env->type_env, e->Iex.Triop.details->arg2);
+   Int src1_sz = sizeofVecIRType(src1_ty);
+   Int src1_nregs = ROUND_UP(src1_sz, vlen_b);
+
+   IRType src2_ty = typeOfIRExpr(env->type_env, e->Iex.Triop.details->arg2);
+   Int src2_sz = sizeofVecIRType(src2_ty);
+   Int src2_nregs = ROUND_UP(src2_sz, vlen_b);
+
+   Int sz = MAX(src1_sz, src2_sz);
+   sz = MAX(sz, dst_sz);
+
+   HReg src1[MAX_REGS] = {0};
+   HReg src2[MAX_REGS] = {0};
+   iselVecExpr_R(src1, env, e->Iex.Triop.details->arg1);
+   iselVecExpr_R(src2, env, e->Iex.Triop.details->arg2);
+   iselVecExpr_R(dst, env, e->Iex.Triop.details->arg3);
+
+   HReg argp = newVRegI(env);
+
+   adjust_sp(env, -MAX_ARGS_STACK_SIZE);
+   addInstr(env, RISCV64Instr_MV(argp, hregRISCV64_x2()));
+
+   addInstr(env, RISCV64Instr_ALUImm(RISCV64op_ADDI, argp, argp, 15));
+   addInstr(env, RISCV64Instr_ALUImm(RISCV64op_ANDI, argp, argp, ~(Int)15));
+
+   addInstr(env, RISCV64Instr_ALUImm(RISCV64op_ADDI, hregRISCV64_x10(), argp, 0));                 // a0 - dst
+   addInstr(env, RISCV64Instr_ALUImm(RISCV64op_ADDI, hregRISCV64_x11(), argp, sz));                // a1 - src1
+   addInstr(env, RISCV64Instr_ALUImm(RISCV64op_ADDI, hregRISCV64_x12(), argp, sz * 2));            // a2 - src2
+   addInstr(env, RISCV64Instr_ALUImm(RISCV64op_ADDI, hregRISCV64_x13(), hregRISCV64_x0(), vl));    // a3 - vl
+
+   storeVecReg(env, src1, src1_nregs, hregRISCV64_x11());
+   storeVecReg(env, src2, src2_nregs, hregRISCV64_x12());
+   storeVecReg(env, dst, dst_nregs, hregRISCV64_x10());
+   addInstr(env, RISCV64Instr_Call(mk_RetLoc_simple(RLPri_None), (Addr64) fn, INVALID_HREG, 4, 0));
+   loadVecReg(env, dst, dst_nregs, argp);
+
+   adjust_sp(env, MAX_ARGS_STACK_SIZE);
+   return True;
+}
+
+static Bool iselVecExpr_R_wrk_triop_vx(HReg dst[], ISelEnv* env, IRExpr* e)
+{
+   const void* fn = IOP_HANDLERS[e->Iex.Triop.details->op & IR_OP_MASK].fn;
+   if (fn == 0) {
+      return False;
+   }
+
+   const Int vlen_b = VLEN / 8;
+   IRType dst_ty = typeOfIRExpr(env->type_env, e);
+   Int vl = VLofVecIRType(dst_ty);
+
+   Int dst_sz = sizeofVecIRType(dst_ty);
+   Int dst_nregs = ROUND_UP(dst_sz, vlen_b);
+
+   IRType src2_ty = typeOfIRExpr(env->type_env, e->Iex.Triop.details->arg2);
+   Int src2_sz = sizeofVecIRType(src2_ty);
+   Int src2_nregs = ROUND_UP(src2_sz, vlen_b);
+
+   Int sz = MAX(dst_sz, src2_sz);
+
+   HReg src1 = iselIntExpr_R(env, e->Iex.Triop.details->arg1);
+   HReg src2[MAX_REGS] = {0};
+   iselVecExpr_R(src2, env, e->Iex.Triop.details->arg2);
+   iselVecExpr_R(dst, env, e->Iex.Triop.details->arg3);
+
+   HReg argp = newVRegI(env);
+
+   adjust_sp(env, -MAX_ARGS_STACK_SIZE);
+   addInstr(env, RISCV64Instr_MV(argp, hregRISCV64_x2()));
+
+   addInstr(env, RISCV64Instr_ALUImm(RISCV64op_ADDI, argp, argp, 15));
+   addInstr(env, RISCV64Instr_ALUImm(RISCV64op_ANDI, argp, argp, ~(Int)15));
+
+   addInstr(env, RISCV64Instr_ALUImm(RISCV64op_ADDI, hregRISCV64_x10(), argp, 0));                 // a0 - dst
+   addInstr(env, RISCV64Instr_MV(hregRISCV64_x11(), src1));                                        // a1 - src1
+   addInstr(env, RISCV64Instr_ALUImm(RISCV64op_ADDI, hregRISCV64_x12(), argp, sz));                // a2 - src2
+   addInstr(env, RISCV64Instr_ALUImm(RISCV64op_ADDI, hregRISCV64_x13(), hregRISCV64_x0(), vl));    // a3 - vl
+
+   storeVecReg(env, src2, src2_nregs, hregRISCV64_x12());
+   storeVecReg(env, dst, dst_nregs, hregRISCV64_x10());
    addInstr(env, RISCV64Instr_Call(mk_RetLoc_simple(RLPri_None), (Addr64) fn, INVALID_HREG, 4, 0));
    loadVecReg(env, dst, dst_nregs, argp);
 
@@ -2430,6 +2624,20 @@ static void iselVecExpr_R_wrk(HReg dst[], ISelEnv* env, IRExpr* e)
          addInstr(env, RISCV64Instr_VALU(op, vl, dst, argL, argR));
          return dst;
          */
+         break;
+      }
+      case Iex_Triop: {
+         Bool ret = False;
+         IROp bop = e->Iex.Triop.details->op & IR_OP_MASK;
+         if (bop > Iop_VV3_Start && bop < Iop_VV3_End) {
+            ret = iselVecExpr_R_wrk_triop_vv(dst, env, e);
+         } else if (bop > Iop_VX3_Start && bop < Iop_VX3_End) {
+            ret = iselVecExpr_R_wrk_triop_vx(dst, env, e);
+         }
+
+         if (ret == True) {
+            return;
+         }
          break;
       }
 

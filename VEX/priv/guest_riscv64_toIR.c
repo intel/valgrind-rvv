@@ -3650,6 +3650,79 @@ static Bool dis_rvv_vi(/*MB_OUT*/ DisResult* dres,
    return dis_rvv_v_vxi(dres, irsb, insn, guest_pc_curr_instr, guest, base_op, V_I);
 }
 
+static Bool dis_rvv_v_vx_3(/*MB_OUT*/ DisResult* dres,
+                           /*OUT*/ IRSB*         irsb,
+                           UInt                  insn,
+                           Addr                  guest_pc_curr_instr,
+                           VexGuestRISCV64State* guest,
+                           IROp                  base_op,
+                           enum V_VXI            vxi)
+{
+   UInt vm = INSN(25, 25);
+   UInt vs2 = INSN(24, 20);
+   UInt s1 = INSN(19, 15);
+   UInt vd = INSN(11, 7);
+
+   UInt vma = SLICE_UInt(guest->guest_vtype, 7, 7);
+   UInt sew = get_sew(guest);
+   Int index = sewToIndex(sew);
+   UInt vl = guest->guest_vl;
+   IRType ty = typeofVecIR(vl, Ity_VLen8 + index);
+
+   IRExpr* es1;
+   if (vxi == V_V) {
+      es1 = getVReg(s1, 0, ty);
+   } else if (vxi == V_X) {
+      es1 = getIReg64(s1);
+   } else if (vxi == V_I) {
+      vassert(1);
+   }
+
+   IRExpr* res = triop(opofVecIR(vl, base_op + index),
+                       es1, getVReg(vs2, 0, ty), getVReg(vd, 0, ty));
+   if (vm == 0) {
+      IRType mask_ty = typeofVecIR(vl, Ity_VLen1);
+      IRExpr* mask = unop(opofVecIR(vl, Iop_VExpandBitsTo8 + index),
+                          getVReg(0 /*v0*/, 0, mask_ty));
+
+      if (vma == 0) { // undisturbed, read it first
+         IRExpr* origin = getVReg(vd, 0, ty);
+         IRExpr* inactive = binop(opofVecIR(vl, Iop_VAnd8_vv + index),
+                                  unop(opofVecIR(vl, Iop_VNot8 + index), mask),
+                                  origin);
+         IRExpr* active = binop(opofVecIR(vl, Iop_VAnd8_vv + index), mask, res);
+         res = binop(opofVecIR(vl, Iop_VOr8_vv + index), active, inactive);
+      } else { // agnostic, set to 1
+         res = binop(opofVecIR(vl, Iop_VOr8_vv + index),
+                     unop(opofVecIR(vl, Iop_VNot8 + index), mask),
+                     res);
+      }
+   }
+   putVReg(irsb, vd, 0, res);
+
+   return True;
+}
+
+static Bool dis_rvv_vv_3(/*MB_OUT*/ DisResult* dres,
+                        /*OUT*/ IRSB*         irsb,
+                        UInt                  insn,
+                        Addr                  guest_pc_curr_instr,
+                        VexGuestRISCV64State* guest,
+                        IROp                  base_op)
+{
+   return dis_rvv_v_vx_3(dres, irsb, insn, guest_pc_curr_instr, guest, base_op, V_V);
+}
+
+static Bool dis_rvv_vx_3(/*MB_OUT*/ DisResult* dres,
+                        /*OUT*/ IRSB*         irsb,
+                        UInt                  insn,
+                        Addr                  guest_pc_curr_instr,
+                        VexGuestRISCV64State* guest,
+                        IROp                  base_op)
+{
+   return dis_rvv_v_vx_3(dres, irsb, insn, guest_pc_curr_instr, guest, base_op, V_X);
+}
+
 static Bool dis_vmsbf_m(/*MB_OUT*/ DisResult* dres,
                         /*OUT*/ IRSB*         irsb,
                         UInt                  insn,
@@ -3965,6 +4038,14 @@ static Bool dis_opmvv(/*MB_OUT*/ DisResult* dres,
       return dis_rvv_vv(dres, irsb, insn, guest_pc_curr_instr, guest, Iop_VMulhu8_vv);
    case 0b100110:
       return dis_rvv_vv(dres, irsb, insn, guest_pc_curr_instr, guest, Iop_VMulhsu8_vv);
+   case 0b101101:
+      return dis_rvv_vv_3(dres, irsb, insn, guest_pc_curr_instr, guest, Iop_VMacc8_vv);
+   case 0b101111:
+      return dis_rvv_vv_3(dres, irsb, insn, guest_pc_curr_instr, guest, Iop_VNmsac8_vv);
+   case 0b101001:
+      return dis_rvv_vv_3(dres, irsb, insn, guest_pc_curr_instr, guest, Iop_VMadd8_vv);
+   case 0b101011:
+      return dis_rvv_vv_3(dres, irsb, insn, guest_pc_curr_instr, guest, Iop_VNmsub8_vv);
    default:
       return False;
    }
@@ -4088,6 +4169,14 @@ static Bool dis_opmvx(/*MB_OUT*/ DisResult* dres,
       return dis_rvv_vx(dres, irsb, insn, guest_pc_curr_instr, guest, Iop_VMulhu8_vx);
    case 0b100110:
       return dis_rvv_vx(dres, irsb, insn, guest_pc_curr_instr, guest, Iop_VMulhsu8_vx);
+   case 0b101101:
+      return dis_rvv_vx_3(dres, irsb, insn, guest_pc_curr_instr, guest, Iop_VMacc8_vx);
+   case 0b101111:
+      return dis_rvv_vx_3(dres, irsb, insn, guest_pc_curr_instr, guest, Iop_VNmsac8_vx);
+   case 0b101001:
+      return dis_rvv_vx_3(dres, irsb, insn, guest_pc_curr_instr, guest, Iop_VMadd8_vx);
+   case 0b101011:
+      return dis_rvv_vx_3(dres, irsb, insn, guest_pc_curr_instr, guest, Iop_VNmsub8_vx);
    default:
       return False;
    }

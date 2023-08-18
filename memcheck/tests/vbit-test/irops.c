@@ -1257,6 +1257,11 @@ static irop_t irops[] = {
   DEFOP_V_XI(Msgtu),
   DEFOP_V_XI(Msgt),
 
+  DEFOP_V_VX(Macc),
+  DEFOP_V_VX(Nmsac),
+  DEFOP_V_VX(Madd),
+  DEFOP_V_VX(Nmsub),
+
   /* These are fake ones */
   { DEFOP(Iop_VV2_Start, UNDEF_UNKNOWN), },
   { DEFOP(Iop_VV2_End, UNDEF_UNKNOWN), },
@@ -1264,6 +1269,11 @@ static irop_t irops[] = {
   { DEFOP(Iop_VX2_End, UNDEF_UNKNOWN), },
   { DEFOP(Iop_VI2_Start, UNDEF_UNKNOWN), },
   { DEFOP(Iop_VI2_End, UNDEF_UNKNOWN), },
+
+  { DEFOP(Iop_VV3_Start, UNDEF_UNKNOWN), },
+  { DEFOP(Iop_VV3_End, UNDEF_UNKNOWN), },
+  { DEFOP(Iop_VX3_Start, UNDEF_UNKNOWN), },
+  { DEFOP(Iop_VX3_End, UNDEF_UNKNOWN), },
 
   DEFOP_V(CmpNEZ),
   DEFOP_V(Not),

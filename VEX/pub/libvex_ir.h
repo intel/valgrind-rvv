@@ -2153,6 +2153,20 @@ typedef
       IOPVI2(Msgt),
       Iop_VI2_End,
 
+      Iop_VV3_Start,
+      IOPVV2(Macc),
+      IOPVV2(Nmsac),
+      IOPVV2(Madd),
+      IOPVV2(Nmsub),
+      Iop_VV3_End,
+
+      Iop_VX3_Start,
+      IOPVX2(Macc),
+      IOPVX2(Nmsac),
+      IOPVX2(Madd),
+      IOPVX2(Nmsub),
+      Iop_VX3_End,
+
       IOPVV1(Not),
       IOPVV1(CmpNEZ),
       IOPVV1(ExpandBitsTo),
