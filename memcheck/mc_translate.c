@@ -5395,6 +5395,28 @@ IRAtom* expr2vbits_Binop ( MCEnv* mce,
       case Iop_VMsgt8_vi ... Iop_VMsgt64_vi:
          return mkPCast_v(mce, vatom2, 8 << (bop - Iop_VMsgt8_vi));
 
+      // TODO: revisit this memcheck semantics
+      case Iop_VSll8_vv ... Iop_VSll64_vv:
+         return binary_v(mce, vatom1, vatom2, 8 << (bop - Iop_VSll8_vv));
+      case Iop_VSll8_vx ... Iop_VSll64_vx:
+         return binary_v(mce, vatom1, vatom2, 8 << (bop - Iop_VSll8_vx));
+      case Iop_VSll8_vi ... Iop_VSll64_vi:
+         return mkPCast_v(mce, vatom2, 8 << (bop - Iop_VSll8_vi));
+
+      case Iop_VSrl8_vv ... Iop_VSrl64_vv:
+         return binary_v(mce, vatom1, vatom2, 8 << (bop - Iop_VSrl8_vv));
+      case Iop_VSrl8_vx ... Iop_VSrl64_vx:
+         return binary_v(mce, vatom1, vatom2, 8 << (bop - Iop_VSrl8_vx));
+      case Iop_VSrl8_vi ... Iop_VSrl64_vi:
+         return mkPCast_v(mce, vatom2, 8 << (bop - Iop_VSrl8_vi));
+
+      case Iop_VSra8_vv ... Iop_VSra64_vv:
+         return binary_v(mce, vatom1, vatom2, 8 << (bop - Iop_VSra8_vv));
+      case Iop_VSra8_vx ... Iop_VSra64_vx:
+         return binary_v(mce, vatom1, vatom2, 8 << (bop - Iop_VSra8_vx));
+      case Iop_VSra8_vi ... Iop_VSra64_vi:
+         return mkPCast_v(mce, vatom2, 8 << (bop - Iop_VSra8_vi));
+
       default:
          ppIROp(op);
          VG_(tool_panic)("memcheck:expr2vbits_Binop");

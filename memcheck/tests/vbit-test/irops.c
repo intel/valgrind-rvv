@@ -1262,6 +1262,10 @@ static irop_t irops[] = {
   DEFOP_V_VX(Madd),
   DEFOP_V_VX(Nmsub),
 
+  DEFOP_V_VXI(Sll),
+  DEFOP_V_VXI(Srl),
+  DEFOP_V_VXI(Sra),
+
   /* These are fake ones */
   { DEFOP(Iop_VV2_Start, UNDEF_UNKNOWN), },
   { DEFOP(Iop_VV2_End, UNDEF_UNKNOWN), },

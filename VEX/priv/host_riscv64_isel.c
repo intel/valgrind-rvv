@@ -2161,6 +2161,60 @@ GEN_VEXT_VX(VNmsub16_vx)
 GEN_VEXT_VX(VNmsub32_vx)
 GEN_VEXT_VX(VNmsub64_vx)
 
+/* Vector Single-Width Bit Shift Instructions */
+#define DO_SLL(N, M)  (N << (M))
+#define DO_SRL(N, M)  (N >> (M))
+
+/* generate the helpers for shift instructions with two vector operators */
+#define GEN_VEXT_SHIFT_VV(NAME, TS1, TS2, OP, MASK)               \
+static void h_Iop_##NAME(void *vd, void *vs1, void *vs2, int len) \
+{                                                                 \
+   for (int i = 0; i < len; ++i) {                                \
+      TS1 s1 = *((TS1 *)vs1 + i);                                 \
+      TS2 s2 = *((TS2 *)vs2 + i);                                 \
+      *((TS1 *)vd + i) = OP(s2, s1 & MASK);                       \
+   }                                                              \
+}
+
+GEN_VEXT_SHIFT_VV(VSll8_vv, uint8_t,  uint8_t, DO_SLL, 0x7)
+GEN_VEXT_SHIFT_VV(VSll16_vv, uint16_t, uint16_t, DO_SLL, 0xf)
+GEN_VEXT_SHIFT_VV(VSll32_vv, uint32_t, uint32_t, DO_SLL, 0x1f)
+GEN_VEXT_SHIFT_VV(VSll64_vv, uint64_t, uint64_t, DO_SLL, 0x3f)
+
+GEN_VEXT_SHIFT_VV(VSrl8_vv, uint8_t, uint8_t, DO_SRL, 0x7)
+GEN_VEXT_SHIFT_VV(VSrl16_vv, uint16_t, uint16_t, DO_SRL, 0xf)
+GEN_VEXT_SHIFT_VV(VSrl32_vv, uint32_t, uint32_t, DO_SRL, 0x1f)
+GEN_VEXT_SHIFT_VV(VSrl64_vv, uint64_t, uint64_t, DO_SRL, 0x3f)
+
+GEN_VEXT_SHIFT_VV(VSra8_vv, uint8_t,  int8_t, DO_SRL, 0x7)
+GEN_VEXT_SHIFT_VV(VSra16_vv, uint16_t, int16_t, DO_SRL, 0xf)
+GEN_VEXT_SHIFT_VV(VSra32_vv, uint32_t, int32_t, DO_SRL, 0x1f)
+GEN_VEXT_SHIFT_VV(VSra64_vv, uint64_t, int64_t, DO_SRL, 0x3f)
+
+#define GEN_VEXT_SHIFT_VX(NAME, TD, TS2, OP, MASK)                \
+static void h_Iop_##NAME(void *vd, Long s1, void *vs2, int len)   \
+{                                                                 \
+   for (int i = 0; i < len; ++i) {                                \
+      TS2 s2 = *((TS2 *)vs2 + i);                                 \
+      *((TD *)vd + i) = OP(s2, s1 & MASK);                        \
+    }                                                             \
+}
+
+GEN_VEXT_SHIFT_VX(VSll8_vx, uint8_t, int8_t, DO_SLL, 0x7)
+GEN_VEXT_SHIFT_VX(VSll16_vx, uint16_t, int16_t, DO_SLL, 0xf)
+GEN_VEXT_SHIFT_VX(VSll32_vx, uint32_t, int32_t, DO_SLL, 0x1f)
+GEN_VEXT_SHIFT_VX(VSll64_vx, uint64_t, int64_t, DO_SLL, 0x3f)
+
+GEN_VEXT_SHIFT_VX(VSrl8_vx, uint8_t, uint8_t, DO_SRL, 0x7)
+GEN_VEXT_SHIFT_VX(VSrl16_vx, uint16_t, uint16_t, DO_SRL, 0xf)
+GEN_VEXT_SHIFT_VX(VSrl32_vx, uint32_t, uint32_t, DO_SRL, 0x1f)
+GEN_VEXT_SHIFT_VX(VSrl64_vx, uint64_t, uint64_t, DO_SRL, 0x3f)
+
+GEN_VEXT_SHIFT_VX(VSra8_vx, int8_t, int8_t, DO_SRL, 0x7)
+GEN_VEXT_SHIFT_VX(VSra16_vx, int16_t, int16_t, DO_SRL, 0xf)
+GEN_VEXT_SHIFT_VX(VSra32_vx, int32_t, int32_t, DO_SRL, 0x1f)
+GEN_VEXT_SHIFT_VX(VSra64_vx, int64_t, int64_t, DO_SRL, 0x3f)
+
 struct Iop_handler {
    const char* name;
    const void* fn;
@@ -2244,6 +2298,10 @@ static const struct Iop_handler IOP_HANDLERS[] = {
    H_V_VX(Nmsac),
    H_V_VX(Madd),
    H_V_VX(Nmsub),
+
+   H_V_VXI(Sll),
+   H_V_VXI(Srl),
+   H_V_VXI(Sra),
 
    H_V1(Not),
    H_V1(CmpNEZ),

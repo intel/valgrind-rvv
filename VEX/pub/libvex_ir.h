@@ -2108,6 +2108,9 @@ typedef
       IOPVV2(Mslt),
       IOPVV2(Msleu),
       IOPVV2(Msle),
+      IOPVV2(Sll),
+      IOPVV2(Srl),
+      IOPVV2(Sra),
       Iop_VV2_End,
 
       Iop_VX2_Start,
@@ -2137,6 +2140,9 @@ typedef
       IOPVX2(Msle),
       IOPVX2(Msgtu),
       IOPVX2(Msgt),
+      IOPVX2(Sll),
+      IOPVX2(Srl),
+      IOPVX2(Sra),
       Iop_VX2_End,
 
       Iop_VI2_Start,
@@ -2151,6 +2157,9 @@ typedef
       IOPVI2(Msle),
       IOPVI2(Msgtu),
       IOPVI2(Msgt),
+      IOPVI2(Sll),
+      IOPVI2(Srl),
+      IOPVI2(Sra),
       Iop_VI2_End,
 
       Iop_VV3_Start,
