@@ -2602,7 +2602,7 @@ static void iselVecExpr_R_wrk(HReg dst[], ISelEnv* env, IRExpr* e)
    //Int vl = VLofVecIRType(ty);
    Int sz = sizeofVecIRType(ty);
    Int vlen_b = VLEN / 8;
-   Int nregs = (sz + vlen_b - 1) / vlen_b;
+   Int nregs = ROUND_UP(sz, vlen_b);
    Int vl_ldst64 = vlen_b / 8;
 
    for (int i = 0; i < nregs; ++i) {
@@ -3163,7 +3163,7 @@ static void iselStmt(ISelEnv* env, IRStmt* stmt)
          //Int vl = VLofVecIRType(tyd);
          Int sz = sizeofVecIRType(tyd);
          Int vlen_b = VLEN / 8;
-         Int nregs = sz / vlen_b;
+         Int nregs = ROUND_UP(sz, vlen_b);
          Int vl_ldst64  = vlen_b / 8;
 
          HReg src[MAX_REGS] = {0};
@@ -3205,10 +3205,10 @@ static void iselStmt(ISelEnv* env, IRStmt* stmt)
       if (vty >= Ity_VLen1 && vty <= Ity_VLen64) {
          Int sz = sizeofVecIRType(ty);
          Int vlen_b = VLEN / 8;
-         Int nregs = sz / vlen_b;
+         Int nregs = ROUND_UP(sz, vlen_b);
 
-         HReg dst[8];
-         HReg src[8];
+         HReg dst[MAX_REGS];
+         HReg src[MAX_REGS];
          iselVecExpr_R(src, env, stmt->Ist.WrTmp.data);
          lookupIRTempVec(dst, nregs, env, stmt->Ist.WrTmp.tmp);
          for (int i = 0; i < nregs; ++i) {

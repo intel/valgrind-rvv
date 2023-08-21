@@ -3452,7 +3452,7 @@ static inline Long sext_slice_ulong(ULong value, UInt bmax, UInt bmin)
 static ULong helper_vsetvl(VexGuestRISCV64State* guest, ULong avl, ULong vtype)
 {
    UInt sew = SLICE_UInt(vtype, 5, 3);
-   Int lmul = sext_slice_ulong(vtype, 3, 0);
+   Int lmul = sext_slice_ulong(vtype, 2, 0);
 
    ULong vlmax = VLEN >> (sew + 3 - lmul);
    ULong vl = guest->guest_vl;
