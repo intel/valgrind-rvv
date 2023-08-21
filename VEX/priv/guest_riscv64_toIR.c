@@ -3566,6 +3566,61 @@ enum V_VXI {
    V_I
 };
 
+static Bool dis_rvv_iext(/*MB_OUT*/ DisResult* dres,
+                         /*OUT*/ IRSB*         irsb,
+                         UInt                  insn,
+                         Addr                  guest_pc_curr_instr,
+                         VexGuestRISCV64State* guest)
+{
+   UInt vm = INSN(25, 25);
+   UInt vs2 = INSN(24, 20);
+   UInt s1 = INSN(19, 15);
+   UInt vd = INSN(11, 7);
+
+   UInt vma = SLICE_UInt(guest->guest_vtype, 7, 7);
+   UInt sew = get_sew(guest);
+   Int index = sewToIndex(sew);
+   UInt vl = guest->guest_vl;
+   IRType dst_ty = typeofVecIR(vl, Ity_VLen8 + index);
+   IRType src_ty;
+
+   vassert(sew >= 16);
+
+   IROp op;
+   switch (s1) {
+   case 0b00110: op = Iop_VZext16_vf2 + index - 1; src_ty = dst_ty - 1; break;
+   case 0b00100: op = Iop_VZext32_vf4 + index - 2; src_ty = dst_ty - 2; break;
+   case 0b00010: op = Iop_VZext64_vf8 + index - 3; src_ty = dst_ty - 3; break;
+   case 0b00111: op = Iop_VSext16_vf2 + index - 1; src_ty = dst_ty - 1; break;
+   case 0b00101: op = Iop_VSext32_vf4 + index - 2; src_ty = dst_ty - 2; break;
+   case 0b00011: op = Iop_VSext64_vf8 + index - 3; src_ty = dst_ty - 3; break;
+   default: vassert(0);
+   }
+
+   IRExpr* res = unop(opofVecIR(vl, op), getVReg(vs2, 0, src_ty));
+   if (vm == 0) {
+      IRType mask_ty = typeofVecIR(vl, Ity_VLen1);
+      IRExpr* mask = unop(opofVecIR(vl, Iop_VExpandBitsTo8 + index),
+                          getVReg(0 /*v0*/, 0, mask_ty));
+
+      if (vma == 0) { // undisturbed, read it first
+         IRExpr* origin = getVReg(vd, 0, dst_ty);
+         IRExpr* inactive = binop(opofVecIR(vl, Iop_VAnd8_vv + index),
+                                  unop(opofVecIR(vl, Iop_VNot8 + index), mask),
+                                  origin);
+         IRExpr* active = binop(opofVecIR(vl, Iop_VAnd8_vv + index), mask, res);
+         res = binop(opofVecIR(vl, Iop_VOr8_vv + index), active, inactive);
+      } else { // agnostic, set to 1
+         res = binop(opofVecIR(vl, Iop_VOr8_vv + index),
+                     unop(opofVecIR(vl, Iop_VNot8 + index), mask),
+                     res);
+      }
+   }
+   putVReg(irsb, vd, 0, res);
+
+   return True;
+}
+
 static Bool dis_rvv_v_vxi(/*MB_OUT*/ DisResult* dres,
                           /*OUT*/ IRSB*         irsb,
                           UInt                  insn,
@@ -3675,7 +3730,7 @@ static Bool dis_rvv_v_vx_3(/*MB_OUT*/ DisResult* dres,
    } else if (vxi == V_X) {
       es1 = getIReg64(s1);
    } else if (vxi == V_I) {
-      vassert(1);
+      vassert(0);
    }
 
    IRExpr* res = triop(opofVecIR(vl, base_op + index),
@@ -4017,6 +4072,8 @@ static Bool dis_opmvv(/*MB_OUT*/ DisResult* dres,
          return False;
       }
       return False;
+   case 0b010010:
+      return dis_rvv_iext(dres, irsb, insn, guest_pc_curr_instr, guest);
    case 0b010100:
       switch (INSN(19, 15)) {
       case 0b00001:

@@ -1227,6 +1227,14 @@ static irop_t irops[] = {
   DEFOP_V_X(op), \
   DEFOP_V_I(op)
 
+#define DEFOP_V_EXT(op) \
+  { DEFOP(Iop_V##op##16_vf2, UNDEF_UNKNOWN), },  \
+  { DEFOP(Iop_V##op##32_vf2, UNDEF_UNKNOWN), },  \
+  { DEFOP(Iop_V##op##64_vf2, UNDEF_UNKNOWN), },  \
+  { DEFOP(Iop_V##op##32_vf4, UNDEF_UNKNOWN), },  \
+  { DEFOP(Iop_V##op##64_vf4, UNDEF_UNKNOWN), },  \
+  { DEFOP(Iop_V##op##64_vf8, UNDEF_UNKNOWN), }
+
   DEFOP_V_VXI(Add),
   DEFOP_V_VXI(Or),
   DEFOP_V_VXI(Xor),
@@ -1265,6 +1273,9 @@ static irop_t irops[] = {
   DEFOP_V_VXI(Sll),
   DEFOP_V_VXI(Srl),
   DEFOP_V_VXI(Sra),
+
+  DEFOP_V_EXT(Zext),
+  DEFOP_V_EXT(Sext),
 
   /* These are fake ones */
   { DEFOP(Iop_VV2_Start, UNDEF_UNKNOWN), },

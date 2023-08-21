@@ -370,6 +370,19 @@ void ppIROp ( IROp op )
       case Iop_VSra8_vi ... Iop_VSra64_vi:
          str = "VSra_vi"; base = Iop_VSra8_vi; break;
 
+      case Iop_VZext16_vf2 ... Iop_VZext64_vf2:
+         str = "Zext_vf2-"; base = Iop_VZext16_vf2 - 1; break;
+      case Iop_VZext32_vf4 ... Iop_VZext64_vf4:
+         str = "Zext_vf4-"; base = Iop_VZext32_vf4 - 2; break;
+     case Iop_VZext64_vf8:
+         str = "Zext_vf8-"; base = Iop_VZext64_vf8 - 3; break;
+      case Iop_VSext16_vf2 ... Iop_VSext64_vf2:
+         str = "Sext_vf2-"; base = Iop_VSext16_vf2 - 1; break;
+      case Iop_VSext32_vf4 ... Iop_VSext64_vf4:
+         str = "Sext_vf4-"; base = Iop_VSext32_vf4 - 2; break;
+     case Iop_VSext64_vf8:
+         str = "Sext_vf8-"; base = Iop_VSext64_vf8 - 3; break;
+
       case Iop_VCmpNEZ8 ... Iop_VCmpNEZ64:
          str = "VCmpNEZ"; base = Iop_VCmpNEZ8; break;
       case Iop_VNot8 ... Iop_VNot64:
@@ -2120,6 +2133,13 @@ Bool primopMightTrap ( IROp op )
    case Iop_VSra8_vx ... Iop_VSra64_vx:
    case Iop_VSra8_vi ... Iop_VSra64_vi:
 
+   case Iop_VZext16_vf2 ... Iop_VZext64_vf2:
+   case Iop_VZext32_vf4 ... Iop_VZext64_vf4:
+   case Iop_VZext64_vf8:
+   case Iop_VSext16_vf2 ... Iop_VSext64_vf2:
+   case Iop_VSext32_vf4 ... Iop_VSext64_vf4:
+   case Iop_VSext64_vf8:
+
    case Iop_VCmpNEZ8 ... Iop_VCmpNEZ64:
    case Iop_VNot8 ... Iop_VNot64:
    case Iop_VExpandBitsTo8 ... Iop_VExpandBitsTo64:
@@ -3475,6 +3495,14 @@ void typeOfPrimop ( IROp op,
          UNARY(ty, ty); \
       }
 
+#define VEC_UNARY_GENERIC(dst_base, src_base)	\
+      { \
+         UInt vl = VLofVecIROp(op); \
+         IRType dst_ty = typeofVecIR (vl, dst_base); \
+         IRType src_ty = typeofVecIR (vl, src_base); \
+         UNARY(src_ty, dst_ty); \
+      }
+
    /* Rounding mode values are always Ity_I32, encoded as per
       IRRoundingMode */
    const IRType ity_RMode = Ity_I32;
@@ -4717,6 +4745,19 @@ void typeOfPrimop ( IROp op,
          VEC_VXI_BINARY(Iop_VSra8_vx);
       case Iop_VSra8_vi    ... Iop_VSra64_vi:
          VEC_VXI_BINARY(Iop_VSra8_vi);
+
+      case Iop_VZext16_vf2: VEC_UNARY_GENERIC(Ity_VLen16, Ity_VLen8);
+      case Iop_VZext32_vf2: VEC_UNARY_GENERIC(Ity_VLen32, Ity_VLen16);
+      case Iop_VZext64_vf2: VEC_UNARY_GENERIC(Ity_VLen64, Ity_VLen32);
+      case Iop_VZext32_vf4: VEC_UNARY_GENERIC(Ity_VLen32, Ity_VLen8);
+      case Iop_VZext64_vf4: VEC_UNARY_GENERIC(Ity_VLen64, Ity_VLen16);
+      case Iop_VZext64_vf8: VEC_UNARY_GENERIC(Ity_VLen64, Ity_VLen8);
+      case Iop_VSext16_vf2: VEC_UNARY_GENERIC(Ity_VLen16, Ity_VLen8);
+      case Iop_VSext32_vf2: VEC_UNARY_GENERIC(Ity_VLen32, Ity_VLen16);
+      case Iop_VSext64_vf2: VEC_UNARY_GENERIC(Ity_VLen64, Ity_VLen32);
+      case Iop_VSext32_vf4: VEC_UNARY_GENERIC(Ity_VLen32, Ity_VLen8);
+      case Iop_VSext64_vf4: VEC_UNARY_GENERIC(Ity_VLen64, Ity_VLen16);
+      case Iop_VSext64_vf8: VEC_UNARY_GENERIC(Ity_VLen64, Ity_VLen8);
 
       case Iop_VCmpNEZ8 ... Iop_VCmpNEZ64:
          VEC_UNARY(Iop_VCmpNEZ8);

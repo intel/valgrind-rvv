@@ -5859,6 +5859,28 @@ IRExpr* expr2vbits_Unop ( MCEnv* mce, IROp op, IRAtom* atom )
          return mkPCast16x8(mce,
                assignNew('V', mce, Ity_V128, unop(op, mkPCast8x16(mce, vatom))));
 
+      case Iop_VZext16_vf2:
+      case Iop_VSext16_vf2: {
+         IRType dst_ty = typeofVecIR (VLofVecIROp(op), Ity_VLen16);
+         return mkPCast16_v(mce, assignNew('V', mce, dst_ty, unop(op, vatom)));
+      }
+      case Iop_VZext32_vf2:
+      case Iop_VZext32_vf4:
+      case Iop_VSext32_vf2:
+      case Iop_VSext32_vf4: {
+         IRType dst_ty = typeofVecIR (VLofVecIROp(op), Ity_VLen32);
+         return mkPCast32_v(mce, assignNew('V', mce, dst_ty, unop(op, vatom)));
+      }
+      case Iop_VZext64_vf2:
+      case Iop_VZext64_vf4:
+      case Iop_VZext64_vf8:
+      case Iop_VSext64_vf2:
+      case Iop_VSext64_vf4:
+      case Iop_VSext64_vf8: {
+         IRType dst_ty = typeofVecIR (VLofVecIROp(op), Ity_VLen64);
+         return mkPCast64_v(mce, assignNew('V', mce, dst_ty, unop(op, vatom)));
+      }
+
       case Iop_VNot32:
          return vatom; // TODO
       case Iop_VExpandBitsTo8 ... Iop_VExpandBitsTo32: {

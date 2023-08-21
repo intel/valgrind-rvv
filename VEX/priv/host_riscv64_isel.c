@@ -2215,6 +2215,29 @@ GEN_VEXT_SHIFT_VX(VSra16_vx, int16_t, int16_t, DO_SRL, 0xf)
 GEN_VEXT_SHIFT_VX(VSra32_vx, int32_t, int32_t, DO_SRL, 0x1f)
 GEN_VEXT_SHIFT_VX(VSra64_vx, int64_t, int64_t, DO_SRL, 0x3f)
 
+/* Vector Integer Extension */
+#define GEN_VEXT_INT_EXT(NAME, ETYPE, DTYPE)            \
+static void h_Iop_##NAME(void *vd, void *vs2, int len)  \
+{                                                       \
+   for (int i = 0; i < len; ++i) {                      \
+      *((ETYPE *)vd + i) = *((DTYPE *)vs2 + i);         \
+   }                                                    \
+}
+
+GEN_VEXT_INT_EXT(VZext16_vf2, uint16_t, uint8_t)
+GEN_VEXT_INT_EXT(VZext32_vf2, uint32_t, uint16_t)
+GEN_VEXT_INT_EXT(VZext64_vf2, uint64_t, uint32_t)
+GEN_VEXT_INT_EXT(VZext32_vf4, uint32_t, uint8_t)
+GEN_VEXT_INT_EXT(VZext64_vf4, uint64_t, uint16_t)
+GEN_VEXT_INT_EXT(VZext64_vf8, uint64_t, uint8_t)
+
+GEN_VEXT_INT_EXT(VSext16_vf2, int16_t, int8_t)
+GEN_VEXT_INT_EXT(VSext32_vf2, int32_t, int16_t)
+GEN_VEXT_INT_EXT(VSext64_vf2, int64_t, int32_t)
+GEN_VEXT_INT_EXT(VSext32_vf4, int32_t, int8_t)
+GEN_VEXT_INT_EXT(VSext64_vf4, int64_t, int16_t)
+GEN_VEXT_INT_EXT(VSext64_vf8, int64_t, int8_t)
+
 struct Iop_handler {
    const char* name;
    const void* fn;
@@ -2225,6 +2248,14 @@ struct Iop_handler {
    [Iop_V##op##16] = {"Iop_V" #op "16", h_Iop_V##op##16}, \
    [Iop_V##op##32] = {"Iop_V" #op "32", h_Iop_V##op##32}, \
    [Iop_V##op##64] = {"Iop_V" #op "64", h_Iop_V##op##64}
+
+#define H_V1_IEXT(op) \
+   [Iop_V##op##16_vf2] = {"Iop_V" #op "16_vf2", h_Iop_V##op##16_vf2}, \
+   [Iop_V##op##32_vf2] = {"Iop_V" #op "32_vf2", h_Iop_V##op##32_vf2}, \
+   [Iop_V##op##64_vf2] = {"Iop_V" #op "64_vf2", h_Iop_V##op##64_vf2}, \
+   [Iop_V##op##32_vf4] = {"Iop_V" #op "32_vf4", h_Iop_V##op##32_vf4}, \
+   [Iop_V##op##64_vf4] = {"Iop_V" #op "64_vf4", h_Iop_V##op##64_vf4}, \
+   [Iop_V##op##64_vf8] = {"Iop_V" #op "64_vf8", h_Iop_V##op##64_vf8}
 
 #define H_V_V(op) \
    [Iop_V##op##8_vv]  = {"Iop_V" #op "8_vv", h_Iop_V##op##8_vv},   \
@@ -2302,6 +2333,9 @@ static const struct Iop_handler IOP_HANDLERS[] = {
    H_V_VXI(Sll),
    H_V_VXI(Srl),
    H_V_VXI(Sra),
+
+   H_V1_IEXT(Zext),
+   H_V1_IEXT(Sext),
 
    H_V1(Not),
    H_V1(CmpNEZ),
