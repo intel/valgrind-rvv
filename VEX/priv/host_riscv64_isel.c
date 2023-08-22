@@ -2245,6 +2245,9 @@ GEN_VEXT_INT_EXT(VSext64_vf8, int64_t, int8_t)
 #define WOP_SSS_B int16_t, int8_t, int8_t, int16_t, int16_t
 #define WOP_SSS_H int32_t, int16_t, int16_t, int32_t, int32_t
 #define WOP_SSS_W int64_t, int32_t, int32_t, int64_t, int64_t
+#define WOP_SUS_B int16_t, uint8_t, int8_t, uint16_t, int16_t
+#define WOP_SUS_H int32_t, uint16_t, int16_t, uint32_t, int32_t
+#define WOP_SUS_W int64_t, uint32_t, int32_t, uint64_t, int64_t
 #define WOP_WUUU_B  uint16_t, uint8_t, uint16_t, uint16_t, uint16_t
 #define WOP_WUUU_H  uint32_t, uint16_t, uint32_t, uint32_t, uint32_t
 #define WOP_WUUU_W  uint64_t, uint32_t, uint64_t, uint64_t, uint64_t
@@ -2348,6 +2351,45 @@ GEN_VEXT_VX(VWadd32_wx)
 GEN_VEXT_VX(VWsub8_wx)
 GEN_VEXT_VX(VWsub16_wx)
 GEN_VEXT_VX(VWsub32_wx)
+
+/* Vector Widening Integer Multiply Instructions */
+RVVCALL(OPIVV2, VWmul8_vv, WOP_SSS_B, DO_MUL)
+RVVCALL(OPIVV2, VWmul16_vv, WOP_SSS_H, DO_MUL)
+RVVCALL(OPIVV2, VWmul32_vv, WOP_SSS_W, DO_MUL)
+RVVCALL(OPIVV2, VWmulu8_vv, WOP_UUU_B, DO_MUL)
+RVVCALL(OPIVV2, VWmulu16_vv, WOP_UUU_H, DO_MUL)
+RVVCALL(OPIVV2, VWmulu32_vv, WOP_UUU_W, DO_MUL)
+RVVCALL(OPIVV2, VWmulsu8_vv, WOP_SUS_B, DO_MUL)
+RVVCALL(OPIVV2, VWmulsu16_vv, WOP_SUS_H, DO_MUL)
+RVVCALL(OPIVV2, VWmulsu32_vv, WOP_SUS_W, DO_MUL)
+GEN_VEXT_VV(VWmul8_vv)
+GEN_VEXT_VV(VWmul16_vv)
+GEN_VEXT_VV(VWmul32_vv)
+GEN_VEXT_VV(VWmulu8_vv)
+GEN_VEXT_VV(VWmulu16_vv)
+GEN_VEXT_VV(VWmulu32_vv)
+GEN_VEXT_VV(VWmulsu8_vv)
+GEN_VEXT_VV(VWmulsu16_vv)
+GEN_VEXT_VV(VWmulsu32_vv)
+
+RVVCALL(OPIVX2, VWmul8_vx, WOP_SSS_B, DO_MUL)
+RVVCALL(OPIVX2, VWmul16_vx, WOP_SSS_H, DO_MUL)
+RVVCALL(OPIVX2, VWmul32_vx, WOP_SSS_W, DO_MUL)
+RVVCALL(OPIVX2, VWmulu8_vx, WOP_UUU_B, DO_MUL)
+RVVCALL(OPIVX2, VWmulu16_vx, WOP_UUU_H, DO_MUL)
+RVVCALL(OPIVX2, VWmulu32_vx, WOP_UUU_W, DO_MUL)
+RVVCALL(OPIVX2, VWmulsu8_vx, WOP_SUS_B, DO_MUL)
+RVVCALL(OPIVX2, VWmulsu16_vx, WOP_SUS_H, DO_MUL)
+RVVCALL(OPIVX2, VWmulsu32_vx, WOP_SUS_W, DO_MUL)
+GEN_VEXT_VX(VWmul8_vx)
+GEN_VEXT_VX(VWmul16_vx)
+GEN_VEXT_VX(VWmul32_vx)
+GEN_VEXT_VX(VWmulu8_vx)
+GEN_VEXT_VX(VWmulu16_vx)
+GEN_VEXT_VX(VWmulu32_vx)
+GEN_VEXT_VX(VWmulsu8_vx)
+GEN_VEXT_VX(VWmulsu16_vx)
+GEN_VEXT_VX(VWmulsu32_vx)
 
 struct Iop_handler {
    const char* name;
@@ -2481,6 +2523,10 @@ static const struct Iop_handler IOP_HANDLERS[] = {
    HW_VW_VX(Wadd),
    HW_VW_VX(Wsubu),
    HW_VW_VX(Wsub),
+
+   HW_V_VX(Wmulu),
+   HW_V_VX(Wmulsu),
+   HW_V_VX(Wmul),
 
    H_V1_IEXT(Zext),
    H_V1_IEXT(Sext),

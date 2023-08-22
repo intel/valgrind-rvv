@@ -5500,6 +5500,19 @@ IRAtom* expr2vbits_Binop ( MCEnv* mce,
       case Iop_VWsub8_wx ... Iop_VWsub32_wx:
          return binary_w_w_x(mce, vatom1, vatom2, 8 << (bop - Iop_VWsub8_wx));
 
+      case Iop_VWmulu8_vv ... Iop_VWmulu32_vv:
+         return binary_w_v_vx(mce, vatom1, vatom2, 8 << (bop - Iop_VWmulu8_vv));
+      case Iop_VWmulu8_vx ... Iop_VWmulu32_vx:
+         return binary_w_v_vx(mce, vatom1, vatom2, 8 << (bop - Iop_VWmulu8_vx));
+      case Iop_VWmulsu8_vv ... Iop_VWmulsu32_vv:
+         return binary_w_v_vx(mce, vatom1, vatom2, 8 << (bop - Iop_VWmulsu8_vv));
+      case Iop_VWmulsu8_vx ... Iop_VWmulsu32_vx:
+         return binary_w_v_vx(mce, vatom1, vatom2, 8 << (bop - Iop_VWmulsu8_vx));
+      case Iop_VWmul8_vv ... Iop_VWmul32_vv:
+         return binary_w_v_vx(mce, vatom1, vatom2, 8 << (bop - Iop_VWmul8_vv));
+      case Iop_VWmul8_vx ... Iop_VWmul32_vx:
+         return binary_w_v_vx(mce, vatom1, vatom2, 8 << (bop - Iop_VWmul8_vx));
+
       default:
          ppIROp(op);
          VG_(tool_panic)("memcheck:expr2vbits_Binop");

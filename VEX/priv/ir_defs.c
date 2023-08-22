@@ -403,6 +403,18 @@ void ppIROp ( IROp op )
       case Iop_VWsub8_wx ... Iop_VWsub32_wx:
          str = "VWsub_wx"; base = Iop_VWsub8_wx; break;
 
+      case Iop_VWmulu8_vv ... Iop_VWmulu32_vv:
+         str = "VWmulu_vv"; base = Iop_VWmulu8_vv; break;
+      case Iop_VWmulu8_vx ... Iop_VWmulu32_vx:
+         str = "VWmulu_vx"; base = Iop_VWmulu8_vx; break;
+      case Iop_VWmulsu8_vv ... Iop_VWmulsu32_vv:
+         str = "VWmulsu_vv"; base = Iop_VWmulsu8_vv; break;
+      case Iop_VWmulsu8_vx ... Iop_VWmulsu32_vx:
+         str = "VWmulsu_vx"; base = Iop_VWmulsu8_vx; break;
+      case Iop_VWmul8_vv ... Iop_VWmul32_vv:
+         str = "VWmul_vv"; base = Iop_VWmul8_vv; break;
+      case Iop_VWmul8_vx ... Iop_VWmul32_vx:
+         str = "VWmul_vx"; base = Iop_VWmul8_vx; break;
 
       case Iop_VZext16_vf2 ... Iop_VZext64_vf2:
          str = "Zext_vf2-"; base = Iop_VZext16_vf2 - 1; break;
@@ -2183,6 +2195,13 @@ Bool primopMightTrap ( IROp op )
    case Iop_VWsubu8_wx ... Iop_VWsubu32_wx:
    case Iop_VWsub8_wv ... Iop_VWsub32_wv:
    case Iop_VWsub8_wx ... Iop_VWsub32_wx:
+
+   case Iop_VWmulu8_vv ... Iop_VWmulu32_vv:
+   case Iop_VWmulu8_vx ... Iop_VWmulu32_vx:
+   case Iop_VWmulsu8_vv ... Iop_VWmulsu32_vv:
+   case Iop_VWmulsu8_vx ... Iop_VWmulsu32_vx:
+   case Iop_VWmul8_vv ... Iop_VWmul32_vv:
+   case Iop_VWmul8_vx ... Iop_VWmul32_vx:
 
    case Iop_VZext16_vf2 ... Iop_VZext64_vf2:
    case Iop_VZext32_vf4 ... Iop_VZext64_vf4:
@@ -4871,6 +4890,19 @@ void typeOfPrimop ( IROp op,
          VEC_WV_BINARY_W(Iop_VWsub8_wv);
       case Iop_VWsub8_wx ... Iop_VWsub32_wx:
          VEC_WX_BINARY_W(Iop_VWsub8_wx);
+
+      case Iop_VWmulu8_vv ... Iop_VWmulu32_vv:
+         VEC_VV_BINARY_W(Iop_VWmulu8_vv);
+      case Iop_VWmulu8_vx ... Iop_VWmulu32_vx:
+         VEC_VX_BINARY_W(Iop_VWmulu8_vx);
+      case Iop_VWmulsu8_vv ... Iop_VWmulsu32_vv:
+         VEC_VV_BINARY_W(Iop_VWmulsu8_vv);
+      case Iop_VWmulsu8_vx ... Iop_VWmulsu32_vx:
+         VEC_VX_BINARY_W(Iop_VWmulsu8_vx);
+      case Iop_VWmul8_vv ... Iop_VWmul32_vv:
+         VEC_VV_BINARY_W(Iop_VWmul8_vv);
+      case Iop_VWmul8_vx ... Iop_VWmul32_vx:
+         VEC_VX_BINARY_W(Iop_VWmul8_vx);
 
       case Iop_VZext16_vf2: VEC_UNARY_GENERIC(Ity_VLen16, Ity_VLen8);
       case Iop_VZext32_vf2: VEC_UNARY_GENERIC(Ity_VLen32, Ity_VLen16);

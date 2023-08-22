@@ -4225,6 +4225,12 @@ static Bool dis_opmvv(/*MB_OUT*/ DisResult* dres,
       return dis_rvv_w_w_v(dres, irsb, insn, guest_pc_curr_instr, guest, Iop_VWsubu8_wv);
    case 0b110111:
       return dis_rvv_w_w_v(dres, irsb, insn, guest_pc_curr_instr, guest, Iop_VWsub8_wv);
+   case 0b111000:
+      return dis_rvv_w_v_v(dres, irsb, insn, guest_pc_curr_instr, guest, Iop_VWmulu8_vv);
+   case 0b111010:
+      return dis_rvv_w_v_v(dres, irsb, insn, guest_pc_curr_instr, guest, Iop_VWmulsu8_vv);
+   case 0b111011:
+      return dis_rvv_w_v_v(dres, irsb, insn, guest_pc_curr_instr, guest, Iop_VWmul8_vv);
    default:
       return False;
    }
@@ -4384,6 +4390,12 @@ static Bool dis_opmvx(/*MB_OUT*/ DisResult* dres,
       return dis_rvv_w_w_x(dres, irsb, insn, guest_pc_curr_instr, guest, Iop_VWsubu8_wx);
    case 0b110111:
       return dis_rvv_w_w_x(dres, irsb, insn, guest_pc_curr_instr, guest, Iop_VWsub8_wx);
+   case 0b111000:
+      return dis_rvv_w_v_x(dres, irsb, insn, guest_pc_curr_instr, guest, Iop_VWmulu8_vx);
+   case 0b111010:
+      return dis_rvv_w_v_x(dres, irsb, insn, guest_pc_curr_instr, guest, Iop_VWmulsu8_vx);
+   case 0b111011:
+      return dis_rvv_w_v_x(dres, irsb, insn, guest_pc_curr_instr, guest, Iop_VWmul8_vx);
    default:
       return False;
    }
