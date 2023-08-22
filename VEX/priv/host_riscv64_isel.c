@@ -2248,6 +2248,9 @@ GEN_VEXT_INT_EXT(VSext64_vf8, int64_t, int8_t)
 #define WOP_SUS_B int16_t, uint8_t, int8_t, uint16_t, int16_t
 #define WOP_SUS_H int32_t, uint16_t, int16_t, uint32_t, int32_t
 #define WOP_SUS_W int64_t, uint32_t, int32_t, uint64_t, int64_t
+#define WOP_SSU_B int16_t, int8_t, uint8_t, int16_t, uint16_t
+#define WOP_SSU_H int32_t, int16_t, uint16_t, int32_t, uint32_t
+#define WOP_SSU_W int64_t, int32_t, uint32_t, int64_t, uint64_t
 #define WOP_WUUU_B  uint16_t, uint8_t, uint16_t, uint16_t, uint16_t
 #define WOP_WUUU_H  uint32_t, uint16_t, uint32_t, uint32_t, uint32_t
 #define WOP_WUUU_W  uint64_t, uint32_t, uint64_t, uint64_t, uint64_t
@@ -2391,6 +2394,51 @@ GEN_VEXT_VX(VWmulsu8_vx)
 GEN_VEXT_VX(VWmulsu16_vx)
 GEN_VEXT_VX(VWmulsu32_vx)
 
+/* Vector Widening Integer Multiply-Add Instructions */
+RVVCALL(OPIVV3, VWmaccu8_vv, WOP_UUU_B, DO_MACC)
+RVVCALL(OPIVV3, VWmaccu16_vv, WOP_UUU_H, DO_MACC)
+RVVCALL(OPIVV3, VWmaccu32_vv, WOP_UUU_W, DO_MACC)
+RVVCALL(OPIVV3, VWmacc8_vv, WOP_SSS_B, DO_MACC)
+RVVCALL(OPIVV3, VWmacc16_vv, WOP_SSS_H, DO_MACC)
+RVVCALL(OPIVV3, VWmacc32_vv, WOP_SSS_W, DO_MACC)
+RVVCALL(OPIVV3, VWmaccsu8_vv, WOP_SSU_B, DO_MACC)
+RVVCALL(OPIVV3, VWmaccsu16_vv, WOP_SSU_H, DO_MACC)
+RVVCALL(OPIVV3, VWmaccsu32_vv, WOP_SSU_W, DO_MACC)
+GEN_VEXT_VV(VWmaccu8_vv)
+GEN_VEXT_VV(VWmaccu16_vv)
+GEN_VEXT_VV(VWmaccu32_vv)
+GEN_VEXT_VV(VWmacc8_vv)
+GEN_VEXT_VV(VWmacc16_vv)
+GEN_VEXT_VV(VWmacc32_vv)
+GEN_VEXT_VV(VWmaccsu8_vv)
+GEN_VEXT_VV(VWmaccsu16_vv)
+GEN_VEXT_VV(VWmaccsu32_vv)
+
+RVVCALL(OPIVX3, VWmaccu8_vx, WOP_UUU_B, DO_MACC)
+RVVCALL(OPIVX3, VWmaccu16_vx, WOP_UUU_H, DO_MACC)
+RVVCALL(OPIVX3, VWmaccu32_vx, WOP_UUU_W, DO_MACC)
+RVVCALL(OPIVX3, VWmacc8_vx, WOP_SSS_B, DO_MACC)
+RVVCALL(OPIVX3, VWmacc16_vx, WOP_SSS_H, DO_MACC)
+RVVCALL(OPIVX3, VWmacc32_vx, WOP_SSS_W, DO_MACC)
+RVVCALL(OPIVX3, VWmaccsu8_vx, WOP_SSU_B, DO_MACC)
+RVVCALL(OPIVX3, VWmaccsu16_vx, WOP_SSU_H, DO_MACC)
+RVVCALL(OPIVX3, VWmaccsu32_vx, WOP_SSU_W, DO_MACC)
+RVVCALL(OPIVX3, VWmaccus8_vx, WOP_SUS_B, DO_MACC)
+RVVCALL(OPIVX3, VWmaccus16_vx, WOP_SUS_H, DO_MACC)
+RVVCALL(OPIVX3, VWmaccus32_vx, WOP_SUS_W, DO_MACC)
+GEN_VEXT_VX(VWmaccu8_vx)
+GEN_VEXT_VX(VWmaccu16_vx)
+GEN_VEXT_VX(VWmaccu32_vx)
+GEN_VEXT_VX(VWmacc8_vx)
+GEN_VEXT_VX(VWmacc16_vx)
+GEN_VEXT_VX(VWmacc32_vx)
+GEN_VEXT_VX(VWmaccsu8_vx)
+GEN_VEXT_VX(VWmaccsu16_vx)
+GEN_VEXT_VX(VWmaccsu32_vx)
+GEN_VEXT_VX(VWmaccus8_vx)
+GEN_VEXT_VX(VWmaccus16_vx)
+GEN_VEXT_VX(VWmaccus32_vx)
+
 struct Iop_handler {
    const char* name;
    const void* fn;
@@ -2527,6 +2575,11 @@ static const struct Iop_handler IOP_HANDLERS[] = {
    HW_V_VX(Wmulu),
    HW_V_VX(Wmulsu),
    HW_V_VX(Wmul),
+
+   HW_V_VX(Wmaccu),
+   HW_V_VX(Wmacc),
+   HW_V_VX(Wmaccsu),
+   HW_V_X(Wmaccus),
 
    H_V1_IEXT(Zext),
    H_V1_IEXT(Sext),

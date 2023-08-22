@@ -3483,6 +3483,17 @@ IRAtom* ternary_v ( MCEnv* mce, IRAtom* vatom1, IRAtom* vatom2, IRAtom* vatom3, 
    }
 }
 
+static
+IRAtom* ternary_w_v_vx ( MCEnv* mce, IRAtom* vatom1, IRAtom* vatom2, IRAtom* vatom3, UInt sew )
+{
+   switch (sew) {
+   case  8: return mkPCast16_v(mce, mkUifUVLen16(mce, zwiden_v(mce, mkUifUVLen8(mce, vatom1, vatom2)), vatom3));
+   case 16: return mkPCast32_v(mce, mkUifUVLen32(mce, zwiden_v(mce, mkUifUVLen16(mce, vatom1, vatom2)), vatom3));
+   case 32: return mkPCast64_v(mce, mkUifUVLen64(mce, zwiden_v(mce, mkUifUVLen32(mce, vatom1, vatom2)), vatom3));
+   default: VG_(tool_panic)("memcheck:binary_w_v_vx");
+   }
+}
+
 /* --- 64-bit versions --- */
 
 static
@@ -3775,6 +3786,24 @@ IRAtom* expr2vbits_Triop ( MCEnv* mce,
          return ternary_v(mce, vatom1, vatom2, vatom3, 8 << (bop - Iop_VNmsub8_vv));
       case Iop_VNmsub8_vx ... Iop_VNmsub64_vx:
          return ternary_v(mce, vatom1, vatom2, vatom3, 8 << (bop - Iop_VNmsub8_vx));
+
+      case Iop_VWmaccu8_vv ... Iop_VWmaccu32_vv:
+         return ternary_w_v_vx(mce, vatom1, vatom2, vatom3, 8 << (bop - Iop_VWmaccu8_vv));
+      case Iop_VWmaccu8_vx ... Iop_VWmaccu32_vx:
+         return ternary_w_v_vx(mce, vatom1, vatom2, vatom3, 8 << (bop - Iop_VWmaccu8_vx));
+
+      case Iop_VWmacc8_vv ... Iop_VWmacc32_vv:
+         return ternary_w_v_vx(mce, vatom1, vatom2, vatom3, 8 << (bop - Iop_VWmacc8_vv));
+      case Iop_VWmacc8_vx ... Iop_VWmacc32_vx:
+         return ternary_w_v_vx(mce, vatom1, vatom2, vatom3, 8 << (bop - Iop_VWmacc8_vx));
+
+      case Iop_VWmaccsu8_vv ... Iop_VWmaccsu32_vv:
+         return ternary_w_v_vx(mce, vatom1, vatom2, vatom3, 8 << (bop - Iop_VWmaccsu8_vv));
+      case Iop_VWmaccsu8_vx ... Iop_VWmaccsu32_vx:
+         return ternary_w_v_vx(mce, vatom1, vatom2, vatom3, 8 << (bop - Iop_VWmaccsu8_vx));
+
+      case Iop_VWmaccus8_vx ... Iop_VWmaccus32_vx:
+         return ternary_w_v_vx(mce, vatom1, vatom2, vatom3, 8 << (bop - Iop_VWmaccus8_vx));
 
       default:
          ppIROp(op);

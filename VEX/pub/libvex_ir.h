@@ -2209,6 +2209,10 @@ typedef
       IOPVV2(Nmsac),
       IOPVV2(Madd),
       IOPVV2(Nmsub),
+
+      WIOPVV2(Wmaccu),
+      WIOPVV2(Wmacc),
+      WIOPVV2(Wmaccsu),
       Iop_VV3_End,
 
       Iop_VX3_Start,
@@ -2216,6 +2220,11 @@ typedef
       IOPVX2(Nmsac),
       IOPVX2(Madd),
       IOPVX2(Nmsub),
+
+      WIOPVX2(Wmaccu),
+      WIOPVX2(Wmacc),
+      WIOPVX2(Wmaccsu),
+      WIOPVX2(Wmaccus),
       Iop_VX3_End,
 
       IOPVV1_IEXT(Zext),

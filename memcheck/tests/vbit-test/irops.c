@@ -1316,6 +1316,11 @@ static irop_t irops[] = {
   DEFOPW_V_VX(Wmulsu),
   DEFOPW_V_VX(Wmul),
 
+  DEFOPW_V_VX(Wmaccu),
+  DEFOPW_V_VX(Wmacc),
+  DEFOPW_V_VX(Wmaccsu),
+  DEFOPW_V_X(Wmaccus),
+
   DEFOP_V_EXT(Zext),
   DEFOP_V_EXT(Sext),
 
