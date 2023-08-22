@@ -2238,6 +2238,117 @@ GEN_VEXT_INT_EXT(VSext32_vf4, int32_t, int8_t)
 GEN_VEXT_INT_EXT(VSext64_vf4, int64_t, int16_t)
 GEN_VEXT_INT_EXT(VSext64_vf8, int64_t, int8_t)
 
+/* Vector Widening Integer Add/Subtract */
+#define WOP_UUU_B uint16_t, uint8_t, uint8_t, uint16_t, uint16_t
+#define WOP_UUU_H uint32_t, uint16_t, uint16_t, uint32_t, uint32_t
+#define WOP_UUU_W uint64_t, uint32_t, uint32_t, uint64_t, uint64_t
+#define WOP_SSS_B int16_t, int8_t, int8_t, int16_t, int16_t
+#define WOP_SSS_H int32_t, int16_t, int16_t, int32_t, int32_t
+#define WOP_SSS_W int64_t, int32_t, int32_t, int64_t, int64_t
+#define WOP_WUUU_B  uint16_t, uint8_t, uint16_t, uint16_t, uint16_t
+#define WOP_WUUU_H  uint32_t, uint16_t, uint32_t, uint32_t, uint32_t
+#define WOP_WUUU_W  uint64_t, uint32_t, uint64_t, uint64_t, uint64_t
+#define WOP_WSSS_B  int16_t, int8_t, int16_t, int16_t, int16_t
+#define WOP_WSSS_H  int32_t, int16_t, int32_t, int32_t, int32_t
+#define WOP_WSSS_W  int64_t, int32_t, int64_t, int64_t, int64_t
+RVVCALL(OPIVV2, VWaddu8_vv, WOP_UUU_B, DO_ADD)
+RVVCALL(OPIVV2, VWaddu16_vv, WOP_UUU_H, DO_ADD)
+RVVCALL(OPIVV2, VWaddu32_vv, WOP_UUU_W, DO_ADD)
+RVVCALL(OPIVV2, VWsubu8_vv, WOP_UUU_B, DO_SUB)
+RVVCALL(OPIVV2, VWsubu16_vv, WOP_UUU_H, DO_SUB)
+RVVCALL(OPIVV2, VWsubu32_vv, WOP_UUU_W, DO_SUB)
+RVVCALL(OPIVV2, VWadd8_vv, WOP_SSS_B, DO_ADD)
+RVVCALL(OPIVV2, VWadd16_vv, WOP_SSS_H, DO_ADD)
+RVVCALL(OPIVV2, VWadd32_vv, WOP_SSS_W, DO_ADD)
+RVVCALL(OPIVV2, VWsub8_vv, WOP_SSS_B, DO_SUB)
+RVVCALL(OPIVV2, VWsub16_vv, WOP_SSS_H, DO_SUB)
+RVVCALL(OPIVV2, VWsub32_vv, WOP_SSS_W, DO_SUB)
+RVVCALL(OPIVV2, VWaddu8_wv, WOP_WUUU_B, DO_ADD)
+RVVCALL(OPIVV2, VWaddu16_wv, WOP_WUUU_H, DO_ADD)
+RVVCALL(OPIVV2, VWaddu32_wv, WOP_WUUU_W, DO_ADD)
+RVVCALL(OPIVV2, VWsubu8_wv, WOP_WUUU_B, DO_SUB)
+RVVCALL(OPIVV2, VWsubu16_wv, WOP_WUUU_H, DO_SUB)
+RVVCALL(OPIVV2, VWsubu32_wv, WOP_WUUU_W, DO_SUB)
+RVVCALL(OPIVV2, VWadd8_wv, WOP_WSSS_B, DO_ADD)
+RVVCALL(OPIVV2, VWadd16_wv, WOP_WSSS_H, DO_ADD)
+RVVCALL(OPIVV2, VWadd32_wv, WOP_WSSS_W, DO_ADD)
+RVVCALL(OPIVV2, VWsub8_wv, WOP_WSSS_B, DO_SUB)
+RVVCALL(OPIVV2, VWsub16_wv, WOP_WSSS_H, DO_SUB)
+RVVCALL(OPIVV2, VWsub32_wv, WOP_WSSS_W, DO_SUB)
+GEN_VEXT_VV(VWaddu8_vv)
+GEN_VEXT_VV(VWaddu16_vv)
+GEN_VEXT_VV(VWaddu32_vv)
+GEN_VEXT_VV(VWsubu8_vv)
+GEN_VEXT_VV(VWsubu16_vv)
+GEN_VEXT_VV(VWsubu32_vv)
+GEN_VEXT_VV(VWadd8_vv)
+GEN_VEXT_VV(VWadd16_vv)
+GEN_VEXT_VV(VWadd32_vv)
+GEN_VEXT_VV(VWsub8_vv)
+GEN_VEXT_VV(VWsub16_vv)
+GEN_VEXT_VV(VWsub32_vv)
+GEN_VEXT_VV(VWaddu8_wv)
+GEN_VEXT_VV(VWaddu16_wv)
+GEN_VEXT_VV(VWaddu32_wv)
+GEN_VEXT_VV(VWsubu8_wv)
+GEN_VEXT_VV(VWsubu16_wv)
+GEN_VEXT_VV(VWsubu32_wv)
+GEN_VEXT_VV(VWadd8_wv)
+GEN_VEXT_VV(VWadd16_wv)
+GEN_VEXT_VV(VWadd32_wv)
+GEN_VEXT_VV(VWsub8_wv)
+GEN_VEXT_VV(VWsub16_wv)
+GEN_VEXT_VV(VWsub32_wv)
+
+RVVCALL(OPIVX2, VWaddu8_vx, WOP_UUU_B, DO_ADD)
+RVVCALL(OPIVX2, VWaddu16_vx, WOP_UUU_H, DO_ADD)
+RVVCALL(OPIVX2, VWaddu32_vx, WOP_UUU_W, DO_ADD)
+RVVCALL(OPIVX2, VWsubu8_vx, WOP_UUU_B, DO_SUB)
+RVVCALL(OPIVX2, VWsubu16_vx, WOP_UUU_H, DO_SUB)
+RVVCALL(OPIVX2, VWsubu32_vx, WOP_UUU_W, DO_SUB)
+RVVCALL(OPIVX2, VWadd8_vx, WOP_SSS_B, DO_ADD)
+RVVCALL(OPIVX2, VWadd16_vx, WOP_SSS_H, DO_ADD)
+RVVCALL(OPIVX2, VWadd32_vx, WOP_SSS_W, DO_ADD)
+RVVCALL(OPIVX2, VWsub8_vx, WOP_SSS_B, DO_SUB)
+RVVCALL(OPIVX2, VWsub16_vx, WOP_SSS_H, DO_SUB)
+RVVCALL(OPIVX2, VWsub32_vx, WOP_SSS_W, DO_SUB)
+RVVCALL(OPIVX2, VWaddu8_wx, WOP_WUUU_B, DO_ADD)
+RVVCALL(OPIVX2, VWaddu16_wx, WOP_WUUU_H, DO_ADD)
+RVVCALL(OPIVX2, VWaddu32_wx, WOP_WUUU_W, DO_ADD)
+RVVCALL(OPIVX2, VWsubu8_wx, WOP_WUUU_B, DO_SUB)
+RVVCALL(OPIVX2, VWsubu16_wx, WOP_WUUU_H, DO_SUB)
+RVVCALL(OPIVX2, VWsubu32_wx, WOP_WUUU_W, DO_SUB)
+RVVCALL(OPIVX2, VWadd8_wx, WOP_WSSS_B, DO_ADD)
+RVVCALL(OPIVX2, VWadd16_wx, WOP_WSSS_H, DO_ADD)
+RVVCALL(OPIVX2, VWadd32_wx, WOP_WSSS_W, DO_ADD)
+RVVCALL(OPIVX2, VWsub8_wx, WOP_WSSS_B, DO_SUB)
+RVVCALL(OPIVX2, VWsub16_wx, WOP_WSSS_H, DO_SUB)
+RVVCALL(OPIVX2, VWsub32_wx, WOP_WSSS_W, DO_SUB)
+GEN_VEXT_VX(VWaddu8_vx)
+GEN_VEXT_VX(VWaddu16_vx)
+GEN_VEXT_VX(VWaddu32_vx)
+GEN_VEXT_VX(VWsubu8_vx)
+GEN_VEXT_VX(VWsubu16_vx)
+GEN_VEXT_VX(VWsubu32_vx)
+GEN_VEXT_VX(VWadd8_vx)
+GEN_VEXT_VX(VWadd16_vx)
+GEN_VEXT_VX(VWadd32_vx)
+GEN_VEXT_VX(VWsub8_vx)
+GEN_VEXT_VX(VWsub16_vx)
+GEN_VEXT_VX(VWsub32_vx)
+GEN_VEXT_VX(VWaddu8_wx)
+GEN_VEXT_VX(VWaddu16_wx)
+GEN_VEXT_VX(VWaddu32_wx)
+GEN_VEXT_VX(VWsubu8_wx)
+GEN_VEXT_VX(VWsubu16_wx)
+GEN_VEXT_VX(VWsubu32_wx)
+GEN_VEXT_VX(VWadd8_wx)
+GEN_VEXT_VX(VWadd16_wx)
+GEN_VEXT_VX(VWadd32_wx)
+GEN_VEXT_VX(VWsub8_wx)
+GEN_VEXT_VX(VWsub16_wx)
+GEN_VEXT_VX(VWsub32_wx)
+
 struct Iop_handler {
    const char* name;
    const void* fn;
@@ -2292,6 +2403,38 @@ struct Iop_handler {
    H_V_X(op), \
    H_V_I(op)
 
+#define HW_V_V(op) \
+   [Iop_V##op##8_vv]  = {"Iop_V" #op "8_vv", h_Iop_V##op##8_vv},   \
+   [Iop_V##op##16_vv] = {"Iop_V" #op "16_vv", h_Iop_V##op##16_vv}, \
+   [Iop_V##op##32_vv] = {"Iop_V" #op "32_vv", h_Iop_V##op##32_vv}
+
+#define HW_V_X(op) \
+   [Iop_V##op##8_vx]  = {"Iop_V" #op "8_vx", h_Iop_V##op##8_vx},   \
+   [Iop_V##op##16_vx] = {"Iop_V" #op "16_vx", h_Iop_V##op##16_vx}, \
+   [Iop_V##op##32_vx] = {"Iop_V" #op "32_vx", h_Iop_V##op##32_vx}
+
+#define HW_W_V(op) \
+   [Iop_V##op##8_wv]  = {"Iop_V" #op "8_wv", h_Iop_V##op##8_wv},   \
+   [Iop_V##op##16_wv] = {"Iop_V" #op "16_wv", h_Iop_V##op##16_wv}, \
+   [Iop_V##op##32_wv] = {"Iop_V" #op "32_wv", h_Iop_V##op##32_wv}
+
+#define HW_W_X(op) \
+   [Iop_V##op##8_wx]  = {"Iop_V" #op "8_wx", h_Iop_V##op##8_wx},   \
+   [Iop_V##op##16_wx] = {"Iop_V" #op "16_wx", h_Iop_V##op##16_wx}, \
+   [Iop_V##op##32_wx] = {"Iop_V" #op "32_wx", h_Iop_V##op##32_wx}
+
+#define HW_V_VX(op) \
+   HW_V_V(op), \
+   HW_V_X(op)
+
+#define HW_W_VX(op) \
+   HW_W_V(op), \
+   HW_W_X(op)
+
+#define HW_VW_VX(op) \
+   HW_V_VX(op), \
+   HW_W_VX(op)
+
 static const struct Iop_handler IOP_HANDLERS[] = {
    H_V_VXI(And),
    H_V_VXI(Or),
@@ -2333,6 +2476,11 @@ static const struct Iop_handler IOP_HANDLERS[] = {
    H_V_VXI(Sll),
    H_V_VXI(Srl),
    H_V_VXI(Sra),
+
+   HW_VW_VX(Waddu),
+   HW_VW_VX(Wadd),
+   HW_VW_VX(Wsubu),
+   HW_VW_VX(Wsub),
 
    H_V1_IEXT(Zext),
    H_V1_IEXT(Sext),

@@ -2089,6 +2089,18 @@ typedef
       Iop_V##op##32_vf4, Iop_V##op##64_vf4, \
       Iop_V##op##64_vf8
 
+#define WIOPVV2(op) \
+      Iop_V##op##8_vv, Iop_V##op##16_vv, Iop_V##op##32_vv
+
+#define WIOPVX2(op) \
+      Iop_V##op##8_vx, Iop_V##op##16_vx, Iop_V##op##32_vx
+
+#define WIOPWV2(op) \
+      Iop_V##op##8_wv, Iop_V##op##16_wv, Iop_V##op##32_wv
+
+#define WIOPWX2(op) \
+      Iop_V##op##8_wx, Iop_V##op##16_wx, Iop_V##op##32_wx
+
       Iop_VV2_Start,
       IOPVV2(Add),
       IOPVV2(Or),
@@ -2116,6 +2128,15 @@ typedef
       IOPVV2(Sll),
       IOPVV2(Srl),
       IOPVV2(Sra),
+
+      WIOPVV2(Waddu),
+      WIOPVV2(Wadd),
+      WIOPVV2(Wsubu),
+      WIOPVV2(Wsub),
+      WIOPWV2(Waddu),
+      WIOPWV2(Wadd),
+      WIOPWV2(Wsubu),
+      WIOPWV2(Wsub),
       Iop_VV2_End,
 
       Iop_VX2_Start,
@@ -2148,6 +2169,14 @@ typedef
       IOPVX2(Sll),
       IOPVX2(Srl),
       IOPVX2(Sra),
+      WIOPVX2(Waddu),
+      WIOPVX2(Wadd),
+      WIOPVX2(Wsubu),
+      WIOPVX2(Wsub),
+      WIOPWX2(Waddu),
+      WIOPWX2(Wadd),
+      WIOPWX2(Wsubu),
+      WIOPWX2(Wsub),
       Iop_VX2_End,
 
       Iop_VI2_Start,

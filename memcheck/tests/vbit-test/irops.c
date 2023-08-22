@@ -1227,6 +1227,34 @@ static irop_t irops[] = {
   DEFOP_V_X(op), \
   DEFOP_V_I(op)
 
+#define DEFOPW_V_V(op) \
+  { DEFOP(Iop_V##op##8_vv, UNDEF_UNKNOWN), },  \
+  { DEFOP(Iop_V##op##16_vv, UNDEF_UNKNOWN), }, \
+  { DEFOP(Iop_V##op##32_vv, UNDEF_UNKNOWN), }
+
+#define DEFOPW_V_X(op) \
+  { DEFOP(Iop_V##op##8_vx, UNDEF_UNKNOWN), },  \
+  { DEFOP(Iop_V##op##16_vx, UNDEF_UNKNOWN), }, \
+  { DEFOP(Iop_V##op##32_vx, UNDEF_UNKNOWN), }
+
+#define DEFOPW_V_VX(op) \
+  DEFOPW_V_V(op), \
+  DEFOPW_V_X(op)
+
+#define DEFOPW_W_V(op) \
+  { DEFOP(Iop_V##op##8_wv, UNDEF_UNKNOWN), },  \
+  { DEFOP(Iop_V##op##16_wv, UNDEF_UNKNOWN), }, \
+  { DEFOP(Iop_V##op##32_wv, UNDEF_UNKNOWN), }
+
+#define DEFOPW_W_X(op) \
+  { DEFOP(Iop_V##op##8_wx, UNDEF_UNKNOWN), },  \
+  { DEFOP(Iop_V##op##16_wx, UNDEF_UNKNOWN), }, \
+  { DEFOP(Iop_V##op##32_wx, UNDEF_UNKNOWN), }
+
+#define DEFOPW_W_VX(op) \
+  DEFOPW_W_V(op), \
+  DEFOPW_W_X(op)
+
 #define DEFOP_V_EXT(op) \
   { DEFOP(Iop_V##op##16_vf2, UNDEF_UNKNOWN), },  \
   { DEFOP(Iop_V##op##32_vf2, UNDEF_UNKNOWN), },  \
@@ -1273,6 +1301,16 @@ static irop_t irops[] = {
   DEFOP_V_VXI(Sll),
   DEFOP_V_VXI(Srl),
   DEFOP_V_VXI(Sra),
+
+  DEFOPW_V_VX(Waddu),
+  DEFOPW_V_VX(Wadd),
+  DEFOPW_V_VX(Wsubu),
+  DEFOPW_V_VX(Wsub),
+
+  DEFOPW_W_VX(Waddu),
+  DEFOPW_W_VX(Wadd),
+  DEFOPW_W_VX(Wsubu),
+  DEFOPW_W_VX(Wsub),
 
   DEFOP_V_EXT(Zext),
   DEFOP_V_EXT(Sext),

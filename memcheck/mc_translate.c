@@ -3383,6 +3383,55 @@ IRAtom* binary_v ( MCEnv* mce, IRAtom* vatom1, IRAtom* vatom2, UInt sew )
 }
 
 static
+IRAtom* zwiden_v ( MCEnv* mce, IRAtom* at )
+{
+   IRType ty = typeOfIRExpr(mce->sb->tyenv, at);
+   IROp base_op;
+   switch (ty & IR_TYPE_MASK) {
+   case Ity_VLen8:  base_op = Iop_VZext16_vf2; break;
+   case Ity_VLen16: base_op = Iop_VZext32_vf2; break;
+   case Ity_VLen32: base_op = Iop_VZext64_vf2; break;
+   default: VG_(tool_panic)("memcheck:zwiden_v");
+   }
+
+   UInt vl = VLofVecIRType(ty);
+   return assignNew('V', mce, ty + 1, unop(opofVecIR(vl, base_op), at));
+}
+
+static
+IRAtom* binary_w_v_vx ( MCEnv* mce, IRAtom* vatom1, IRAtom* vatom2, UInt sew )
+{
+   switch (sew) {
+   case  8: return mkPCast16_v(mce, zwiden_v(mce, mkUifUVLen8(mce, vatom1, vatom2)));
+   case 16: return mkPCast32_v(mce, zwiden_v(mce, mkUifUVLen16(mce, vatom1, vatom2)));
+   case 32: return mkPCast64_v(mce, zwiden_v(mce, mkUifUVLen32(mce, vatom1, vatom2)));
+   default: VG_(tool_panic)("memcheck:binary_w_v_vx");
+   }
+}
+
+static
+IRAtom* binary_w_w_v ( MCEnv* mce, IRAtom* vatom1, IRAtom* vatom2, UInt sew )
+{
+   switch (sew) {
+   case  8: return mkPCast16_v(mce, mkUifUVLen16(mce, zwiden_v(mce, vatom1), vatom2));
+   case 16: return mkPCast32_v(mce, mkUifUVLen32(mce, zwiden_v(mce, vatom1), vatom2));
+   case 32: return mkPCast64_v(mce, mkUifUVLen64(mce, zwiden_v(mce, vatom1), vatom2));
+   default: VG_(tool_panic)("memcheck:binary_w_v_v");
+   }
+}
+
+static
+IRAtom* binary_w_w_x ( MCEnv* mce, IRAtom* vatom1, IRAtom* vatom2, UInt sew )
+{
+   switch (sew) {
+   case  8: return mkPCast16_v(mce, mkUifUVLen16(mce, vatom1, vatom2));
+   case 16: return mkPCast32_v(mce, mkUifUVLen32(mce, vatom1, vatom2));
+   case 32: return mkPCast64_v(mce, mkUifUVLen64(mce, vatom1, vatom2));
+   default: VG_(tool_panic)("memcheck:binary_w_v_v");
+   }
+}
+
+static
 IRAtom* ternary8I_v ( MCEnv* mce, IRAtom* vatom1, IRAtom* vatom2, IRAtom* vatom3 )
 {
    IRAtom* at;
@@ -5417,6 +5466,40 @@ IRAtom* expr2vbits_Binop ( MCEnv* mce,
       case Iop_VSra8_vi ... Iop_VSra64_vi:
          return mkPCast_v(mce, vatom2, 8 << (bop - Iop_VSra8_vi));
 
+      case Iop_VWaddu8_vv ... Iop_VWaddu32_vv:
+         return binary_w_v_vx(mce, vatom1, vatom2, 8 << (bop - Iop_VWaddu8_vv));
+      case Iop_VWaddu8_vx ... Iop_VWaddu32_vx:
+         return binary_w_v_vx(mce, vatom1, vatom2, 8 << (bop - Iop_VWaddu8_vx));
+      case Iop_VWadd8_vv ... Iop_VWadd32_vv:
+         return binary_w_v_vx(mce, vatom1, vatom2, 8 << (bop - Iop_VWadd8_vv));
+      case Iop_VWadd8_vx ... Iop_VWadd32_vx:
+         return binary_w_v_vx(mce, vatom1, vatom2, 8 << (bop - Iop_VWadd8_vx));
+      case Iop_VWsubu8_vv ... Iop_VWsubu32_vv:
+         return binary_w_v_vx(mce, vatom1, vatom2, 8 << (bop - Iop_VWsubu8_vv));
+      case Iop_VWsubu8_vx ... Iop_VWsubu32_vx:
+         return binary_w_v_vx(mce, vatom1, vatom2, 8 << (bop - Iop_VWsubu8_vx));
+      case Iop_VWsub8_vv ... Iop_VWsub32_vv:
+         return binary_w_v_vx(mce, vatom1, vatom2, 8 << (bop - Iop_VWsub8_vv));
+      case Iop_VWsub8_vx ... Iop_VWsub32_vx:
+         return binary_w_v_vx(mce, vatom1, vatom2, 8 << (bop - Iop_VWsub8_vx));
+
+      case Iop_VWaddu8_wv ... Iop_VWaddu32_wv:
+         return binary_w_w_v(mce, vatom1, vatom2, 8 << (bop - Iop_VWaddu8_wv));
+      case Iop_VWaddu8_wx ... Iop_VWaddu32_wx:
+         return binary_w_w_x(mce, vatom1, vatom2, 8 << (bop - Iop_VWaddu8_wx));
+      case Iop_VWadd8_wv ... Iop_VWadd32_wv:
+         return binary_w_w_v(mce, vatom1, vatom2, 8 << (bop - Iop_VWadd8_wv));
+      case Iop_VWadd8_wx ... Iop_VWadd32_wx:
+         return binary_w_w_x(mce, vatom1, vatom2, 8 << (bop - Iop_VWadd8_wx));
+      case Iop_VWsubu8_wv ... Iop_VWsubu32_wv:
+         return binary_w_w_v(mce, vatom1, vatom2, 8 << (bop - Iop_VWsubu8_wv));
+      case Iop_VWsubu8_wx ... Iop_VWsubu32_wx:
+         return binary_w_w_x(mce, vatom1, vatom2, 8 << (bop - Iop_VWsubu8_wx));
+      case Iop_VWsub8_wv ... Iop_VWsub32_wv:
+         return binary_w_w_v(mce, vatom1, vatom2, 8 << (bop - Iop_VWsub8_wv));
+      case Iop_VWsub8_wx ... Iop_VWsub32_wx:
+         return binary_w_w_x(mce, vatom1, vatom2, 8 << (bop - Iop_VWsub8_wx));
+
       default:
          ppIROp(op);
          VG_(tool_panic)("memcheck:expr2vbits_Binop");
@@ -5881,9 +5964,9 @@ IRExpr* expr2vbits_Unop ( MCEnv* mce, IROp op, IRAtom* atom )
          return mkPCast64_v(mce, assignNew('V', mce, dst_ty, unop(op, vatom)));
       }
 
-      case Iop_VNot32:
-         return vatom; // TODO
-      case Iop_VExpandBitsTo8 ... Iop_VExpandBitsTo32: {
+      case Iop_VNot8 ... Iop_VNot64:
+         return vatom;
+      case Iop_VExpandBitsTo8 ... Iop_VExpandBitsTo64: {
          IRType base = Ity_VLen8 + (op & IR_OP_MASK) - Iop_VExpandBitsTo8;
          UInt vl = VLofVecIROp(op);
          IRType dst_ty = typeofVecIR (vl, base);
