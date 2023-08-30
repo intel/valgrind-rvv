@@ -3995,6 +3995,32 @@ Bool dis_rvv3w_v_x(/*MB_OUT*/ DisResult* dres,
    return dis_rvv3w_v_vx(dres, irsb, insn, guest_pc_curr_instr, guest, base_op, RVV_X);
 }
 
+static Bool dis_rvv_vmvr(/*MB_OUT*/ DisResult* dres,
+                         /*OUT*/ IRSB*         irsb,
+                         UInt                  insn,
+                         Addr                  guest_pc_curr_instr,
+                         VexGuestRISCV64State* guest)
+{
+   UInt vm = INSN(25, 25);
+   UInt vs = INSN(24, 20);
+   UInt imm = INSN(19, 15);
+   UInt vd = INSN(11, 7);
+   UInt nreg = imm + 1;
+
+   vassert(vm == 1);
+
+   UInt sew = get_sew(guest);
+   Int index = sewToIndex(sew);
+   UInt vl = VLEN / sew;  // one vreg
+   IRType ty = typeofVecIR(vl, Ity_VLen8 + index);
+
+   for (int i = 0; i < nreg; ++i) {
+      putVReg(irsb, vd++, 0, getVReg(vs++, 0, ty));
+   }
+
+   return True;
+}
+
 static Bool dis_vmsbf_m(/*MB_OUT*/ DisResult* dres,
                         /*OUT*/ IRSB*         irsb,
                         UInt                  insn,
@@ -4400,6 +4426,8 @@ static Bool dis_opivi(/*MB_OUT*/ DisResult* dres,
       return False;
    case 0b100101:
       return dis_rvv2_v_i(dres, irsb, insn, guest_pc_curr_instr, guest, Iop_VSll_vi_8);
+   case 0b100111:
+      return dis_rvv_vmvr(dres, irsb, insn, guest_pc_curr_instr, guest);
    case 0b101000:
       return dis_rvv2_v_i(dres, irsb, insn, guest_pc_curr_instr, guest, Iop_VSrl_vi_8);
    case 0b101001:
