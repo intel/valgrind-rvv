@@ -5559,7 +5559,8 @@ IRExpr* expr2vbits_Unop ( MCEnv* mce, IROp op, IRAtom* atom )
       future).  See comment in do_shadow_LoadG. */
    IRAtom* vatom = expr2vbits( mce, atom, HuOth );
    tl_assert(isOriginalAtom(mce,atom));
-   switch (op & IR_OP_MASK) {
+   IROp bop = op & IR_OP_MASK;
+   switch (bop) {
 
       case Iop_Abs64Fx2:
       case Iop_Neg64Fx2:
@@ -6013,6 +6014,21 @@ IRExpr* expr2vbits_Unop ( MCEnv* mce, IROp op, IRAtom* atom )
          UInt vl = VLofVecIROp(op);
          IRType dst_ty = typeofVecIR (vl, base);
          return assignNew('V', mce, dst_ty, unop(op, vatom));
+      }
+
+      case Iop_VMv_v_v_8 ... Iop_VMv_v_v_64:
+         return mkPCast_v(mce, vatom, 8 << (bop - Iop_VMv_v_v_8));
+      case Iop_VMv_v_x_8 ... Iop_VMv_v_x_64: {
+         IRType base = Ity_VLen8 + bop - Iop_VMv_v_x_8;
+         UInt vl = VLofVecIROp(op);
+         IRType dst_ty = typeofVecIR (vl, base);
+         return assignNew('V', mce, dst_ty, unop(op, vatom));
+      }
+      case Iop_VMv_v_i_8 ... Iop_VMv_v_i_64: {
+         IRType base = Ity_VLen8 + bop - Iop_VMv_v_i_8;
+         UInt vl = VLofVecIROp(op);
+         IRType dst_ty = typeofVecIR (vl, base);
+         return assignNew('V', mce, dst_ty, unop(op, mkU64(0)));
       }
 
       case Iop_I64UtoF32:

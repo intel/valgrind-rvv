@@ -2143,6 +2143,10 @@ typedef
       IOPVV1(CmpNEZ),
       IOPVV1(ExpandBitsTo),
 
+      IOPVV1(Mv_v_v),
+      IOPVV1(Mv_v_x),
+      IOPVV1(Mv_v_i),
+
       IOPVV2_V_VXI(Add),
       IOPVV2_V_VX(Sub),
       IOPVV2_V_XI(Rsub),

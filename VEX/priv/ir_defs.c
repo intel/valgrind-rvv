@@ -462,6 +462,14 @@ void ppIROp ( IROp op )
          str = "VNot"; base = Iop_VNot_8; break;
       case Iop_VExpandBitsTo_8 ... Iop_VExpandBitsTo_64:
          str = "VExpandBitsTo"; base = Iop_VExpandBitsTo_8; break;
+
+      case Iop_VMv_v_v_8 ... Iop_VMv_v_v_64:
+         str = "VMv_v_v"; base = Iop_VMv_v_v_8; break;
+      case Iop_VMv_v_x_8 ... Iop_VMv_v_x_64:
+         str = "VMv_v_x"; base = Iop_VMv_v_x_8; break;
+      case Iop_VMv_v_i_8 ... Iop_VMv_v_i_64:
+         str = "VMv_v_i"; base = Iop_VMv_v_i_8; break;
+
       /* other cases must explicitly "return;" */
       case Iop_8Uto16:   vex_printf("8Uto16");  return;
       case Iop_8Uto32:   vex_printf("8Uto32");  return;
@@ -2248,6 +2256,10 @@ Bool primopMightTrap ( IROp op )
    case Iop_VCmpNEZ_8 ... Iop_VCmpNEZ_64:
    case Iop_VNot_8 ... Iop_VNot_64:
    case Iop_VExpandBitsTo_8 ... Iop_VExpandBitsTo_64:
+
+   case Iop_VMv_v_v_8 ... Iop_VMv_v_v_64:
+   case Iop_VMv_v_x_8 ... Iop_VMv_v_x_64:
+   case Iop_VMv_v_i_8 ... Iop_VMv_v_i_64:
       return False;
 
    case Iop_INVALID: case Iop_LAST:
@@ -4997,6 +5009,20 @@ void typeOfPrimop ( IROp op,
          IRType dst_ty = typeofVecIR (vl, base);
          IRType src_ty = typeofVecIR (vl, Ity_VLen1);
          UNARY(src_ty, dst_ty);
+      }
+      case Iop_VMv_v_v_8 ... Iop_VMv_v_v_64:
+         VEC_UNARY(Iop_VMv_v_v_8);
+      case Iop_VMv_v_x_8 ... Iop_VMv_v_x_64: {
+         IRType base = Ity_VLen8 + bop - Iop_VMv_v_x_8;
+         UInt vl = VLofVecIROp(op);
+         IRType dst_ty = typeofVecIR (vl, base);
+         UNARY(Ity_I64, dst_ty);
+      }
+      case Iop_VMv_v_i_8 ... Iop_VMv_v_i_64: {
+         IRType base = Ity_VLen8 + bop - Iop_VMv_v_i_8;
+         UInt vl = VLofVecIROp(op);
+         IRType dst_ty = typeofVecIR (vl, base);
+         UNARY(Ity_I64, dst_ty);
       }
 
       default:

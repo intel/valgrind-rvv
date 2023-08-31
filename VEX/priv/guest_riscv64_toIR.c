@@ -4069,6 +4069,43 @@ static Bool dis_rvv_vmv_s_x(/*MB_OUT*/ DisResult* dres,
    return True;
 }
 
+static Bool dis_rvv_vmv_v_vxi(/*MB_OUT*/ DisResult* dres,
+                              /*OUT*/ IRSB*         irsb,
+                              UInt                  insn,
+                              Addr                  guest_pc_curr_instr,
+                              VexGuestRISCV64State* guest,
+                              rvvRegType            s1_type)
+{
+   UInt vs2 = INSN(24, 20);
+   UInt s1 = INSN(19, 15);
+   UInt vd = INSN(11, 7);
+
+   vassert(vs2 == 0);
+
+   UInt sew = get_sew(guest);
+   Int index = sewToIndex(sew);
+   UInt vl = guest->guest_vl;
+   IRType ty = typeofVecIR(vl, Ity_VLen8 + index);
+
+   IRExpr* es1;
+   IROp base_op;
+   if (s1_type == RVV_V) {
+      es1 = getVReg(s1, 0, ty);
+      base_op = Iop_VMv_v_v_8;
+   } else if (s1_type == RVV_X) {
+      es1 = getIReg64(s1);
+      base_op = Iop_VMv_v_x_8;
+   } else if (s1_type == RVV_I) {
+      es1 = mkU64(sext_slice_ulong(insn, 19, 15));
+      base_op = Iop_VMv_v_i_8;
+   }
+
+   IRExpr* res = unop(opofVecIR(vl, base_op + index), es1);
+   putVReg(irsb, vd, 0, res);
+
+   return True;
+}
+
 static Bool dis_vmsbf_m(/*MB_OUT*/ DisResult* dres,
                         /*OUT*/ IRSB*         irsb,
                         UInt                  insn,
@@ -4261,37 +4298,6 @@ static Bool dis_vid_v(/*MB_OUT*/ DisResult* dres,
    return True;
 }
 
-static Bool dis_vmv_vi(/*MB_OUT*/ DisResult* dres,
-                       /*OUT*/ IRSB*         irsb,
-                       UInt                  insn,
-                       Addr                  guest_pc_curr_instr,
-                       VexGuestRISCV64State* guest)
-{
-   UInt vs2 = INSN(24, 20);
-   ULong imm = sext_slice_ulong(insn, 19, 15);
-   UInt vd = INSN(11, 7);
-
-   vassert(vs2 == 0);
-
-   UInt sew_b = get_sew(guest) / 8;
-   IRExpr* e_imm;
-   switch (sew_b) {
-   case 1: e_imm = mkU8((UChar)imm); break;
-   case 2: e_imm = mkU16((UShort)imm); break;
-   case 4: e_imm = mkU32((UInt)imm); break;
-   case 8: e_imm = mkU64(imm); break;
-   default: vassert(0);
-   }
-
-   UInt offset = 0;
-   for (UInt i = 0; i < guest->guest_vl; ++i) {
-      putVReg(irsb, vd, offset, e_imm);
-      offset += sew_b;
-   }
-
-   return True;
-}
-
 static Bool dis_opivv(/*MB_OUT*/ DisResult* dres,
                       /*OUT*/ IRSB*         irsb,
                       UInt                  insn,
@@ -4299,6 +4305,7 @@ static Bool dis_opivv(/*MB_OUT*/ DisResult* dres,
                       VexGuestRISCV64State* guest)
 {
    UInt funct6 = INSN(31, 26);
+   UInt vm = INSN(25, 25);
 
    switch (funct6) {
    case 0b000000:
@@ -4319,6 +4326,11 @@ static Bool dis_opivv(/*MB_OUT*/ DisResult* dres,
       return dis_rvv2_v_v(dres, irsb, insn, guest_pc_curr_instr, guest, Iop_VXor_vv_8);
    case 0b001001:
       return dis_rvv2_v_v(dres, irsb, insn, guest_pc_curr_instr, guest, Iop_VAnd_vv_8);
+   case 0b010111:
+      if (vm == 1) {
+         return dis_rvv_vmv_v_vxi(dres, irsb, insn, guest_pc_curr_instr, guest, RVV_V);
+      }
+      return False;
    case 0b011000:
       return dis_rvv2_v_v(dres, irsb, insn, guest_pc_curr_instr, guest, Iop_VMseq_vv_8);
    case 0b011001:
@@ -4471,7 +4483,7 @@ static Bool dis_opivi(/*MB_OUT*/ DisResult* dres,
       return dis_rvv2_v_i(dres, irsb, insn, guest_pc_curr_instr, guest, Iop_VMsgt_vi_8);
    case 0b010111:
       if (vm == 1) {
-         return dis_vmv_vi(dres, irsb, insn, guest_pc_curr_instr, guest);
+         return dis_rvv_vmv_v_vxi(dres, irsb, insn, guest_pc_curr_instr, guest, RVV_I);
       }
       return False;
    case 0b100101:
@@ -4494,6 +4506,7 @@ static Bool dis_opivx(/*MB_OUT*/ DisResult* dres,
                       VexGuestRISCV64State* guest)
 {
    UInt funct6 = INSN(31, 26);
+   UInt vm = INSN(25, 25);
 
    switch (funct6) {
    case 0b000000:
@@ -4516,6 +4529,11 @@ static Bool dis_opivx(/*MB_OUT*/ DisResult* dres,
       return dis_rvv2_v_x(dres, irsb, insn, guest_pc_curr_instr, guest, Iop_VXor_vx_8);
    case 0b001001:
       return dis_rvv2_v_x(dres, irsb, insn, guest_pc_curr_instr, guest, Iop_VAnd_vx_8);
+   case 0b010111:
+      if (vm == 1) {
+         return dis_rvv_vmv_v_vxi(dres, irsb, insn, guest_pc_curr_instr, guest, RVV_X);
+      }
+      return False;
    case 0b011000:
       return dis_rvv2_v_x(dres, irsb, insn, guest_pc_curr_instr, guest, Iop_VMseq_vx_8);
    case 0b011001:

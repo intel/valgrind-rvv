@@ -2440,6 +2440,33 @@ GEN_VEXT_VX(VWmaccus_vx_8)
 GEN_VEXT_VX(VWmaccus_vx_16)
 GEN_VEXT_VX(VWmaccus_vx_32)
 
+#define GEN_VEXT_VMV_VV(NAME, ETYPE)                              \
+static void h_Iop_##NAME(void *vd, void *vs1, int len)            \
+{                                                                 \
+   for (int i = 0; i < len; ++i) {                                \
+        ETYPE s1 = *((ETYPE *)vs1 + i);                           \
+        *((ETYPE *)vd + i) = s1;                                  \
+    }                                                             \
+}
+
+GEN_VEXT_VMV_VV(VMv_v_v_8, int8_t)
+GEN_VEXT_VMV_VV(VMv_v_v_16, int16_t)
+GEN_VEXT_VMV_VV(VMv_v_v_32, int32_t)
+GEN_VEXT_VMV_VV(VMv_v_v_64, int64_t)
+
+#define GEN_VEXT_VMV_VX(NAME, ETYPE)                              \
+static void h_Iop_##NAME(void *vd, uint64_t s1, int len)          \
+{                                                                 \
+    for (int i = 0; i < len; ++i) {                               \
+        *((ETYPE *)vd + i) = (ETYPE)s1;                           \
+    }                                                             \
+}
+
+GEN_VEXT_VMV_VX(VMv_v_x_8, int8_t)
+GEN_VEXT_VMV_VX(VMv_v_x_16, int16_t)
+GEN_VEXT_VMV_VX(VMv_v_x_32, int32_t)
+GEN_VEXT_VMV_VX(VMv_v_x_64, int64_t)
+
 struct Iop_handler {
    const char* name;
    const void* fn;
@@ -2450,6 +2477,12 @@ struct Iop_handler {
    [Iop_V##op##_16] = {"Iop_V" #op "_16", h_Iop_V##op##_16}, \
    [Iop_V##op##_32] = {"Iop_V" #op "_32", h_Iop_V##op##_32}, \
    [Iop_V##op##_64] = {"Iop_V" #op "_64", h_Iop_V##op##_64}
+
+#define H_V1_ALTER(op, alter_op) \
+   [Iop_V##op##_8]  = {"Iop_V" #op "_8", h_Iop_V##alter_op##_8},   \
+   [Iop_V##op##_16] = {"Iop_V" #op "_16", h_Iop_V##alter_op##_16}, \
+   [Iop_V##op##_32] = {"Iop_V" #op "_32", h_Iop_V##alter_op##_32}, \
+   [Iop_V##op##_64] = {"Iop_V" #op "_64", h_Iop_V##alter_op##_64}
 
 #define H_V1_IEXT(op) \
    [Iop_V##op##_vf2_16] = {"Iop_V" #op "_vf2_16", h_Iop_V##op##_vf2_16}, \
@@ -2588,6 +2621,10 @@ static const struct Iop_handler IOP_HANDLERS[] = {
    H_V1(Not),
    H_V1(CmpNEZ),
    H_V1(ExpandBitsTo),
+
+   H_V1(Mv_v_v),
+   H_V1(Mv_v_x),
+   H_V1_ALTER(Mv_v_i, Mv_v_x),
 
    [Iop_LAST] = {"Iop_LAST", 0}
 };
