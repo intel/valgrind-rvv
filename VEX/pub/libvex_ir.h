@@ -2136,6 +2136,20 @@ typedef
       IOPVV3W_V_V(op), \
       IOPVV3W_V_X(op)
 
+#define IOPVV3_V_V_M(op) \
+      Iop_V##op##_vvm_8, Iop_V##op##_vvm_16, Iop_V##op##_vvm_32, Iop_V##op##_vvm_64
+
+#define IOPVV3_V_X_M(op) \
+      Iop_V##op##_vxm_8, Iop_V##op##_vxm_16, Iop_V##op##_vxm_32, Iop_V##op##_vxm_64
+
+#define IOPVV3_V_I_M(op) \
+      Iop_V##op##_vim_8, Iop_V##op##_vim_16, Iop_V##op##_vim_32, Iop_V##op##_vim_64
+
+#define IOPVV3_V_VXI_M(op) \
+      IOPVV3_V_V_M(op), \
+      IOPVV3_V_X_M(op), \
+      IOPVV3_V_I_M(op)
+
       IOPVV1_IEXT(Zext),
       IOPVV1_IEXT(Sext),
 
@@ -2198,6 +2212,7 @@ typedef
       IOPVV2W_V_VX(Wmul),
 
       Iop_SSS_Start,
+      IOPVV3_V_VXI_M(Merge),
       Iop_SSS_End,
 
       Iop_SSD_Start,

@@ -4115,6 +4115,43 @@ static Bool dis_rvv_vmv_v_vxi(/*MB_OUT*/ DisResult* dres,
    return True;
 }
 
+static Bool dis_rvv_vmerge_vxi(/*MB_OUT*/ DisResult* dres,
+                               /*OUT*/ IRSB*         irsb,
+                               UInt                  insn,
+                               Addr                  guest_pc_curr_instr,
+                               VexGuestRISCV64State* guest,
+                               rvvRegType            s1_type)
+{
+   UInt vs2 = INSN(24, 20);
+   UInt s1 = INSN(19, 15);
+   UInt vd = INSN(11, 7);
+
+   UInt sew = get_sew(guest);
+   Int index = sewToIndex(sew);
+   UInt vl = guest->guest_vl;
+   IRType ty = typeofVecIR(vl, Ity_VLen8 + index);
+
+   IRExpr* es1;
+   IROp base_op;
+   if (s1_type == RVV_V) {
+      es1 = getVReg(s1, 0, ty);
+      base_op = Iop_VMerge_vvm_8;
+   } else if (s1_type == RVV_X) {
+      es1 = getIReg64(s1);
+      base_op = Iop_VMerge_vxm_8;
+   } else if (s1_type == RVV_I) {
+      es1 = mkU64(sext_slice_ulong(insn, 19, 15));
+      base_op = Iop_VMerge_vim_8;
+   }
+
+   IRExpr* mask = getVReg(0 /*v0*/, 0, typeofVecIR(vl, Ity_VLen1));
+   IRExpr* res = triop(opofVecIR(vl, base_op + index),
+                       es1, getVReg(vs2, 0, ty), mask);
+   putVReg(irsb, vd, 0, res);
+
+   return True;
+}
+
 static Bool dis_vmsbf_m(/*MB_OUT*/ DisResult* dres,
                         /*OUT*/ IRSB*         irsb,
                         UInt                  insn,
@@ -4338,6 +4375,8 @@ static Bool dis_opivv(/*MB_OUT*/ DisResult* dres,
    case 0b010111:
       if (vm == 1) {
          return dis_rvv_vmv_v_vxi(dres, irsb, insn, guest_pc_curr_instr, guest, RVV_V);
+      } else {
+         return dis_rvv_vmerge_vxi(dres, irsb, insn, guest_pc_curr_instr, guest, RVV_V);
       }
       return False;
    case 0b011000:
@@ -4493,6 +4532,8 @@ static Bool dis_opivi(/*MB_OUT*/ DisResult* dres,
    case 0b010111:
       if (vm == 1) {
          return dis_rvv_vmv_v_vxi(dres, irsb, insn, guest_pc_curr_instr, guest, RVV_I);
+      } else {
+         return dis_rvv_vmerge_vxi(dres, irsb, insn, guest_pc_curr_instr, guest, RVV_I);
       }
       return False;
    case 0b100101:
@@ -4541,6 +4582,8 @@ static Bool dis_opivx(/*MB_OUT*/ DisResult* dres,
    case 0b010111:
       if (vm == 1) {
          return dis_rvv_vmv_v_vxi(dres, irsb, insn, guest_pc_curr_instr, guest, RVV_X);
+      } else {
+         return dis_rvv_vmerge_vxi(dres, irsb, insn, guest_pc_curr_instr, guest, RVV_X);
       }
       return False;
    case 0b011000:

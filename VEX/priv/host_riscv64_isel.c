@@ -2467,6 +2467,42 @@ GEN_VEXT_VMV_VX(VMv_v_x_16, int16_t)
 GEN_VEXT_VMV_VX(VMv_v_x_32, int32_t)
 GEN_VEXT_VMV_VX(VMv_v_x_64, int64_t)
 
+static inline int vext_elem_mask(void *v0, int index)
+{
+    int idx = index / 64;
+    int pos = index  % 64;
+    return (((uint64_t *)v0)[idx] >> pos) & 1;
+}
+
+#define GEN_VEXT_VMERGE_VV(NAME, ETYPE)                                      \
+static void h_Iop_##NAME(void *vd, void *vs1, void *vs2, void *v0, int len)  \
+{                                                                            \
+    for (int i = 0; i < len; ++i) {                                          \
+        ETYPE *vt = (!vext_elem_mask(v0, i) ? vs2 : vs1);                    \
+        *((ETYPE *)vd + i) = *(vt + i);                                      \
+    }                                                                        \
+}
+
+GEN_VEXT_VMERGE_VV(VMerge_vvm_8, int8_t)
+GEN_VEXT_VMERGE_VV(VMerge_vvm_16, int16_t)
+GEN_VEXT_VMERGE_VV(VMerge_vvm_32, int32_t)
+GEN_VEXT_VMERGE_VV(VMerge_vvm_64, int64_t)
+
+#define GEN_VEXT_VMERGE_VX(NAME, ETYPE)                                      \
+static void h_Iop_##NAME(void *vd, Long s1, void *vs2, void *v0, int len)    \
+{                                                                            \
+    for (int i = 0; i < len; ++i) {                                          \
+        ETYPE s2 = *((ETYPE *)vs2 + i);                                      \
+        ETYPE d = (!vext_elem_mask(v0, i) ? s2 : (ETYPE)s1);                 \
+        *((ETYPE *)vd + i) = d;                                              \
+    }                                                                        \
+}
+
+GEN_VEXT_VMERGE_VX(VMerge_vxm_8, int8_t)
+GEN_VEXT_VMERGE_VX(VMerge_vxm_16, int16_t)
+GEN_VEXT_VMERGE_VX(VMerge_vxm_32, int32_t)
+GEN_VEXT_VMERGE_VX(VMerge_vxm_64, int64_t)
+
 struct Iop_handler {
    const char* name;
    const void* fn;
@@ -2559,6 +2595,29 @@ struct Iop_handler {
    HW_V_VX(op), \
    HW_W_VX(op)
 
+#define H_V_V_M(op) \
+   [Iop_V##op##_vvm_8]  = {"Iop_V" #op "_vvm_8", h_Iop_V##op##_vvm_8},   \
+   [Iop_V##op##_vvm_16] = {"Iop_V" #op "_vvm_16", h_Iop_V##op##_vvm_16}, \
+   [Iop_V##op##_vvm_32] = {"Iop_V" #op "_vvm_32", h_Iop_V##op##_vvm_32}, \
+   [Iop_V##op##_vvm_64] = {"Iop_V" #op "_vvm_64", h_Iop_V##op##_vvm_64}
+
+#define H_V_X_M(op) \
+   [Iop_V##op##_vxm_8]  = {"Iop_V" #op "_vxm_8", h_Iop_V##op##_vxm_8},   \
+   [Iop_V##op##_vxm_16] = {"Iop_V" #op "_vxm_16", h_Iop_V##op##_vxm_16}, \
+   [Iop_V##op##_vxm_32] = {"Iop_V" #op "_vxm_32", h_Iop_V##op##_vxm_32}, \
+   [Iop_V##op##_vxm_64] = {"Iop_V" #op "_vxm_64", h_Iop_V##op##_vxm_64}
+
+#define H_V_I_M(op) \
+   [Iop_V##op##_vim_8]  = {"Iop_V" #op "_vim_8", h_Iop_V##op##_vxm_8},   \
+   [Iop_V##op##_vim_16] = {"Iop_V" #op "_vim_16", h_Iop_V##op##_vxm_16}, \
+   [Iop_V##op##_vim_32] = {"Iop_V" #op "_vim_32", h_Iop_V##op##_vxm_32}, \
+   [Iop_V##op##_vim_64] = {"Iop_V" #op "_vim_64", h_Iop_V##op##_vxm_64}
+
+#define H_V_VXI_M(op) \
+   H_V_V_M(op), \
+   H_V_X_M(op), \
+   H_V_I_M(op)
+
 static const struct Iop_handler IOP_HANDLERS[] = {
    H_V_VXI(And),
    H_V_VXI(Or),
@@ -2614,6 +2673,8 @@ static const struct Iop_handler IOP_HANDLERS[] = {
    HW_V_VX(Wmacc),
    HW_V_VX(Wmaccsu),
    HW_V_X(Wmaccus),
+
+   H_V_VXI_M(Merge),
 
    H_V1_IEXT(Zext),
    H_V1_IEXT(Sext),

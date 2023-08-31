@@ -1277,6 +1277,29 @@ static irop_t irops[] = {
       DEFOP_VV3W_V_V(op), \
       DEFOP_VV3W_V_X(op)
 
+#define DEFOP_VV3_V_V_M(op) \
+  { DEFOP(Iop_V##op##_vvm_8, UNDEF_UNKNOWN), }, \
+  { DEFOP(Iop_V##op##_vvm_16, UNDEF_UNKNOWN), }, \
+  { DEFOP(Iop_V##op##_vvm_32, UNDEF_UNKNOWN), }, \
+  { DEFOP(Iop_V##op##_vvm_64, UNDEF_UNKNOWN), }
+
+#define DEFOP_VV3_V_X_M(op) \
+  { DEFOP(Iop_V##op##_vxm_8, UNDEF_UNKNOWN), }, \
+  { DEFOP(Iop_V##op##_vxm_16, UNDEF_UNKNOWN), }, \
+  { DEFOP(Iop_V##op##_vxm_32, UNDEF_UNKNOWN), }, \
+  { DEFOP(Iop_V##op##_vxm_64, UNDEF_UNKNOWN), }
+
+#define DEFOP_VV3_V_I_M(op) \
+  { DEFOP(Iop_V##op##_vim_8, UNDEF_UNKNOWN), }, \
+  { DEFOP(Iop_V##op##_vim_16, UNDEF_UNKNOWN), }, \
+  { DEFOP(Iop_V##op##_vim_32, UNDEF_UNKNOWN), }, \
+  { DEFOP(Iop_V##op##_vim_64, UNDEF_UNKNOWN), }
+
+#define DEFOP_VV3_V_VXI_M(op) \
+  DEFOP_VV3_V_V_M(op), \
+  DEFOP_VV3_V_X_M(op), \
+  DEFOP_VV3_V_I_M(op)
+
   DEFOP_VV1_IEXT(Zext),
   DEFOP_VV1_IEXT(Sext),
 
@@ -1345,6 +1368,8 @@ static irop_t irops[] = {
   DEFOP_VV3W_V_VX(Wmacc),
   DEFOP_VV3W_V_VX(Wmaccsu),
   DEFOP_VV3W_V_X(Wmaccus),
+
+  DEFOP_VV3_V_VXI_M(Merge),
 
   /* These are fake ones */
   { DEFOP(Iop_SSS_Start, UNDEF_UNKNOWN), },

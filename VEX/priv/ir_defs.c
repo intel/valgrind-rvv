@@ -470,6 +470,13 @@ void ppIROp ( IROp op )
       case Iop_VMv_v_i_8 ... Iop_VMv_v_i_64:
          str = "VMv_v_i"; base = Iop_VMv_v_i_8; break;
 
+      case Iop_VMerge_vvm_8 ... Iop_VMerge_vvm_64:
+         str = "VMerge_vvm"; base = Iop_VMerge_vvm_8; break;
+      case Iop_VMerge_vxm_8 ... Iop_VMerge_vxm_64:
+         str = "VMerge_vxm"; base = Iop_VMerge_vxm_8; break;
+      case Iop_VMerge_vim_8 ... Iop_VMerge_vim_64:
+         str = "VMerge_vim"; base = Iop_VMerge_vim_8; break;
+
       /* other cases must explicitly "return;" */
       case Iop_8Uto16:   vex_printf("8Uto16");  return;
       case Iop_8Uto32:   vex_printf("8Uto32");  return;
@@ -2260,6 +2267,10 @@ Bool primopMightTrap ( IROp op )
    case Iop_VMv_v_v_8 ... Iop_VMv_v_v_64:
    case Iop_VMv_v_x_8 ... Iop_VMv_v_x_64:
    case Iop_VMv_v_i_8 ... Iop_VMv_v_i_64:
+
+   case Iop_VMerge_vvm_8 ... Iop_VMerge_vvm_64:
+   case Iop_VMerge_vxm_8 ... Iop_VMerge_vxm_64:
+   case Iop_VMerge_vim_8 ... Iop_VMerge_vim_64:
       return False;
 
    case Iop_INVALID: case Iop_LAST:
@@ -3680,6 +3691,24 @@ void typeOfPrimop ( IROp op,
          UNARY(src_ty, dst_ty); \
       }
 
+#  define VEC_VVM_TERNARY(bop_base) \
+      { \
+         IRType base = Ity_VLen8 + bop - bop_base; \
+         UInt vl = VLofVecIROp(op); \
+         IRType ty = typeofVecIR (vl, base); \
+         IRType mask_ty = typeofVecIR (vl, Ity_VLen1); \
+         TERNARY(ty, ty, mask_ty, ty); \
+      }
+
+#  define VEC_VXM_TERNARY(bop_base) \
+      { \
+         IRType base = Ity_VLen8 + bop - bop_base; \
+         UInt vl = VLofVecIROp(op); \
+         IRType ty = typeofVecIR (vl, base); \
+         IRType mask_ty = typeofVecIR (vl, Ity_VLen1); \
+         TERNARY(Ity_I64, ty, mask_ty, ty); \
+      }
+
    /* Rounding mode values are always Ity_I32, encoded as per
       IRRoundingMode */
    const IRType ity_RMode = Ity_I32;
@@ -5024,6 +5053,12 @@ void typeOfPrimop ( IROp op,
          IRType dst_ty = typeofVecIR (vl, base);
          UNARY(Ity_I64, dst_ty);
       }
+      case Iop_VMerge_vvm_8 ... Iop_VMerge_vvm_64:
+         VEC_VVM_TERNARY(Iop_VMerge_vvm_8);
+      case Iop_VMerge_vxm_8 ... Iop_VMerge_vxm_64:
+         VEC_VXM_TERNARY(Iop_VMerge_vxm_8);
+      case Iop_VMerge_vim_8 ... Iop_VMerge_vim_64:
+         VEC_VXM_TERNARY(Iop_VMerge_vim_8);
 
       default:
          ppIROp(op);

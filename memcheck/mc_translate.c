@@ -3805,6 +3805,11 @@ IRAtom* expr2vbits_Triop ( MCEnv* mce,
       case Iop_VWmaccus_vx_8 ... Iop_VWmaccus_vx_32:
          return ternary_w_v_vx(mce, vatom1, vatom2, vatom3, 8 << (bop - Iop_VWmaccus_vx_8));
 
+      case Iop_VMerge_vvm_8 ... Iop_VMerge_vvm_64:
+      case Iop_VMerge_vxm_8 ... Iop_VMerge_vxm_64:
+      case Iop_VMerge_vim_8 ... Iop_VMerge_vim_64:
+         return vatom2;  // FIXME
+
       default:
          ppIROp(op);
          VG_(tool_panic)("memcheck:expr2vbits_Triop");
