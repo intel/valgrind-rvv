@@ -477,6 +477,40 @@ void ppIROp ( IROp op )
       case Iop_VMerge_vim_8 ... Iop_VMerge_vim_64:
          str = "VMerge_vim"; base = Iop_VMerge_vim_8; break;
 
+      case Iop_VRedsum_vs_8 ... Iop_VRedsum_vs_64:
+         str = "VRedsum_vs"; base = Iop_VRedsum_vs_8; break;
+      case Iop_VRedand_vs_8 ... Iop_VRedand_vs_64:
+         str = "VRedand_vs"; base = Iop_VRedand_vs_8; break;
+      case Iop_VRedor_vs_8 ... Iop_VRedor_vs_64:
+         str = "VRedor_vs"; base = Iop_VRedor_vs_8; break;
+      case Iop_VRedxor_vs_8 ... Iop_VRedxor_vs_64:
+         str = "VRedxor_vs"; base = Iop_VRedxor_vs_8; break;
+      case Iop_VRedminu_vs_8 ... Iop_VRedminu_vs_64:
+         str = "VRedminu_vs"; base = Iop_VRedminu_vs_8; break;
+      case Iop_VRedmin_vs_8 ... Iop_VRedmin_vs_64:
+         str = "VRedmin_vs"; base = Iop_VRedmin_vs_8; break;
+      case Iop_VRedmaxu_vs_8 ... Iop_VRedmaxu_vs_64:
+         str = "VRedmaxu_vs"; base = Iop_VRedmaxu_vs_8; break;
+      case Iop_VRedmax_vs_8 ... Iop_VRedmax_vs_64:
+         str = "VRedmax_vs"; base = Iop_VRedmax_vs_8; break;
+
+      case Iop_VRedsum_vsm_8 ... Iop_VRedsum_vsm_64:
+         str = "VRedsum_vsm"; base = Iop_VRedsum_vsm_8; break;
+      case Iop_VRedand_vsm_8 ... Iop_VRedand_vsm_64:
+         str = "VRedand_vsm"; base = Iop_VRedand_vsm_8; break;
+      case Iop_VRedor_vsm_8 ... Iop_VRedor_vsm_64:
+         str = "VRedor_vsm"; base = Iop_VRedor_vsm_8; break;
+      case Iop_VRedxor_vsm_8 ... Iop_VRedxor_vsm_64:
+         str = "VRedxor_vsm"; base = Iop_VRedxor_vsm_8; break;
+      case Iop_VRedminu_vsm_8 ... Iop_VRedminu_vsm_64:
+         str = "VRedminu_vsm"; base = Iop_VRedminu_vsm_8; break;
+      case Iop_VRedmin_vsm_8 ... Iop_VRedmin_vsm_64:
+         str = "VRedmin_vsm"; base = Iop_VRedmin_vsm_8; break;
+      case Iop_VRedmaxu_vsm_8 ... Iop_VRedmaxu_vsm_64:
+         str = "VRedmaxu_vsm"; base = Iop_VRedmaxu_vsm_8; break;
+      case Iop_VRedmax_vsm_8 ... Iop_VRedmax_vsm_64:
+         str = "VRedmax_vsm"; base = Iop_VRedmax_vsm_8; break;
+
       /* other cases must explicitly "return;" */
       case Iop_8Uto16:   vex_printf("8Uto16");  return;
       case Iop_8Uto32:   vex_printf("8Uto32");  return;
@@ -2271,6 +2305,25 @@ Bool primopMightTrap ( IROp op )
    case Iop_VMerge_vvm_8 ... Iop_VMerge_vvm_64:
    case Iop_VMerge_vxm_8 ... Iop_VMerge_vxm_64:
    case Iop_VMerge_vim_8 ... Iop_VMerge_vim_64:
+
+   case Iop_VRedsum_vs_8 ... Iop_VRedsum_vs_64:
+   case Iop_VRedand_vs_8 ... Iop_VRedand_vs_64:
+   case Iop_VRedor_vs_8 ... Iop_VRedor_vs_64:
+   case Iop_VRedxor_vs_8 ... Iop_VRedxor_vs_64:
+   case Iop_VRedminu_vs_8 ... Iop_VRedminu_vs_64:
+   case Iop_VRedmin_vs_8 ... Iop_VRedmin_vs_64:
+   case Iop_VRedmaxu_vs_8 ... Iop_VRedmaxu_vs_64:
+   case Iop_VRedmax_vs_8 ... Iop_VRedmax_vs_64:
+
+   case Iop_VRedsum_vsm_8 ... Iop_VRedsum_vsm_64:
+   case Iop_VRedand_vsm_8 ... Iop_VRedand_vsm_64:
+   case Iop_VRedor_vsm_8 ... Iop_VRedor_vsm_64:
+   case Iop_VRedxor_vsm_8 ... Iop_VRedxor_vsm_64:
+   case Iop_VRedminu_vsm_8 ... Iop_VRedminu_vsm_64:
+   case Iop_VRedmin_vsm_8 ... Iop_VRedmin_vsm_64:
+   case Iop_VRedmaxu_vsm_8 ... Iop_VRedmaxu_vsm_64:
+   case Iop_VRedmax_vsm_8 ... Iop_VRedmax_vsm_64:
+
       return False;
 
    case Iop_INVALID: case Iop_LAST:
@@ -3709,6 +3762,26 @@ void typeOfPrimop ( IROp op,
          TERNARY(Ity_I64, ty, mask_ty, ty); \
       }
 
+#  define VEC_VS_BINARY(bop_base) \
+      { \
+         IRType base = Ity_VLen8 + bop - bop_base; \
+         UInt vl = VLofVecIROp(op); \
+         IRType src2_ty = typeofVecIR (vl, base); \
+         IRType dst_ty = typeofVecIR (1, base); \
+         BINARY(Ity_I64, src2_ty, dst_ty); \
+      }
+
+/* vs with mask */
+#  define VEC_VS_TERNARY(bop_base) \
+      { \
+         IRType base = Ity_VLen8 + bop - bop_base; \
+         UInt vl = VLofVecIROp(op); \
+         IRType src2_ty = typeofVecIR (vl, base); \
+         IRType mask_ty = typeofVecIR(vl, Ity_VLen1); \
+         IRType dst_ty = typeofVecIR (1, base); \
+         TERNARY(Ity_I64, src2_ty, mask_ty, dst_ty); \
+      }
+
    /* Rounding mode values are always Ity_I32, encoded as per
       IRRoundingMode */
    const IRType ity_RMode = Ity_I32;
@@ -5059,6 +5132,40 @@ void typeOfPrimop ( IROp op,
          VEC_VXM_TERNARY(Iop_VMerge_vxm_8);
       case Iop_VMerge_vim_8 ... Iop_VMerge_vim_64:
          VEC_VXM_TERNARY(Iop_VMerge_vim_8);
+
+      case Iop_VRedsum_vs_8 ... Iop_VRedsum_vs_64:
+         VEC_VS_BINARY(Iop_VRedsum_vs_8);
+      case Iop_VRedand_vs_8 ... Iop_VRedand_vs_64:
+         VEC_VS_BINARY(Iop_VRedand_vs_8);
+      case Iop_VRedor_vs_8 ... Iop_VRedor_vs_64:
+         VEC_VS_BINARY(Iop_VRedor_vs_8);
+      case Iop_VRedxor_vs_8 ... Iop_VRedxor_vs_64:
+         VEC_VS_BINARY(Iop_VRedxor_vs_8);
+      case Iop_VRedminu_vs_8 ... Iop_VRedminu_vs_64:
+         VEC_VS_BINARY(Iop_VRedminu_vs_8);
+      case Iop_VRedmin_vs_8 ... Iop_VRedmin_vs_64:
+         VEC_VS_BINARY(Iop_VRedmin_vs_8);
+      case Iop_VRedmaxu_vs_8 ... Iop_VRedmaxu_vs_64:
+         VEC_VS_BINARY(Iop_VRedmaxu_vs_8);
+      case Iop_VRedmax_vs_8 ... Iop_VRedmax_vs_64:
+         VEC_VS_BINARY(Iop_VRedmax_vs_8);
+
+      case Iop_VRedsum_vsm_8 ... Iop_VRedsum_vsm_64:
+         VEC_VS_TERNARY(Iop_VRedsum_vsm_8);
+      case Iop_VRedand_vsm_8 ... Iop_VRedand_vsm_64:
+         VEC_VS_TERNARY(Iop_VRedand_vsm_8);
+      case Iop_VRedor_vsm_8 ... Iop_VRedor_vsm_64:
+         VEC_VS_TERNARY(Iop_VRedor_vsm_8);
+      case Iop_VRedxor_vsm_8 ... Iop_VRedxor_vsm_64:
+         VEC_VS_TERNARY(Iop_VRedxor_vsm_8);
+      case Iop_VRedminu_vsm_8 ... Iop_VRedminu_vsm_64:
+         VEC_VS_TERNARY(Iop_VRedminu_vsm_8);
+      case Iop_VRedmin_vsm_8 ... Iop_VRedmin_vsm_64:
+         VEC_VS_TERNARY(Iop_VRedmin_vsm_8);
+      case Iop_VRedmaxu_vsm_8 ... Iop_VRedmaxu_vsm_64:
+         VEC_VS_TERNARY(Iop_VRedmaxu_vsm_8);
+      case Iop_VRedmax_vsm_8 ... Iop_VRedmax_vsm_64:
+         VEC_VS_TERNARY(Iop_VRedmax_vsm_8);
 
       default:
          ppIROp(op);

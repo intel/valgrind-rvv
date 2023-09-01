@@ -4152,6 +4152,53 @@ static Bool dis_rvv_vmerge_vxi(/*MB_OUT*/ DisResult* dres,
    return True;
 }
 
+static Bool dis_rvv_reduce(/*MB_OUT*/ DisResult* dres,
+                           /*OUT*/ IRSB*         irsb,
+                           UInt                  insn,
+                           Addr                  guest_pc_curr_instr,
+                           VexGuestRISCV64State* guest)
+{
+   UInt funct6 = INSN(31, 26);
+   UInt vm = INSN(25, 25);
+   UInt vs2 = INSN(24, 20);
+   UInt vs1 = INSN(19, 15);
+   UInt vd = INSN(11, 7);
+
+   UInt sew = get_sew(guest);
+   Int index = sewToIndex(sew);
+   UInt vl = guest->guest_vl;
+   IRType ty = typeofVecIR(vl, Ity_VLen8 + index);
+
+   IROp base_op;
+   switch (funct6) {
+   case 0b000000: base_op = (vm == 0) ? Iop_VRedsum_vsm_8 : Iop_VRedsum_vs_8; break;
+   case 0b000001: base_op = (vm == 0) ? Iop_VRedand_vsm_8 : Iop_VRedand_vs_8; break;
+   case 0b000010: base_op = (vm == 0) ? Iop_VRedor_vsm_8 : Iop_VRedor_vs_8; break;
+   case 0b000011: base_op = (vm == 0) ? Iop_VRedxor_vsm_8 : Iop_VRedxor_vs_8; break;
+   case 0b000100: base_op = (vm == 0) ? Iop_VRedminu_vsm_8 : Iop_VRedminu_vs_8; break;
+   case 0b000101: base_op = (vm == 0) ? Iop_VRedmin_vsm_8 : Iop_VRedmin_vs_8; break;
+   case 0b000110: base_op = (vm == 0) ? Iop_VRedmaxu_vsm_8 : Iop_VRedmaxu_vs_8; break;
+   case 0b000111: base_op = (vm == 0) ? Iop_VRedmax_vsm_8 : Iop_VRedmax_vs_8; break;
+   default: vassert(0);
+   }
+
+   IRExpr* s1 = getVReg(vs1, 0, Ity_I64);
+   IRExpr* s2 = getVReg(vs2, 0, ty);
+
+   IRExpr* res;
+   if (vm == 0) {
+      IRType mask_ty = typeofVecIR(vl, Ity_VLen1);
+      IRExpr* mask = getVReg(0 /*v0*/, 0, mask_ty);
+      res = triop(opofVecIR(vl, base_op + index), s1, s2, mask);
+   } else {
+      res = binop(opofVecIR(vl, base_op + index), s1, s2);
+   }
+
+   putVReg(irsb, vd, 0, res);
+
+   return True;
+}
+
 static Bool dis_vmsbf_m(/*MB_OUT*/ DisResult* dres,
                         /*OUT*/ IRSB*         irsb,
                         UInt                  insn,
@@ -4413,6 +4460,8 @@ static Bool dis_opmvv(/*MB_OUT*/ DisResult* dres,
    UInt funct6 = INSN(31, 26);
 
    switch (funct6) {
+   case 0b000000 ...  0b000111:
+      return dis_rvv_reduce(dres, irsb, insn, guest_pc_curr_instr, guest);
    case 0b011010:
       return dis_vmor_mm(dres, irsb, insn, guest_pc_curr_instr, guest);
    case 0b010000:

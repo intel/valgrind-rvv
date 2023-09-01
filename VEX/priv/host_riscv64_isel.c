@@ -2503,6 +2503,87 @@ GEN_VEXT_VMERGE_VX(VMerge_vxm_16, int16_t)
 GEN_VEXT_VMERGE_VX(VMerge_vxm_32, int32_t)
 GEN_VEXT_VMERGE_VX(VMerge_vxm_64, int64_t)
 
+/* Vector Single-Width Integer Reduction Instructions */
+#define GEN_VEXT_RED_NOM(NAME, SFX, TD, TS2, OP)                           \
+static void h_Iop_##NAME##_##SFX(void *vd, Long vs1_0, void *vs2, int len) \
+{                                                                          \
+   TD s1 = (TD)vs1_0;                                                      \
+                                                                           \
+   for (int i = 0; i < len; ++i) {                                         \
+      TS2 s2 = *((TS2 *)vs2 + i);                                          \
+      s1 = OP(s1, (TD)s2);                                                 \
+   }                                                                       \
+   *((TD *)vd + 0) = s1;                                                   \
+}
+
+#define GEN_VEXT_RED_M(NAME, SFX, TD, TS2, OP)                             \
+static void h_Iop_##NAME##m_##SFX(void *vd, Long vs1_0, void *vs2,         \
+                                  void *v0, int len)                       \
+{                                                                          \
+   TD s1 = (TD)vs1_0;                                                      \
+                                                                           \
+   for (int i = 0; i < len; ++i) {                                         \
+      if (!vext_elem_mask(v0, i)) {                                        \
+         continue;                                                         \
+      }                                                                    \
+      TS2 s2 = *((TS2 *)vs2 + i);                                          \
+      s1 = OP(s1, (TD)s2);                                                 \
+   }                                                                       \
+   *((TD *)vd + 0) = s1;                                                   \
+}
+
+#define GEN_VEXT_RED(NAME, SFX, TD, TS2, OP) \
+   GEN_VEXT_RED_M(NAME, SFX, TD, TS2, OP)    \
+   GEN_VEXT_RED_NOM(NAME, SFX, TD, TS2, OP)
+
+/* vd[0] = sum(vs1[0], vs2[*]) */
+GEN_VEXT_RED(VRedsum_vs, 8, int8_t,  int8_t,  DO_ADD)
+GEN_VEXT_RED(VRedsum_vs, 16, int16_t, int16_t, DO_ADD)
+GEN_VEXT_RED(VRedsum_vs, 32, int32_t, int32_t, DO_ADD)
+GEN_VEXT_RED(VRedsum_vs, 64, int64_t, int64_t, DO_ADD)
+
+/* vd[0] = maxu(vs1[0], vs2[*]) */
+GEN_VEXT_RED(VRedmaxu_vs, 8, uint8_t,  uint8_t,  DO_MAX)
+GEN_VEXT_RED(VRedmaxu_vs, 16, uint16_t, uint16_t, DO_MAX)
+GEN_VEXT_RED(VRedmaxu_vs, 32, uint32_t, uint32_t, DO_MAX)
+GEN_VEXT_RED(VRedmaxu_vs, 64, uint64_t, uint64_t, DO_MAX)
+
+/* vd[0] = max(vs1[0], vs2[*]) */
+GEN_VEXT_RED(VRedmax_vs, 8, int8_t,  int8_t,  DO_MAX)
+GEN_VEXT_RED(VRedmax_vs, 16, int16_t, int16_t, DO_MAX)
+GEN_VEXT_RED(VRedmax_vs, 32, int32_t, int32_t, DO_MAX)
+GEN_VEXT_RED(VRedmax_vs, 64, int64_t, int64_t, DO_MAX)
+
+/* vd[0] = minu(vs1[0], vs2[*]) */
+GEN_VEXT_RED(VRedminu_vs, 8, uint8_t,  uint8_t,  DO_MIN)
+GEN_VEXT_RED(VRedminu_vs, 16, uint16_t, uint16_t, DO_MIN)
+GEN_VEXT_RED(VRedminu_vs, 32, uint32_t, uint32_t, DO_MIN)
+GEN_VEXT_RED(VRedminu_vs, 64, uint64_t, uint64_t, DO_MIN)
+
+/* vd[0] = min(vs1[0], vs2[*]) */
+GEN_VEXT_RED(VRedmin_vs, 8, int8_t,  int8_t,  DO_MIN)
+GEN_VEXT_RED(VRedmin_vs, 16, int16_t, int16_t, DO_MIN)
+GEN_VEXT_RED(VRedmin_vs, 32, int32_t, int32_t, DO_MIN)
+GEN_VEXT_RED(VRedmin_vs, 64, int64_t, int64_t, DO_MIN)
+
+/* vd[0] = and(vs1[0], vs2[*]) */
+GEN_VEXT_RED(VRedand_vs, 8, int8_t,  int8_t,  DO_AND)
+GEN_VEXT_RED(VRedand_vs, 16, int16_t, int16_t, DO_AND)
+GEN_VEXT_RED(VRedand_vs, 32, int32_t, int32_t, DO_AND)
+GEN_VEXT_RED(VRedand_vs, 64, int64_t, int64_t, DO_AND)
+
+/* vd[0] = or(vs1[0], vs2[*]) */
+GEN_VEXT_RED(VRedor_vs, 8, int8_t,  int8_t,  DO_OR)
+GEN_VEXT_RED(VRedor_vs, 16, int16_t, int16_t, DO_OR)
+GEN_VEXT_RED(VRedor_vs, 32, int32_t, int32_t, DO_OR)
+GEN_VEXT_RED(VRedor_vs, 64, int64_t, int64_t, DO_OR)
+
+/* vd[0] = xor(vs1[0], vs2[*]) */
+GEN_VEXT_RED(VRedxor_vs, 8, int8_t,  int8_t,  DO_XOR)
+GEN_VEXT_RED(VRedxor_vs, 16, int16_t, int16_t, DO_XOR)
+GEN_VEXT_RED(VRedxor_vs, 32, int32_t, int32_t, DO_XOR)
+GEN_VEXT_RED(VRedxor_vs, 64, int64_t, int64_t, DO_XOR)
+
 struct Iop_handler {
    const char* name;
    const void* fn;
@@ -2618,6 +2699,16 @@ struct Iop_handler {
    H_V_X_M(op), \
    H_V_I_M(op)
 
+#define H_RED(op) \
+   [Iop_V##op##_vs_8]  = {"Iop_V" #op "_vs_8", h_Iop_V##op##_vs_8},         \
+   [Iop_V##op##_vs_16] = {"Iop_V" #op "_vs_16", h_Iop_V##op##_vs_16},       \
+   [Iop_V##op##_vs_32] = {"Iop_V" #op "_vs_32", h_Iop_V##op##_vs_32},       \
+   [Iop_V##op##_vs_64] = {"Iop_V" #op "_vs_64", h_Iop_V##op##_vs_64},       \
+   [Iop_V##op##_vsm_8]  = {"Iop_V" #op "_vsm_8", h_Iop_V##op##_vsm_8},   \
+   [Iop_V##op##_vsm_16] = {"Iop_V" #op "_vsm_16", h_Iop_V##op##_vsm_16}, \
+   [Iop_V##op##_vsm_32] = {"Iop_V" #op "_vsm_32", h_Iop_V##op##_vsm_32}, \
+   [Iop_V##op##_vsm_64] = {"Iop_V" #op "_vsm_64", h_Iop_V##op##_vsm_64}
+
 static const struct Iop_handler IOP_HANDLERS[] = {
    H_V_VXI(And),
    H_V_VXI(Or),
@@ -2675,6 +2766,15 @@ static const struct Iop_handler IOP_HANDLERS[] = {
    HW_V_X(Wmaccus),
 
    H_V_VXI_M(Merge),
+
+   H_RED(Redsum),
+   H_RED(Redand),
+   H_RED(Redor),
+   H_RED(Redxor),
+   H_RED(Redminu),
+   H_RED(Redmin),
+   H_RED(Redmaxu),
+   H_RED(Redmax),
 
    H_V1_IEXT(Zext),
    H_V1_IEXT(Sext),

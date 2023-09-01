@@ -3810,6 +3810,20 @@ IRAtom* expr2vbits_Triop ( MCEnv* mce,
       case Iop_VMerge_vim_8 ... Iop_VMerge_vim_64:
          return vatom2;  // FIXME
 
+      // FIXME
+      case Iop_VRedsum_vsm_8 ... Iop_VRedsum_vsm_64:
+      case Iop_VRedand_vsm_8 ... Iop_VRedand_vsm_64:
+      case Iop_VRedor_vsm_8 ... Iop_VRedor_vsm_64:
+      case Iop_VRedxor_vsm_8 ... Iop_VRedxor_vsm_64:
+      case Iop_VRedminu_vsm_8 ... Iop_VRedminu_vsm_64:
+      case Iop_VRedmin_vsm_8 ... Iop_VRedmin_vsm_64:
+      case Iop_VRedmaxu_vsm_8 ... Iop_VRedmaxu_vsm_64:
+      case Iop_VRedmax_vsm_8 ... Iop_VRedmax_vsm_64: {
+         Int vl = VLEN / 64;
+         IRType ty = typeofVecIR(vl, Ity_VLen64);
+         return assignNew('V', mce, ty, unop(opofVecIR(vl, Iop_VMv_v_i_64), mkU64(0)));
+      }
+
       default:
          ppIROp(op);
          VG_(tool_panic)("memcheck:expr2vbits_Triop");
@@ -5546,6 +5560,20 @@ IRAtom* expr2vbits_Binop ( MCEnv* mce,
          return binary_w_v_vx(mce, vatom1, vatom2, 8 << (bop - Iop_VWmul_vv_8));
       case Iop_VWmul_vx_8 ... Iop_VWmul_vx_32:
          return binary_w_v_vx(mce, vatom1, vatom2, 8 << (bop - Iop_VWmul_vx_8));
+
+      // FIXME
+      case Iop_VRedsum_vs_8 ... Iop_VRedsum_vs_64:
+      case Iop_VRedand_vs_8 ... Iop_VRedand_vs_64:
+      case Iop_VRedor_vs_8 ... Iop_VRedor_vs_64:
+      case Iop_VRedxor_vs_8 ... Iop_VRedxor_vs_64:
+      case Iop_VRedminu_vs_8 ... Iop_VRedminu_vs_64:
+      case Iop_VRedmin_vs_8 ... Iop_VRedmin_vs_64:
+      case Iop_VRedmaxu_vs_8 ... Iop_VRedmaxu_vs_64:
+      case Iop_VRedmax_vs_8 ... Iop_VRedmax_vs_64: {
+         Int vl = VLEN / 64;
+         IRType ty = typeofVecIR(vl, Ity_VLen64);
+         return assignNew('V', mce, ty, unop(opofVecIR(vl, Iop_VMv_v_i_64), mkU64(0)));
+      }
 
       default:
          ppIROp(op);
