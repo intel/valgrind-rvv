@@ -4202,6 +4202,31 @@ static Bool dis_rvv_reduce(/*MB_OUT*/ DisResult* dres,
    return True;
 }
 
+static Bool dis_rvv_m_m(/*MB_OUT*/ DisResult* dres,
+                        /*OUT*/ IRSB*         irsb,
+                        UInt                  insn,
+                        Addr                  guest_pc_curr_instr,
+                        VexGuestRISCV64State* guest,
+                        IROp                  base_op)
+{
+   UInt vm = INSN(25, 25);
+   UInt vs2 = INSN(24, 20);
+   UInt vs1 = INSN(19, 15);
+   UInt vd = INSN(11, 7);
+
+   vassert(vm == 1);
+
+   UInt vl = VLEN;
+   IRType ty = typeofVecIR(vl, Ity_VLen1);
+
+   IRExpr* s1 = getVReg(vs1, 0, ty);
+   IRExpr* s2 = getVReg(vs2, 0, ty);
+
+   putVReg(irsb, vd, 0, binop(opofVecIR(vl, base_op), s1, s2));
+
+   return True;
+}
+
 static Bool dis_vmsbf_m(/*MB_OUT*/ DisResult* dres,
                         /*OUT*/ IRSB*         irsb,
                         UInt                  insn,
@@ -4279,27 +4304,6 @@ static Bool dis_vmsif_m(/*MB_OUT*/ DisResult* dres,
 
       putVReg(irsb, vd, mask_offset, res);
       prev = res;
-   }
-
-   return True;
-}
-
-static Bool dis_vmor_mm(/*MB_OUT*/ DisResult* dres,
-                        /*OUT*/ IRSB*         irsb,
-                        UInt                  insn,
-                        Addr                  guest_pc_curr_instr,
-                        VexGuestRISCV64State* guest)
-{
-   UInt vs2 = INSN(24, 20);
-   UInt vs1 = INSN(19, 15);
-   UInt vd = INSN(11, 7);
-
-   for (UInt i = 0; i < guest->guest_vl; i += 64) {
-      UInt mask_offset = i / 8;
-      IRExpr* mask = binop(Iop_Or64,
-                           getVReg(vs1, mask_offset, Ity_I64),
-                           getVReg(vs2, mask_offset, Ity_I64));
-      putVReg(irsb, vd, mask_offset, mask);
    }
 
    return True;
@@ -4468,8 +4472,6 @@ static Bool dis_opmvv(/*MB_OUT*/ DisResult* dres,
    switch (funct6) {
    case 0b000000 ...  0b000111:
       return dis_rvv_reduce(dres, irsb, insn, guest_pc_curr_instr, guest);
-   case 0b011010:
-      return dis_vmor_mm(dres, irsb, insn, guest_pc_curr_instr, guest);
    case 0b010000:
       switch (INSN(19, 15)) {
       case 0b00000:
@@ -4494,6 +4496,22 @@ static Bool dis_opmvv(/*MB_OUT*/ DisResult* dres,
          return False;
       }
       return False;
+   case 0b011001:
+      return dis_rvv_m_m(dres, irsb, insn, guest_pc_curr_instr, guest, Iop_VMand_mm);
+   case 0b011101:
+      return dis_rvv_m_m(dres, irsb, insn, guest_pc_curr_instr, guest, Iop_VMnand_mm);
+   case 0b011000:
+      return dis_rvv_m_m(dres, irsb, insn, guest_pc_curr_instr, guest, Iop_VMandn_mm);
+   case 0b011011:
+      return dis_rvv_m_m(dres, irsb, insn, guest_pc_curr_instr, guest, Iop_VMxor_mm);
+   case 0b011010:
+      return dis_rvv_m_m(dres, irsb, insn, guest_pc_curr_instr, guest, Iop_VMor_mm);
+   case 0b011110:
+      return dis_rvv_m_m(dres, irsb, insn, guest_pc_curr_instr, guest, Iop_VMnor_mm);
+   case 0b011100:
+      return dis_rvv_m_m(dres, irsb, insn, guest_pc_curr_instr, guest, Iop_VMorn_mm);
+   case 0b011111:
+      return dis_rvv_m_m(dres, irsb, insn, guest_pc_curr_instr, guest, Iop_VMxnor_mm);
    case 0b100000:
       return dis_rvv2_v_v(dres, irsb, insn, guest_pc_curr_instr, guest, Iop_VDivu_vv_8);
    case 0b100001:

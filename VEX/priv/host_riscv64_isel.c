@@ -2595,6 +2595,38 @@ GEN_VEXT_RED(VWredsumu_vs, 8, uint16_t, uint8_t, DO_ADD)
 GEN_VEXT_RED(VWredsumu_vs, 16, uint32_t, uint16_t, DO_ADD)
 GEN_VEXT_RED(VWredsumu_vs, 32, uint64_t, uint32_t, DO_ADD)
 
+/*
+ * Vector Mask Operations
+ */
+/* Vector Mask-Register Logical Instructions */
+#define GEN_VEXT_MASK_VV(NAME, OP)                        \
+static void h_Iop_##NAME(void *vd, void *vs1, void *vs2,  \
+                  int len)                                \
+{                                                         \
+    int a, b;                                             \
+                                                          \
+    for (int i = 0; i < len; ++i) {                       \
+        a = vext_elem_mask(vs1, i);                       \
+        b = vext_elem_mask(vs2, i);                       \
+        vext_set_elem_mask(vd, i, OP(b, a));              \
+    }                                                     \
+}
+
+#define DO_NAND(N, M)  (!(N & M))
+#define DO_ANDNOT(N, M)  (N & !M)
+#define DO_NOR(N, M)  (!(N | M))
+#define DO_ORNOT(N, M)  (N | !M)
+#define DO_XNOR(N, M)  (!(N ^ M))
+
+GEN_VEXT_MASK_VV(VMand_mm, DO_AND)
+GEN_VEXT_MASK_VV(VMnand_mm, DO_NAND)
+GEN_VEXT_MASK_VV(VMandn_mm, DO_ANDNOT)
+GEN_VEXT_MASK_VV(VMxor_mm, DO_XOR)
+GEN_VEXT_MASK_VV(VMor_mm, DO_OR)
+GEN_VEXT_MASK_VV(VMnor_mm, DO_NOR)
+GEN_VEXT_MASK_VV(VMorn_mm, DO_ORNOT)
+GEN_VEXT_MASK_VV(VMxnor_mm, DO_XNOR)
+
 struct Iop_handler {
    const char* name;
    const void* fn;
@@ -2728,6 +2760,9 @@ struct Iop_handler {
    [Iop_V##op##_vsm_16] = {"Iop_V" #op "_vsm_16", h_Iop_V##op##_vsm_16}, \
    [Iop_V##op##_vsm_32] = {"Iop_V" #op "_vsm_32", h_Iop_V##op##_vsm_32}
 
+#define H_M_M(op) \
+   [Iop_V##op##_mm]  = {"Iop_V" #op "_mm", h_Iop_V##op##_mm}
+
 static const struct Iop_handler IOP_HANDLERS[] = {
    H_V_VXI(And),
    H_V_VXI(Or),
@@ -2808,6 +2843,15 @@ static const struct Iop_handler IOP_HANDLERS[] = {
    H_V1(Mv_v_v),
    H_V1(Mv_v_x),
    H_V1_ALTER(Mv_v_i, Mv_v_x),
+
+   H_M_M(Mand),
+   H_M_M(Mnand),
+   H_M_M(Mandn),
+   H_M_M(Mxor),
+   H_M_M(Mor),
+   H_M_M(Mnor),
+   H_M_M(Morn),
+   H_M_M(Mxnor),
 
    [Iop_LAST] = {"Iop_LAST", 0}
 };

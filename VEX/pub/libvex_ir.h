@@ -2235,6 +2235,9 @@ typedef
       IOPW_RED(Wredsumu),
       IOPW_RED(Wredsum),
 
+      Iop_VMand_mm, Iop_VMnand_mm, Iop_VMandn_mm, Iop_VMxor_mm,
+      Iop_VMor_mm, Iop_VMnor_mm, Iop_VMorn_mm, Iop_VMxnor_mm,
+
       Iop_SSS_Start,
       IOPVV3_V_VXI_M(Merge),
 

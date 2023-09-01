@@ -521,6 +521,15 @@ void ppIROp ( IROp op )
       case Iop_VWredsum_vsm_8 ... Iop_VWredsum_vsm_32:
          str = "VWredsum_vsm"; base = Iop_VWredsum_vsm_8; break;
 
+      case Iop_VMand_mm:   vex_printf("VMand");  return;
+      case Iop_VMnand_mm:  vex_printf("VMnand"); return;
+      case Iop_VMandn_mm:  vex_printf("VMandn"); return;
+      case Iop_VMxor_mm:   vex_printf("VMxor");  return;
+      case Iop_VMor_mm:    vex_printf("VMor");   return;
+      case Iop_VMnor_mm:   vex_printf("VMnor");  return;
+      case Iop_VMorn_mm:   vex_printf("VMorn");  return;
+      case Iop_VMxnor_mm:  vex_printf("VMxnor"); return;
+
       /* other cases must explicitly "return;" */
       case Iop_8Uto16:   vex_printf("8Uto16");  return;
       case Iop_8Uto32:   vex_printf("8Uto32");  return;
@@ -2339,6 +2348,14 @@ Bool primopMightTrap ( IROp op )
    case Iop_VWredsumu_vsm_8 ... Iop_VWredsumu_vsm_32:
    case Iop_VWredsum_vsm_8 ... Iop_VWredsum_vsm_32:
 
+   case Iop_VMand_mm:
+   case Iop_VMnand_mm:
+   case Iop_VMandn_mm:
+   case Iop_VMxor_mm:
+   case Iop_VMor_mm:
+   case Iop_VMnor_mm:
+   case Iop_VMorn_mm:
+   case Iop_VMxnor_mm:
       return False;
 
    case Iop_INVALID: case Iop_LAST:
@@ -5211,6 +5228,19 @@ void typeOfPrimop ( IROp op,
          VEC_VS_TERNARY_W(Iop_VWredsumu_vsm_8);
       case Iop_VWredsum_vsm_8 ... Iop_VWredsum_vsm_32:
          VEC_VS_TERNARY_W(Iop_VWredsum_vsm_8);
+
+      case Iop_VMand_mm:
+      case Iop_VMnand_mm:
+      case Iop_VMandn_mm:
+      case Iop_VMxor_mm:
+      case Iop_VMor_mm:
+      case Iop_VMnor_mm:
+      case Iop_VMorn_mm:
+      case Iop_VMxnor_mm: {
+         UInt vl = VLofVecIROp(op);
+         IRType ty = typeofVecIR(vl, Ity_VLen1);
+         BINARY(ty, ty, ty);
+      }
 
       default:
          ppIROp(op);

@@ -1401,6 +1401,15 @@ static irop_t irops[] = {
   DEFOP_W_RED(Wredsumu),
   DEFOP_W_RED(Wredsum),
 
+  { DEFOP(Iop_VMand_mm, UNDEF_UNKNOWN), },
+  { DEFOP(Iop_VMnand_mm, UNDEF_UNKNOWN), },
+  { DEFOP(Iop_VMandn_mm, UNDEF_UNKNOWN), },
+  { DEFOP(Iop_VMxor_mm, UNDEF_UNKNOWN), },
+  { DEFOP(Iop_VMor_mm, UNDEF_UNKNOWN), },
+  { DEFOP(Iop_VMnor_mm, UNDEF_UNKNOWN), },
+  { DEFOP(Iop_VMorn_mm, UNDEF_UNKNOWN), },
+  { DEFOP(Iop_VMxnor_mm, UNDEF_UNKNOWN), },
+
   /* These are fake ones */
   { DEFOP(Iop_SSS_Start, UNDEF_UNKNOWN), },
   { DEFOP(Iop_SSS_End, UNDEF_UNKNOWN), },

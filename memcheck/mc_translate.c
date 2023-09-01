@@ -712,6 +712,16 @@ static IRAtom* mkUifUV256 ( MCEnv* mce, IRAtom* a1, IRAtom* a2 ) {
    return assignNew('V', mce, Ity_V256, binop(Iop_OrV256, a1, a2));
 }
 
+// only for mask mask
+static IRAtom* mkUifUVLen1 ( MCEnv* mce, IRAtom* a1, IRAtom* a2 ) {
+   tl_assert(isShadowAtom(mce,a1));
+   tl_assert(isShadowAtom(mce,a2));
+
+   IRType ty = typeOfIRExpr(mce->sb->tyenv, a2);
+   IROp op = Iop_VMor_mm | (ty & IR_TYPE_VL_MASK);
+   return assignNew('V', mce, ty, binop(op, a1, a2));
+}
+
 static IRAtom* mkUifUVLen8 ( MCEnv* mce, IRAtom* a1, IRAtom* a2 ) {
    tl_assert(isShadowAtom(mce,a1));
    tl_assert(isShadowAtom(mce,a2));
@@ -5578,6 +5588,16 @@ IRAtom* expr2vbits_Binop ( MCEnv* mce,
          IRType ty = typeofVecIR(vl, Ity_VLen64);
          return assignNew('V', mce, ty, unop(opofVecIR(vl, Iop_VMv_v_i_64), mkU64(0)));
       }
+
+      case Iop_VMand_mm:
+      case Iop_VMnand_mm:
+      case Iop_VMandn_mm:
+      case Iop_VMxor_mm:
+      case Iop_VMor_mm:
+      case Iop_VMnor_mm:
+      case Iop_VMorn_mm:
+      case Iop_VMxnor_mm:
+         return mkUifUVLen1(mce, vatom1, vatom2);
 
       default:
          ppIROp(op);
