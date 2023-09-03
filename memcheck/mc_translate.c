@@ -3504,6 +3504,42 @@ IRAtom* ternary_w_v_vx ( MCEnv* mce, IRAtom* vatom1, IRAtom* vatom2, IRAtom* vat
    }
 }
 
+static
+IRAtom* ternary_v_vxi_m ( MCEnv* mce, IRAtom* vatom1, IRAtom* vatom2, IRAtom* vatom3, UInt index )
+{
+   IRType ty = typeOfIRExpr(mce->sb->tyenv, vatom2);
+   UInt vl = VLofVecIRType(ty);
+   IROp expand_op = opofVecIR(vl, Iop_VExpandBitsTo_8 + index);
+   IRAtom* expanded_mask = assignNew('V', mce, ty, unop(expand_op, vatom3));
+   return ternary_v(mce, vatom1, vatom2, expanded_mask, 8 << index);
+}
+
+static
+IRAtom* binaryM_v_vxi ( MCEnv* mce, IRAtom* vatom1, IRAtom* vatom2, UInt index )
+{
+   IRType ty = typeOfIRExpr(mce->sb->tyenv, vatom2);
+   IRAtom* a12 = mkUifU(mce, ty, vatom1, vatom2);
+
+   UInt vl = VLofVecIRType(ty);
+   IRType tym = typeofVecIR(vl, Ity_VLen1);
+   IROp to_mask_op = opofVecIR(vl, Iop_VMseq_vi_8 + index);
+   return assignNew('V', mce, tym, binop(to_mask_op, mkU64(0), a12));
+}
+
+static
+IRAtom* ternaryM_v_vxi_m ( MCEnv* mce, IRAtom* vatom1, IRAtom* vatom2, IRAtom* vatom3, UInt index )
+{
+   IRType ty = typeOfIRExpr(mce->sb->tyenv, vatom2);
+   IRAtom* a12 = mkUifU(mce, ty, vatom1, vatom2);
+
+   IRType tym = typeOfIRExpr(mce->sb->tyenv, vatom3);
+   UInt vl = VLofVecIRType(tym);
+   IROp to_mask_op = opofVecIR(vl, Iop_VMseq_vi_8 + index);
+
+   IRAtom* a12m = assignNew('V', mce, tym, binop(to_mask_op, mkU64(0), a12));
+   return mkUifUVLen1(mce, a12m, vatom3);
+}
+
 /* --- 64-bit versions --- */
 
 static
@@ -3835,6 +3871,28 @@ IRAtom* expr2vbits_Triop ( MCEnv* mce,
          IRType ty = typeofVecIR(vl, Ity_VLen64);
          return assignNew('V', mce, ty, unop(opofVecIR(vl, Iop_VMv_v_i_64), mkU64(0)));
       }
+
+      case Iop_VAdc_vvm_8 ... Iop_VAdc_vvm_64:
+         return ternary_v_vxi_m(mce, vatom1, vatom2, vatom3, bop - Iop_VAdc_vvm_8);
+      case Iop_VAdc_vxm_8 ... Iop_VAdc_vxm_64:
+         return ternary_v_vxi_m(mce, vatom1, vatom2, vatom3, bop - Iop_VAdc_vxm_8);
+      case Iop_VAdc_vim_8 ... Iop_VAdc_vim_64:
+         return ternary_v_vxi_m(mce, vatom1, vatom2, vatom3, bop - Iop_VAdc_vim_8);
+      case Iop_VSbc_vvm_8 ... Iop_VSbc_vvm_64:
+         return ternary_v_vxi_m(mce, vatom1, vatom2, vatom3, bop - Iop_VSbc_vvm_8);
+      case Iop_VSbc_vxm_8 ... Iop_VSbc_vxm_64:
+         return ternary_v_vxi_m(mce, vatom1, vatom2, vatom3, bop - Iop_VSbc_vxm_8);
+
+      case Iop_VMadc_vvm_8 ... Iop_VMadc_vvm_64:
+         return ternaryM_v_vxi_m(mce, vatom1, vatom2, vatom3, bop - Iop_VMadc_vvm_8);
+      case Iop_VMadc_vxm_8 ... Iop_VMadc_vxm_64:
+         return ternaryM_v_vxi_m(mce, vatom1, vatom2, vatom3, bop - Iop_VMadc_vxm_8);
+      case Iop_VMadc_vim_8 ... Iop_VMadc_vim_64:
+         return ternaryM_v_vxi_m(mce, vatom1, vatom2, vatom3, bop - Iop_VMadc_vim_8);
+      case Iop_VMsbc_vvm_8 ... Iop_VMsbc_vvm_64:
+         return ternaryM_v_vxi_m(mce, vatom1, vatom2, vatom3, bop - Iop_VMsbc_vvm_8);
+      case Iop_VMsbc_vxm_8 ... Iop_VMsbc_vxm_64:
+         return ternaryM_v_vxi_m(mce, vatom1, vatom2, vatom3, bop - Iop_VMsbc_vxm_8);
 
       default:
          ppIROp(op);
@@ -5598,6 +5656,17 @@ IRAtom* expr2vbits_Binop ( MCEnv* mce,
       case Iop_VMorn_mm:
       case Iop_VMxnor_mm:
          return mkUifUVLen1(mce, vatom1, vatom2);
+
+      case Iop_VMadc_vv_8 ... Iop_VMadc_vv_64:
+         return binaryM_v_vxi(mce, vatom1, vatom2, bop - Iop_VMadc_vv_8);
+      case Iop_VMadc_vx_8 ... Iop_VMadc_vx_64:
+         return binaryM_v_vxi(mce, vatom1, vatom2, bop - Iop_VMadc_vx_8);
+      case Iop_VMadc_vi_8 ... Iop_VMadc_vi_64:
+         return binaryM_v_vxi(mce, vatom1, vatom2, bop - Iop_VMadc_vi_8);
+      case Iop_VMsbc_vv_8 ... Iop_VMsbc_vv_64:
+         return binaryM_v_vxi(mce, vatom1, vatom2, bop - Iop_VMsbc_vv_8);
+      case Iop_VMsbc_vx_8 ... Iop_VMsbc_vx_64:
+         return binaryM_v_vxi(mce, vatom1, vatom2, bop - Iop_VMsbc_vx_8);
 
       default:
          ppIROp(op);

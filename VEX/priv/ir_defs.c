@@ -530,6 +530,35 @@ void ppIROp ( IROp op )
       case Iop_VMorn_mm:   vex_printf("VMorn");  return;
       case Iop_VMxnor_mm:  vex_printf("VMxnor"); return;
 
+      case Iop_VAdc_vvm_8 ... Iop_VAdc_vvm_64:
+         str = "VAdc_vvm"; base = Iop_VAdc_vvm_8; break;
+      case Iop_VAdc_vxm_8 ... Iop_VAdc_vxm_64:
+         str = "VAdc_vxm"; base = Iop_VAdc_vxm_8; break;
+      case Iop_VAdc_vim_8 ... Iop_VAdc_vim_64:
+         str = "VAdc_vim"; base = Iop_VAdc_vim_8; break;
+      case Iop_VSbc_vvm_8 ... Iop_VSbc_vvm_64:
+         str = "VSbc_vvm"; base = Iop_VSbc_vvm_8; break;
+      case Iop_VSbc_vxm_8 ... Iop_VSbc_vxm_64:
+         str = "VSbc_vxm"; base = Iop_VSbc_vxm_8; break;
+      case Iop_VMadc_vvm_8 ... Iop_VMadc_vvm_64:
+         str = "VMadc_vvm"; base = Iop_VMadc_vvm_8; break;
+      case Iop_VMadc_vxm_8 ... Iop_VMadc_vxm_64:
+         str = "VMadc_vxm"; base = Iop_VMadc_vxm_8; break;
+      case Iop_VMadc_vim_8 ... Iop_VMadc_vim_64:
+         str = "VMadc_vim"; base = Iop_VMadc_vim_8; break;
+      case Iop_VMadc_vv_8 ... Iop_VMadc_vv_64:
+         str = "VMadc_vv"; base = Iop_VMadc_vv_8; break;
+      case Iop_VMadc_vx_8 ... Iop_VMadc_vx_64:
+         str = "VMadc_vx"; base = Iop_VMadc_vx_8; break;
+      case Iop_VMsbc_vvm_8 ... Iop_VMsbc_vvm_64:
+         str = "VMsbc_vvm"; base = Iop_VMsbc_vvm_8; break;
+      case Iop_VMsbc_vxm_8 ... Iop_VMsbc_vxm_64:
+         str = "VMsbc_vxm"; base = Iop_VMsbc_vxm_8; break;
+      case Iop_VMsbc_vv_8 ... Iop_VMsbc_vv_64:
+         str = "VMsbc_vv"; base = Iop_VMsbc_vv_8; break;
+      case Iop_VMsbc_vx_8 ... Iop_VMsbc_vx_64:
+         str = "VMsbc_vx"; base = Iop_VMsbc_vx_8; break;
+
       /* other cases must explicitly "return;" */
       case Iop_8Uto16:   vex_printf("8Uto16");  return;
       case Iop_8Uto32:   vex_printf("8Uto32");  return;
@@ -2356,6 +2385,22 @@ Bool primopMightTrap ( IROp op )
    case Iop_VMnor_mm:
    case Iop_VMorn_mm:
    case Iop_VMxnor_mm:
+
+   case Iop_VAdc_vvm_8 ... Iop_VAdc_vvm_64:
+   case Iop_VAdc_vxm_8 ... Iop_VAdc_vxm_64:
+   case Iop_VAdc_vim_8 ... Iop_VAdc_vim_64:
+   case Iop_VSbc_vvm_8 ... Iop_VSbc_vvm_64:
+   case Iop_VSbc_vxm_8 ... Iop_VSbc_vxm_64:
+   case Iop_VMadc_vvm_8 ... Iop_VMadc_vvm_64:
+   case Iop_VMadc_vxm_8 ... Iop_VMadc_vxm_64:
+   case Iop_VMadc_vim_8 ... Iop_VMadc_vim_64:
+   case Iop_VMadc_vv_8 ... Iop_VMadc_vv_64:
+   case Iop_VMadc_vx_8 ... Iop_VMadc_vx_64:
+   case Iop_VMsbc_vvm_8 ... Iop_VMsbc_vvm_64:
+   case Iop_VMsbc_vxm_8 ... Iop_VMsbc_vxm_64:
+   case Iop_VMsbc_vv_8 ... Iop_VMsbc_vv_64:
+   case Iop_VMsbc_vx_8 ... Iop_VMsbc_vx_64:
+
       return False;
 
    case Iop_INVALID: case Iop_LAST:
@@ -3834,6 +3879,42 @@ void typeOfPrimop ( IROp op,
          TERNARY(Ity_I64, src2_ty, mask_ty, dst_ty); \
       }
 
+#  define VEC_VV_BINARY_M(bop_base) \
+      { \
+         IRType base = Ity_VLen8 + bop - bop_base; \
+         UInt vl = VLofVecIROp(op); \
+         IRType ty = typeofVecIR (vl, base); \
+         IRType mask_ty = typeofVecIR (vl, Ity_VLen1); \
+         BINARY(ty, ty, mask_ty); \
+      }
+
+#  define VEC_VX_BINARY_M(bop_base) \
+      { \
+         IRType base = Ity_VLen8 + bop - bop_base; \
+         UInt vl = VLofVecIROp(op); \
+         IRType ty = typeofVecIR (vl, base); \
+         IRType mask_ty = typeofVecIR (vl, Ity_VLen1); \
+         BINARY(Ity_I64, ty, mask_ty); \
+      }
+
+#  define VEC_VVM_TERNARY_M(bop_base) \
+      { \
+         IRType base = Ity_VLen8 + bop - bop_base; \
+         UInt vl = VLofVecIROp(op); \
+         IRType ty = typeofVecIR (vl, base); \
+         IRType mask_ty = typeofVecIR (vl, Ity_VLen1); \
+         TERNARY(ty, ty, mask_ty, mask_ty); \
+      }
+
+#  define VEC_VXM_TERNARY_M(bop_base) \
+      { \
+         IRType base = Ity_VLen8 + bop - bop_base; \
+         UInt vl = VLofVecIROp(op); \
+         IRType ty = typeofVecIR (vl, base); \
+         IRType mask_ty = typeofVecIR (vl, Ity_VLen1); \
+         TERNARY(Ity_I64, ty, mask_ty, mask_ty); \
+      }
+
    /* Rounding mode values are always Ity_I32, encoded as per
       IRRoundingMode */
    const IRType ity_RMode = Ity_I32;
@@ -5228,6 +5309,35 @@ void typeOfPrimop ( IROp op,
          VEC_VS_TERNARY_W(Iop_VWredsumu_vsm_8);
       case Iop_VWredsum_vsm_8 ... Iop_VWredsum_vsm_32:
          VEC_VS_TERNARY_W(Iop_VWredsum_vsm_8);
+
+      case Iop_VAdc_vvm_8 ... Iop_VAdc_vvm_64:
+         VEC_VVM_TERNARY(Iop_VAdc_vvm_8);
+      case Iop_VAdc_vxm_8 ... Iop_VAdc_vxm_64:
+         VEC_VXM_TERNARY(Iop_VAdc_vxm_8);
+      case Iop_VAdc_vim_8 ... Iop_VAdc_vim_64:
+         VEC_VXM_TERNARY(Iop_VAdc_vim_8);
+      case Iop_VSbc_vvm_8 ... Iop_VSbc_vvm_64:
+         VEC_VVM_TERNARY(Iop_VSbc_vvm_8);
+      case Iop_VSbc_vxm_8 ... Iop_VSbc_vxm_64:
+         VEC_VXM_TERNARY(Iop_VSbc_vxm_8);
+      case Iop_VMadc_vvm_8 ... Iop_VMadc_vvm_64:
+         VEC_VVM_TERNARY_M(Iop_VMadc_vvm_8);
+      case Iop_VMadc_vxm_8 ... Iop_VMadc_vxm_64:
+         VEC_VXM_TERNARY_M(Iop_VMadc_vxm_8);
+      case Iop_VMadc_vim_8 ... Iop_VMadc_vim_64:
+         VEC_VXM_TERNARY_M(Iop_VMadc_vim_8);
+      case Iop_VMadc_vv_8 ... Iop_VMadc_vv_64:
+         VEC_VV_BINARY_M(Iop_VMadc_vv_8);
+      case Iop_VMadc_vx_8 ... Iop_VMadc_vx_64:
+         VEC_VX_BINARY_M(Iop_VMadc_vx_8);
+      case Iop_VMsbc_vvm_8 ... Iop_VMsbc_vvm_64:
+         VEC_VVM_TERNARY_M(Iop_VMsbc_vvm_8);
+      case Iop_VMsbc_vxm_8 ... Iop_VMsbc_vxm_64:
+         VEC_VXM_TERNARY_M(Iop_VMsbc_vxm_8);
+      case Iop_VMsbc_vv_8 ... Iop_VMsbc_vv_64:
+         VEC_VV_BINARY_M(Iop_VMsbc_vv_8);
+      case Iop_VMsbc_vx_8 ... Iop_VMsbc_vx_64:
+         VEC_VX_BINARY_M(Iop_VMsbc_vx_8);
 
       case Iop_VMand_mm:
       case Iop_VMnand_mm:

@@ -2627,6 +2627,135 @@ GEN_VEXT_MASK_VV(VMnor_mm, DO_NOR)
 GEN_VEXT_MASK_VV(VMorn_mm, DO_ORNOT)
 GEN_VEXT_MASK_VV(VMxnor_mm, DO_XNOR)
 
+/* Vector Integer Add-with-Carry / Subtract-with-Borrow Instructions */
+#define DO_VADC(N, M, C) (N + M + C)
+#define DO_VSBC(N, M, C) (N - M - C)
+
+#define GEN_VEXT_VADC_VVM(NAME, ETYPE, DO_OP)                 \
+static void h_Iop_##NAME(void *vd, void *vs1, void *vs2,      \
+                         void *v0, int len)                   \
+{                                                             \
+    for (int i = 0; i < len; ++i) {                           \
+        ETYPE s1 = *((ETYPE *)vs1 + i);                       \
+        ETYPE s2 = *((ETYPE *)vs2 + i);                       \
+        ETYPE carry = vext_elem_mask(v0, i);                  \
+                                                              \
+        *((ETYPE *)vd + i) = DO_OP(s2, s1, carry);            \
+    }                                                         \
+}
+
+GEN_VEXT_VADC_VVM(VAdc_vvm_8, uint8_t, DO_VADC)
+GEN_VEXT_VADC_VVM(VAdc_vvm_16, uint16_t, DO_VADC)
+GEN_VEXT_VADC_VVM(VAdc_vvm_32, uint32_t, DO_VADC)
+GEN_VEXT_VADC_VVM(VAdc_vvm_64, uint64_t, DO_VADC)
+
+GEN_VEXT_VADC_VVM(VSbc_vvm_8, uint8_t, DO_VSBC)
+GEN_VEXT_VADC_VVM(VSbc_vvm_16, uint16_t, DO_VSBC)
+GEN_VEXT_VADC_VVM(VSbc_vvm_32, uint32_t, DO_VSBC)
+GEN_VEXT_VADC_VVM(VSbc_vvm_64, uint64_t, DO_VSBC)
+
+#define GEN_VEXT_VADC_VXM(NAME, ETYPE, DO_OP)                     \
+static void h_Iop_##NAME(void *vd, Long s1, void *vs2, void *v0,  \
+                         int len)                                 \
+{                                                                 \
+    for (int i = 0; i < len; ++i) {                               \
+        ETYPE s2 = *((ETYPE *)vs2 + i);                           \
+        ETYPE carry = vext_elem_mask(v0, i);                      \
+                                                                  \
+        *((ETYPE *)vd + i) = DO_OP(s2, (ETYPE)(Long)s1, carry);   \
+    }                                                             \
+}
+
+GEN_VEXT_VADC_VXM(VAdc_vxm_8, uint8_t, DO_VADC)
+GEN_VEXT_VADC_VXM(VAdc_vxm_16, uint16_t, DO_VADC)
+GEN_VEXT_VADC_VXM(VAdc_vxm_32, uint32_t, DO_VADC)
+GEN_VEXT_VADC_VXM(VAdc_vxm_64, uint64_t, DO_VADC)
+
+GEN_VEXT_VADC_VXM(VSbc_vxm_8, uint8_t, DO_VSBC)
+GEN_VEXT_VADC_VXM(VSbc_vxm_16, uint16_t, DO_VSBC)
+GEN_VEXT_VADC_VXM(VSbc_vxm_32, uint32_t, DO_VSBC)
+GEN_VEXT_VADC_VXM(VSbc_vxm_64, uint64_t, DO_VSBC)
+
+#define DO_MADC(N, M, C) (C ? (__typeof(N))(N + M + 1) <= N :           \
+                          (__typeof(N))(N + M) < N)
+#define DO_MSBC(N, M, C) (C ? N <= M : N < M)
+
+#define GEN_VEXT_VMADC_VV_M(NAME, SFX, ETYPE, DO_OP)              \
+static void h_Iop_##NAME##m_##SFX(void *vd, void *vs1, void *vs2, \
+                                  void *v0, int len)              \
+{                                                                 \
+    for (int i = 0; i < len; ++i) {                               \
+        ETYPE s1 = *((ETYPE *)vs1 + i);                           \
+        ETYPE s2 = *((ETYPE *)vs2 + i);                           \
+        ETYPE carry = vext_elem_mask(v0, i);                      \
+        vext_set_elem_mask(vd, i, DO_OP(s2, s1, carry));          \
+    }                                                             \
+}
+
+#define GEN_VEXT_VMADC_VV_NOM(NAME, SFX, ETYPE, DO_OP)            \
+static void h_Iop_##NAME##_##SFX(void *vd, void *vs1, void *vs2,  \
+                                 int len)                         \
+{                                                                 \
+    for (int i = 0; i < len; ++i) {                               \
+        ETYPE s1 = *((ETYPE *)vs1 + i);                           \
+        ETYPE s2 = *((ETYPE *)vs2 + i);                           \
+        ETYPE carry = 0;                                          \
+        vext_set_elem_mask(vd, i, DO_OP(s2, s1, carry));          \
+    }                                                             \
+}
+
+#define GEN_VEXT_VMADC_VVM(NAME, SFX, ETYPE, DO_OP)  \
+   GEN_VEXT_VMADC_VV_M(NAME, SFX, ETYPE, DO_OP)      \
+   GEN_VEXT_VMADC_VV_NOM(NAME, SFX, ETYPE, DO_OP)    \
+
+GEN_VEXT_VMADC_VVM(VMadc_vv, 8, uint8_t, DO_MADC)
+GEN_VEXT_VMADC_VVM(VMadc_vv, 16, uint16_t, DO_MADC)
+GEN_VEXT_VMADC_VVM(VMadc_vv, 32, uint32_t, DO_MADC)
+GEN_VEXT_VMADC_VVM(VMadc_vv, 64, uint64_t, DO_MADC)
+
+GEN_VEXT_VMADC_VVM(VMsbc_vv, 8, uint8_t, DO_MSBC)
+GEN_VEXT_VMADC_VVM(VMsbc_vv, 16, uint16_t, DO_MSBC)
+GEN_VEXT_VMADC_VVM(VMsbc_vv, 32, uint32_t, DO_MSBC)
+GEN_VEXT_VMADC_VVM(VMsbc_vv, 64, uint64_t, DO_MSBC)
+
+#define GEN_VEXT_VMADC_VX_M(NAME, SFX, ETYPE, DO_OP)              \
+static void h_Iop_##NAME##m_##SFX(void *vd, Long s1, void *vs2,   \
+                                  void *v0, int len)              \
+{                                                                 \
+    for (int i = 0; i < len; ++i) {                               \
+        ETYPE s2 = *((ETYPE *)vs2 + i);                           \
+        ETYPE carry = vext_elem_mask(v0, i);                      \
+        vext_set_elem_mask(vd, i,                                 \
+                DO_OP(s2, (ETYPE)(Long)s1, carry));               \
+    }                                                             \
+}
+
+#define GEN_VEXT_VMADC_VX_NOM(NAME, SFX, ETYPE, DO_OP)            \
+static void h_Iop_##NAME##_##SFX(void *vd, Long s1, void *vs2,    \
+                              void *v0, int len)                  \
+{                                                                 \
+    for (int i = 0; i < len; ++i) {                               \
+        ETYPE s2 = *((ETYPE *)vs2 + i);                           \
+        ETYPE carry = 0;                                          \
+        vext_set_elem_mask(vd, i,                                 \
+                DO_OP(s2, (ETYPE)(Long)s1, carry));               \
+    }                                                             \
+}
+
+#define GEN_VEXT_VMADC_VXM(NAME, SFX, ETYPE, DO_OP)  \
+   GEN_VEXT_VMADC_VX_M(NAME, SFX, ETYPE, DO_OP)      \
+   GEN_VEXT_VMADC_VX_NOM(NAME, SFX, ETYPE, DO_OP)
+
+GEN_VEXT_VMADC_VXM(VMadc_vx, 8, uint8_t, DO_MADC)
+GEN_VEXT_VMADC_VXM(VMadc_vx, 16, uint16_t, DO_MADC)
+GEN_VEXT_VMADC_VXM(VMadc_vx, 32, uint32_t, DO_MADC)
+GEN_VEXT_VMADC_VXM(VMadc_vx, 64, uint64_t, DO_MADC)
+
+GEN_VEXT_VMADC_VXM(VMsbc_vx, 8, uint8_t, DO_MSBC)
+GEN_VEXT_VMADC_VXM(VMsbc_vx, 16, uint16_t, DO_MSBC)
+GEN_VEXT_VMADC_VXM(VMsbc_vx, 32, uint32_t, DO_MSBC)
+GEN_VEXT_VMADC_VXM(VMsbc_vx, 64, uint64_t, DO_MSBC)
+
 struct Iop_handler {
    const char* name;
    const void* fn;
@@ -2737,6 +2866,10 @@ struct Iop_handler {
    [Iop_V##op##_vim_32] = {"Iop_V" #op "_vim_32", h_Iop_V##op##_vxm_32}, \
    [Iop_V##op##_vim_64] = {"Iop_V" #op "_vim_64", h_Iop_V##op##_vxm_64}
 
+#define H_V_VX_M(op) \
+   H_V_V_M(op), \
+   H_V_X_M(op)
+
 #define H_V_VXI_M(op) \
    H_V_V_M(op), \
    H_V_X_M(op), \
@@ -2820,6 +2953,14 @@ static const struct Iop_handler IOP_HANDLERS[] = {
    HW_V_X(Wmaccus),
 
    H_V_VXI_M(Merge),
+
+   H_V_VXI_M(Adc),
+   H_V_VX_M(Sbc),
+
+   H_V_VXI_M(Madc),
+   H_V_VXI(Madc),
+   H_V_VX_M(Msbc),
+   H_V_VX(Msbc),
 
    H_RED(Redsum),
    H_RED(Redand),

@@ -4227,6 +4227,89 @@ static Bool dis_rvv_m_m(/*MB_OUT*/ DisResult* dres,
    return True;
 }
 
+static Bool dis_rvv_addsub_carry(/*MB_OUT*/ DisResult* dres,
+                                 /*OUT*/ IRSB*         irsb,
+                                 UInt                  insn,
+                                 Addr                  guest_pc_curr_instr,
+                                 VexGuestRISCV64State* guest)
+{
+   UInt funct6 = INSN(31, 26);
+   UInt vm = INSN(25, 25);
+   UInt vs2 = INSN(24, 20);
+   UInt s1 = INSN(19, 15);
+   UInt funct3 = INSN(14, 12);
+   UInt vd = INSN(11, 7);
+
+   UInt sew = get_sew(guest);
+   Int index = sewToIndex(sew);
+   UInt vl = guest->guest_vl;
+   IRType ty = typeofVecIR(vl, Ity_VLen8 + index);
+   rvvRegType s1_type;
+
+   IROp base_op;
+   switch (funct6) {
+   case 0b010000: {
+      switch (funct3) {
+      case 0b000: base_op = Iop_VAdc_vvm_8; s1_type = RVV_V; break;
+      case 0b100: base_op = Iop_VAdc_vxm_8; s1_type = RVV_X; break;
+      case 0b011: base_op = Iop_VAdc_vim_8; s1_type = RVV_I; break;
+      default: vassert(0);
+      }
+      break;
+   }
+   case 0b010001: {
+      switch (funct3) {
+      case 0b000: base_op = (vm == 0) ? Iop_VMadc_vvm_8 : Iop_VMadc_vv_8; s1_type = RVV_V; break;
+      case 0b100: base_op = (vm == 0) ? Iop_VMadc_vxm_8 : Iop_VMadc_vx_8; s1_type = RVV_X; break;
+      case 0b011: base_op = (vm == 0) ? Iop_VMadc_vim_8 : Iop_VMadc_vi_8; s1_type = RVV_I; break;
+      default: vassert(0);
+      }
+      break;
+   }
+   case 0b010010: {
+      switch (funct3) {
+      case 0b000: base_op = Iop_VSbc_vvm_8; s1_type = RVV_V; break;
+      case 0b100: base_op = Iop_VSbc_vxm_8; s1_type = RVV_X; break;
+      default: vassert(0);
+      }
+      break;
+   }
+   case 0b010011: {
+      switch (funct3) {
+      case 0b000: base_op = (vm == 0) ? Iop_VMsbc_vvm_8 : Iop_VMsbc_vv_8; s1_type = RVV_V; break;
+      case 0b100: base_op = (vm == 0) ? Iop_VMsbc_vxm_8 : Iop_VMsbc_vx_8; s1_type = RVV_X; break;
+      default: vassert(0);
+      }
+      break;
+   }
+   default: vassert(0);
+   }
+
+   IRExpr* es1;
+   if (s1_type == RVV_V) {
+      es1 = getVReg(s1, 0, ty);
+   } else if (s1_type == RVV_X) {
+      es1 = getIReg64(s1);
+   } else if (s1_type == RVV_I) {
+      Long imm = sext_slice_ulong(insn, 19, 15);
+      es1 = mkU64(imm);
+   }
+
+   IRExpr* es2 = getVReg(vs2, 0, ty);
+
+   IRExpr* res;
+   if (vm == 0) {
+      IRType mask_ty = typeofVecIR(vl, Ity_VLen1);
+      IRExpr* mask = getVReg(0 /*v0*/, 0, mask_ty);
+      res = triop(opofVecIR(vl, base_op + index), es1, es2, mask);
+   } else {
+      res = binop(opofVecIR(vl, base_op + index), es1, es2);
+   }
+   putVReg(irsb, vd, 0, res);
+
+   return True;
+}
+
 static Bool dis_vmsbf_m(/*MB_OUT*/ DisResult* dres,
                         /*OUT*/ IRSB*         irsb,
                         UInt                  insn,
@@ -4426,6 +4509,8 @@ static Bool dis_opivv(/*MB_OUT*/ DisResult* dres,
       return dis_rvv2_v_v(dres, irsb, insn, guest_pc_curr_instr, guest, Iop_VXor_vv_8);
    case 0b001001:
       return dis_rvv2_v_v(dres, irsb, insn, guest_pc_curr_instr, guest, Iop_VAnd_vv_8);
+   case 0b010000 ... 0b010011:
+      return dis_rvv_addsub_carry(dres, irsb, insn, guest_pc_curr_instr, guest);
    case 0b010111:
       if (vm == 1) {
          return dis_rvv_vmv_v_vxi(dres, irsb, insn, guest_pc_curr_instr, guest, RVV_V);
@@ -4590,6 +4675,8 @@ static Bool dis_opivi(/*MB_OUT*/ DisResult* dres,
       return dis_rvv2_v_i(dres, irsb, insn, guest_pc_curr_instr, guest, Iop_VXor_vi_8);
    case 0b001001:
       return dis_rvv2_v_i(dres, irsb, insn, guest_pc_curr_instr, guest, Iop_VAnd_vi_8);
+   case 0b010000 ... 0b010011:
+      return dis_rvv_addsub_carry(dres, irsb, insn, guest_pc_curr_instr, guest);
    case 0b011000:
       return dis_rvv2_v_i(dres, irsb, insn, guest_pc_curr_instr, guest, Iop_VMseq_vi_8);
    case 0b011001:
@@ -4652,6 +4739,8 @@ static Bool dis_opivx(/*MB_OUT*/ DisResult* dres,
       return dis_rvv2_v_x(dres, irsb, insn, guest_pc_curr_instr, guest, Iop_VXor_vx_8);
    case 0b001001:
       return dis_rvv2_v_x(dres, irsb, insn, guest_pc_curr_instr, guest, Iop_VAnd_vx_8);
+   case 0b010000 ... 0b010011:
+      return dis_rvv_addsub_carry(dres, irsb, insn, guest_pc_curr_instr, guest);
    case 0b010111:
       if (vm == 1) {
          return dis_rvv_vmv_v_vxi(dres, irsb, insn, guest_pc_curr_instr, guest, RVV_X);

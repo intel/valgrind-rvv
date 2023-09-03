@@ -1265,10 +1265,16 @@ static irop_t irops[] = {
 
 #define DEFOP_VV3_V_V(op) DEFOP_VV2_V_V(op)
 #define DEFOP_VV3_V_X(op) DEFOP_VV2_V_X(op)
+#define DEFOP_VV3_V_I(op) DEFOP_VV2_V_I(op)
 
 #define DEFOP_VV3_V_VX(op) \
       DEFOP_VV3_V_V(op), \
       DEFOP_VV3_V_X(op)
+
+#define DEFOP_VV3_V_VXI(op) \
+      DEFOP_VV3_V_V(op), \
+      DEFOP_VV3_V_X(op), \
+      DEFOP_VV3_V_I(op)
 
 #define DEFOP_VV3W_V_V(op) DEFOP_VV2W_V_V(op)
 #define DEFOP_VV3W_V_X(op) DEFOP_VV2W_V_X(op)
@@ -1294,6 +1300,10 @@ static irop_t irops[] = {
   { DEFOP(Iop_V##op##_vim_16, UNDEF_UNKNOWN), }, \
   { DEFOP(Iop_V##op##_vim_32, UNDEF_UNKNOWN), }, \
   { DEFOP(Iop_V##op##_vim_64, UNDEF_UNKNOWN), }
+
+#define DEFOP_VV3_V_VX_M(op) \
+  DEFOP_VV3_V_V_M(op), \
+  DEFOP_VV3_V_X_M(op)
 
 #define DEFOP_VV3_V_VXI_M(op) \
   DEFOP_VV3_V_V_M(op), \
@@ -1400,6 +1410,13 @@ static irop_t irops[] = {
 
   DEFOP_W_RED(Wredsumu),
   DEFOP_W_RED(Wredsum),
+
+  DEFOP_VV3_V_VXI_M(Adc),
+  DEFOP_VV3_V_VX_M(Sbc),
+  DEFOP_VV3_V_VXI_M(Madc),
+  DEFOP_VV3_V_VXI(Madc),
+  DEFOP_VV3_V_VX_M(Msbc),
+  DEFOP_VV3_V_VX(Msbc),
 
   { DEFOP(Iop_VMand_mm, UNDEF_UNKNOWN), },
   { DEFOP(Iop_VMnand_mm, UNDEF_UNKNOWN), },

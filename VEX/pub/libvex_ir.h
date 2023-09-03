@@ -2145,6 +2145,10 @@ typedef
 #define IOPVV3_V_I_M(op) \
       Iop_V##op##_vim_8, Iop_V##op##_vim_16, Iop_V##op##_vim_32, Iop_V##op##_vim_64
 
+#define IOPVV3_V_VX_M(op) \
+      IOPVV3_V_V_M(op), \
+      IOPVV3_V_X_M(op)
+
 #define IOPVV3_V_VXI_M(op) \
       IOPVV3_V_V_M(op), \
       IOPVV3_V_X_M(op), \
@@ -2238,6 +2242,9 @@ typedef
       Iop_VMand_mm, Iop_VMnand_mm, Iop_VMandn_mm, Iop_VMxor_mm,
       Iop_VMor_mm, Iop_VMnor_mm, Iop_VMorn_mm, Iop_VMxnor_mm,
 
+      IOPVV2_V_VXI(Madc),
+      IOPVV2_V_VX(Msbc),
+
       Iop_SSS_Start,
       IOPVV3_V_VXI_M(Merge),
 
@@ -2252,6 +2259,11 @@ typedef
 
       IOPW_RED_M(Wredsumu),
       IOPW_RED_M(Wredsum),
+
+      IOPVV3_V_VXI_M(Adc),
+      IOPVV3_V_VX_M(Sbc),
+      IOPVV3_V_VXI_M(Madc),
+      IOPVV3_V_VX_M(Msbc),
       Iop_SSS_End,
 
       Iop_SSD_Start,
