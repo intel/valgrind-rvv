@@ -2073,33 +2073,33 @@ typedef
       Iop_Rotx32, Iop_Rotx64,
 
 #define IOPVV1(op) \
-      Iop_V##op##8, Iop_V##op##16, Iop_V##op##32, Iop_V##op##64
-
-#define IOPVV2(op) \
-      Iop_V##op##8_vv, Iop_V##op##16_vv, Iop_V##op##32_vv, Iop_V##op##64_vv
-
-#define IOPVX2(op) \
-      Iop_V##op##8_vx, Iop_V##op##16_vx, Iop_V##op##32_vx, Iop_V##op##64_vx
-
-#define IOPVI2(op) \
-      Iop_V##op##8_vi, Iop_V##op##16_vi, Iop_V##op##32_vi, Iop_V##op##64_vi
+      Iop_V##op##_8, Iop_V##op##_16, Iop_V##op##_32, Iop_V##op##_64
 
 #define IOPVV1_IEXT(op) \
-      Iop_V##op##16_vf2, Iop_V##op##32_vf2, Iop_V##op##64_vf2, \
-      Iop_V##op##32_vf4, Iop_V##op##64_vf4, \
-      Iop_V##op##64_vf8
+      Iop_V##op##_vf2_16, Iop_V##op##_vf2_32, Iop_V##op##_vf2_64, \
+      Iop_V##op##_vf4_32, Iop_V##op##_vf4_64, \
+      Iop_V##op##_vf8_64
+
+#define IOPVV2(op) \
+      Iop_V##op##_vv_8, Iop_V##op##_vv_16, Iop_V##op##_vv_32, Iop_V##op##_vv_64
+
+#define IOPVX2(op) \
+      Iop_V##op##_vx_8, Iop_V##op##_vx_16, Iop_V##op##_vx_32, Iop_V##op##_vx_64
+
+#define IOPVI2(op) \
+      Iop_V##op##_vi_8, Iop_V##op##_vi_16, Iop_V##op##_vi_32, Iop_V##op##_vi_64
 
 #define WIOPVV2(op) \
-      Iop_V##op##8_vv, Iop_V##op##16_vv, Iop_V##op##32_vv
+      Iop_V##op##_vv_8, Iop_V##op##_vv_16, Iop_V##op##_vv_32
 
 #define WIOPVX2(op) \
-      Iop_V##op##8_vx, Iop_V##op##16_vx, Iop_V##op##32_vx
+      Iop_V##op##_vx_8, Iop_V##op##_vx_16, Iop_V##op##_vx_32
 
 #define WIOPWV2(op) \
-      Iop_V##op##8_wv, Iop_V##op##16_wv, Iop_V##op##32_wv
+      Iop_V##op##_wv_8, Iop_V##op##_wv_16, Iop_V##op##_wv_32
 
 #define WIOPWX2(op) \
-      Iop_V##op##8_wx, Iop_V##op##16_wx, Iop_V##op##32_wx
+      Iop_V##op##_wx_8, Iop_V##op##_wx_16, Iop_V##op##_wx_32
 
       Iop_VV2_Start,
       IOPVV2(Add),

@@ -183,273 +183,273 @@ void ppIROp ( IROp op )
       case Iop_Not8 ... Iop_Not64:
          str = "Not"; base = Iop_Not8; break;
 
-      case Iop_VAdd8_vv ... Iop_VAdd64_vv:
-         str = "VAdd_vv"; base = Iop_VAdd8_vv; break;
-      case Iop_VAdd8_vx ... Iop_VAdd64_vx:
-         str = "VAdd_vx"; base = Iop_VAdd8_vx; break;
-      case Iop_VAdd8_vi ... Iop_VAdd64_vi:
-         str = "VAdd_vi"; base = Iop_VAdd8_vi; break;
+      case Iop_VAdd_vv_8 ... Iop_VAdd_vv_64:
+         str = "VAdd_vv"; base = Iop_VAdd_vv_8; break;
+      case Iop_VAdd_vx_8 ... Iop_VAdd_vx_64:
+         str = "VAdd_vx"; base = Iop_VAdd_vx_8; break;
+      case Iop_VAdd_vi_8 ... Iop_VAdd_vi_64:
+         str = "VAdd_vi"; base = Iop_VAdd_vi_8; break;
 
-      case Iop_VOr8_vv ... Iop_VOr64_vv:
-         str = "VOr_vv"; base = Iop_VOr8_vv; break;
-      case Iop_VOr8_vx ... Iop_VOr64_vx:
-         str = "VOr_vx"; base = Iop_VOr8_vx; break;
-      case Iop_VOr8_vi ... Iop_VOr64_vi:
-         str = "VOr_vi"; base = Iop_VOr8_vi; break;
+      case Iop_VOr_vv_8 ... Iop_VOr_vv_64:
+         str = "VOr_vv"; base = Iop_VOr_vv_8; break;
+      case Iop_VOr_vx_8 ... Iop_VOr_vx_64:
+         str = "VOr_vx"; base = Iop_VOr_vx_8; break;
+      case Iop_VOr_vi_8 ... Iop_VOr_vi_64:
+         str = "VOr_vi"; base = Iop_VOr_vi_8; break;
 
-      case Iop_VAnd8_vv ... Iop_VAnd64_vv:
-         str = "VAnd_vv"; base = Iop_VAnd8_vv; break;
-      case Iop_VAnd8_vx ... Iop_VAnd64_vx:
-         str = "VAnd_vx"; base = Iop_VAnd8_vx; break;
-      case Iop_VAnd8_vi ... Iop_VAnd64_vi:
-         str = "VAnd_vi"; base = Iop_VAnd8_vi; break;
+      case Iop_VAnd_vv_8 ... Iop_VAnd_vv_64:
+         str = "VAnd_vv"; base = Iop_VAnd_vv_8; break;
+      case Iop_VAnd_vx_8 ... Iop_VAnd_vx_64:
+         str = "VAnd_vx"; base = Iop_VAnd_vx_8; break;
+      case Iop_VAnd_vi_8 ... Iop_VAnd_vi_64:
+         str = "VAnd_vi"; base = Iop_VAnd_vi_8; break;
 
-      case Iop_VSub8_vv ... Iop_VSub64_vv:
-         str = "VSub_vv"; base = Iop_VSub8_vv; break;
-      case Iop_VSub8_vx ... Iop_VSub64_vx:
-         str = "VSub_vx"; base = Iop_VSub8_vx; break;
+      case Iop_VSub_vv_8 ... Iop_VSub_vv_64:
+         str = "VSub_vv"; base = Iop_VSub_vv_8; break;
+      case Iop_VSub_vx_8 ... Iop_VSub_vx_64:
+         str = "VSub_vx"; base = Iop_VSub_vx_8; break;
 
-      case Iop_VRsub8_vx ... Iop_VRsub64_vx:
-         str = "VRsub_vx"; base = Iop_VRsub8_vx; break;
-      case Iop_VRsub8_vi ... Iop_VRsub64_vi:
-         str = "VRsub_vi"; base = Iop_VRsub8_vi; break;
+      case Iop_VRsub_vx_8 ... Iop_VRsub_vx_64:
+         str = "VRsub_vx"; base = Iop_VRsub_vx_8; break;
+      case Iop_VRsub_vi_8 ... Iop_VRsub_vi_64:
+         str = "VRsub_vi"; base = Iop_VRsub_vi_8; break;
 
-      case Iop_VXor8_vv ... Iop_VXor64_vv:
-         str = "VXor_vv"; base = Iop_VXor8_vv; break;
-      case Iop_VXor8_vx ... Iop_VXor64_vx:
-         str = "VXor_vx"; base = Iop_VXor8_vx; break;
-      case Iop_VXor8_vi ... Iop_VXor64_vi:
-         str = "VXor_vi"; base = Iop_VXor8_vi; break;
+      case Iop_VXor_vv_8 ... Iop_VXor_vv_64:
+         str = "VXor_vv"; base = Iop_VXor_vv_8; break;
+      case Iop_VXor_vx_8 ... Iop_VXor_vx_64:
+         str = "VXor_vx"; base = Iop_VXor_vx_8; break;
+      case Iop_VXor_vi_8 ... Iop_VXor_vi_64:
+         str = "VXor_vi"; base = Iop_VXor_vi_8; break;
 
-      case Iop_VMinu8_vv ... Iop_VMinu64_vv:
-         str = "VMinu_vv"; base = Iop_VMinu8_vv; break;
-      case Iop_VMinu8_vx ... Iop_VMinu64_vx:
-         str = "VMinu_vx"; base = Iop_VMinu8_vx; break;
+      case Iop_VMinu_vv_8 ... Iop_VMinu_vv_64:
+         str = "VMinu_vv"; base = Iop_VMinu_vv_8; break;
+      case Iop_VMinu_vx_8 ... Iop_VMinu_vx_64:
+         str = "VMinu_vx"; base = Iop_VMinu_vx_8; break;
 
-      case Iop_VMin8_vv ... Iop_VMin64_vv:
-         str = "VMin_vv"; base = Iop_VMin8_vv; break;
-      case Iop_VMin8_vx ... Iop_VMin64_vx:
-         str = "VMin_vx"; base = Iop_VMin8_vx; break;
+      case Iop_VMin_vv_8 ... Iop_VMin_vv_64:
+         str = "VMin_vv"; base = Iop_VMin_vv_8; break;
+      case Iop_VMin_vx_8 ... Iop_VMin_vx_64:
+         str = "VMin_vx"; base = Iop_VMin_vx_8; break;
 
-      case Iop_VMaxu8_vv ... Iop_VMaxu64_vv:
-         str = "VMaxu_vv"; base = Iop_VMaxu8_vv; break;
-      case Iop_VMaxu8_vx ... Iop_VMaxu64_vx:
-         str = "VMaxu_vx"; base = Iop_VMaxu8_vx; break;
+      case Iop_VMaxu_vv_8 ... Iop_VMaxu_vv_64:
+         str = "VMaxu_vv"; base = Iop_VMaxu_vv_8; break;
+      case Iop_VMaxu_vx_8 ... Iop_VMaxu_vx_64:
+         str = "VMaxu_vx"; base = Iop_VMaxu_vx_8; break;
 
-      case Iop_VMax8_vv ... Iop_VMax64_vv:
-         str = "VMax_vv"; base = Iop_VMax8_vv; break;
-      case Iop_VMax8_vx ... Iop_VMax64_vx:
-         str = "VMax_vx"; base = Iop_VMax8_vx; break;
+      case Iop_VMax_vv_8 ... Iop_VMax_vv_64:
+         str = "VMax_vv"; base = Iop_VMax_vv_8; break;
+      case Iop_VMax_vx_8 ... Iop_VMax_vx_64:
+         str = "VMax_vx"; base = Iop_VMax_vx_8; break;
 
-      case Iop_VMul8_vv ... Iop_VMul64_vv:
-         str = "VMul_vv"; base = Iop_VMul8_vv; break;
-      case Iop_VMul8_vx ... Iop_VMul64_vx:
-         str = "VMul_vx"; base = Iop_VMul8_vx; break;
+      case Iop_VMul_vv_8 ... Iop_VMul_vv_64:
+         str = "VMul_vv"; base = Iop_VMul_vv_8; break;
+      case Iop_VMul_vx_8 ... Iop_VMul_vx_64:
+         str = "VMul_vx"; base = Iop_VMul_vx_8; break;
 
-      case Iop_VMulh8_vv ... Iop_VMulh64_vv:
-         str = "VMulh_vv"; base = Iop_VMulh8_vv; break;
-      case Iop_VMulh8_vx ... Iop_VMulh64_vx:
-         str = "VMulh_vx"; base = Iop_VMulh8_vx; break;
+      case Iop_VMulh_vv_8 ... Iop_VMulh_vv_64:
+         str = "VMulh_vv"; base = Iop_VMulh_vv_8; break;
+      case Iop_VMulh_vx_8 ... Iop_VMulh_vx_64:
+         str = "VMulh_vx"; base = Iop_VMulh_vx_8; break;
 
-      case Iop_VMulhu8_vv ... Iop_VMulhu64_vv:
-         str = "VMulhu_vv"; base = Iop_VMulhu8_vv; break;
-      case Iop_VMulhu8_vx ... Iop_VMulhu64_vx:
-         str = "VMulhu_vx"; base = Iop_VMulhu8_vx; break;
+      case Iop_VMulhu_vv_8 ... Iop_VMulhu_vv_64:
+         str = "VMulhu_vv"; base = Iop_VMulhu_vv_8; break;
+      case Iop_VMulhu_vx_8 ... Iop_VMulhu_vx_64:
+         str = "VMulhu_vx"; base = Iop_VMulhu_vx_8; break;
 
-      case Iop_VMulhsu8_vv ... Iop_VMulhsu64_vv:
-         str = "VMulhsu_vv"; base = Iop_VMulhsu8_vv; break;
-      case Iop_VMulhsu8_vx ... Iop_VMulhsu64_vx:
-         str = "VMulhsu_vx"; base = Iop_VMulhsu8_vx; break;
+      case Iop_VMulhsu_vv_8 ... Iop_VMulhsu_vv_64:
+         str = "VMulhsu_vv"; base = Iop_VMulhsu_vv_8; break;
+      case Iop_VMulhsu_vx_8 ... Iop_VMulhsu_vx_64:
+         str = "VMulhsu_vx"; base = Iop_VMulhsu_vx_8; break;
 
-      case Iop_VDivu8_vv ... Iop_VDivu64_vv:
-         str = "VDivu_vv"; base = Iop_VDivu8_vv; break;
-      case Iop_VDivu8_vx ... Iop_VDivu64_vx:
-         str = "VDivu_vx"; base = Iop_VDivu8_vx; break;
+      case Iop_VDivu_vv_8 ... Iop_VDivu_vv_64:
+         str = "VDivu_vv"; base = Iop_VDivu_vv_8; break;
+      case Iop_VDivu_vx_8 ... Iop_VDivu_vx_64:
+         str = "VDivu_vx"; base = Iop_VDivu_vx_8; break;
 
-      case Iop_VDiv8_vv ... Iop_VDiv64_vv:
-         str = "VDiv_vv"; base = Iop_VDiv8_vv; break;
-      case Iop_VDiv8_vx ... Iop_VDiv64_vx:
-         str = "VDiv_vx"; base = Iop_VDiv8_vx; break;
+      case Iop_VDiv_vv_8 ... Iop_VDiv_vv_64:
+         str = "VDiv_vv"; base = Iop_VDiv_vv_8; break;
+      case Iop_VDiv_vx_8 ... Iop_VDiv_vx_64:
+         str = "VDiv_vx"; base = Iop_VDiv_vx_8; break;
 
-      case Iop_VRemu8_vv ... Iop_VRemu64_vv:
-         str = "VRemu_vv"; base = Iop_VRemu8_vv; break;
-      case Iop_VRemu8_vx ... Iop_VRemu64_vx:
-         str = "VRemu_vx"; base = Iop_VRemu8_vx; break;
+      case Iop_VRemu_vv_8 ... Iop_VRemu_vv_64:
+         str = "VRemu_vv"; base = Iop_VRemu_vv_8; break;
+      case Iop_VRemu_vx_8 ... Iop_VRemu_vx_64:
+         str = "VRemu_vx"; base = Iop_VRemu_vx_8; break;
 
-      case Iop_VRem8_vv ... Iop_VRem64_vv:
-         str = "VRem_vv"; base = Iop_VRem8_vv; break;
-      case Iop_VRem8_vx ... Iop_VRem64_vx:
-         str = "VRem_vx"; base = Iop_VRem8_vx; break;
+      case Iop_VRem_vv_8 ... Iop_VRem_vv_64:
+         str = "VRem_vv"; base = Iop_VRem_vv_8; break;
+      case Iop_VRem_vx_8 ... Iop_VRem_vx_64:
+         str = "VRem_vx"; base = Iop_VRem_vx_8; break;
 
-      case Iop_VMseq8_vv ... Iop_VMseq64_vv:
-         str = "VMseq_vv"; base = Iop_VMseq8_vv; break;
-      case Iop_VMseq8_vx ... Iop_VMseq64_vx:
-         str = "VMseq_vx"; base = Iop_VMseq8_vx; break;
-      case Iop_VMseq8_vi ... Iop_VMseq64_vi:
-         str = "VMseq_vi"; base = Iop_VMseq8_vi; break;
+      case Iop_VMseq_vv_8 ... Iop_VMseq_vv_64:
+         str = "VMseq_vv"; base = Iop_VMseq_vv_8; break;
+      case Iop_VMseq_vx_8 ... Iop_VMseq_vx_64:
+         str = "VMseq_vx"; base = Iop_VMseq_vx_8; break;
+      case Iop_VMseq_vi_8 ... Iop_VMseq_vi_64:
+         str = "VMseq_vi"; base = Iop_VMseq_vi_8; break;
 
-      case Iop_VMsne8_vv ... Iop_VMsne64_vv:
-         str = "VMsne_vv"; base = Iop_VMsne8_vv; break;
-      case Iop_VMsne8_vx ... Iop_VMsne64_vx:
-         str = "VMsne_vx"; base = Iop_VMsne8_vx; break;
-      case Iop_VMsne8_vi ... Iop_VMsne64_vi:
-         str = "VMsne_vi"; base = Iop_VMsne8_vi; break;
+      case Iop_VMsne_vv_8 ... Iop_VMsne_vv_64:
+         str = "VMsne_vv"; base = Iop_VMsne_vv_8; break;
+      case Iop_VMsne_vx_8 ... Iop_VMsne_vx_64:
+         str = "VMsne_vx"; base = Iop_VMsne_vx_8; break;
+      case Iop_VMsne_vi_8 ... Iop_VMsne_vi_64:
+         str = "VMsne_vi"; base = Iop_VMsne_vi_8; break;
 
-      case Iop_VMsltu8_vv ... Iop_VMsltu64_vv:
-         str = "VMsltu_vv"; base = Iop_VMsltu8_vv; break;
-      case Iop_VMsltu8_vx ... Iop_VMsltu64_vx:
-         str = "VMsltu_vx"; base = Iop_VMsltu8_vx; break;
+      case Iop_VMsltu_vv_8 ... Iop_VMsltu_vv_64:
+         str = "VMsltu_vv"; base = Iop_VMsltu_vv_8; break;
+      case Iop_VMsltu_vx_8 ... Iop_VMsltu_vx_64:
+         str = "VMsltu_vx"; base = Iop_VMsltu_vx_8; break;
 
-      case Iop_VMslt8_vv ... Iop_VMslt64_vv:
-         str = "VMslt_vv"; base = Iop_VMslt8_vv; break;
-      case Iop_VMslt8_vx ... Iop_VMslt64_vx:
-         str = "VMslt_vx"; base = Iop_VMslt8_vx; break;
+      case Iop_VMslt_vv_8 ... Iop_VMslt_vv_64:
+         str = "VMslt_vv"; base = Iop_VMslt_vv_8; break;
+      case Iop_VMslt_vx_8 ... Iop_VMslt_vx_64:
+         str = "VMslt_vx"; base = Iop_VMslt_vx_8; break;
 
-      case Iop_VMsleu8_vv ... Iop_VMsleu64_vv:
-         str = "VMsleu_vv"; base = Iop_VMsleu8_vv; break;
-      case Iop_VMsleu8_vx ... Iop_VMsleu64_vx:
-         str = "VMsleu_vx"; base = Iop_VMsleu8_vx; break;
-      case Iop_VMsleu8_vi ... Iop_VMsleu64_vi:
-         str = "VMsleu_vi"; base = Iop_VMsleu8_vi; break;
+      case Iop_VMsleu_vv_8 ... Iop_VMsleu_vv_64:
+         str = "VMsleu_vv"; base = Iop_VMsleu_vv_8; break;
+      case Iop_VMsleu_vx_8 ... Iop_VMsleu_vx_64:
+         str = "VMsleu_vx"; base = Iop_VMsleu_vx_8; break;
+      case Iop_VMsleu_vi_8 ... Iop_VMsleu_vi_64:
+         str = "VMsleu_vi"; base = Iop_VMsleu_vi_8; break;
 
-      case Iop_VMsle8_vv ... Iop_VMsle64_vv:
-         str = "VMsle_vv"; base = Iop_VMsle8_vv; break;
-      case Iop_VMsle8_vx ... Iop_VMsle64_vx:
-         str = "VMsle_vx"; base = Iop_VMsle8_vx; break;
-      case Iop_VMsle8_vi ... Iop_VMsle64_vi:
-         str = "VMsle_vi"; base = Iop_VMsle8_vi; break;
+      case Iop_VMsle_vv_8 ... Iop_VMsle_vv_64:
+         str = "VMsle_vv"; base = Iop_VMsle_vv_8; break;
+      case Iop_VMsle_vx_8 ... Iop_VMsle_vx_64:
+         str = "VMsle_vx"; base = Iop_VMsle_vx_8; break;
+      case Iop_VMsle_vi_8 ... Iop_VMsle_vi_64:
+         str = "VMsle_vi"; base = Iop_VMsle_vi_8; break;
 
-      case Iop_VMsgtu8_vx ... Iop_VMsgtu64_vx:
-         str = "VMsgtu_vx"; base = Iop_VMsgtu8_vx; break;
-      case Iop_VMsgtu8_vi ... Iop_VMsgtu64_vi:
-         str = "VMsgtu_vi"; base = Iop_VMsgtu8_vi; break;
+      case Iop_VMsgtu_vx_8 ... Iop_VMsgtu_vx_64:
+         str = "VMsgtu_vx"; base = Iop_VMsgtu_vx_8; break;
+      case Iop_VMsgtu_vi_8 ... Iop_VMsgtu_vi_64:
+         str = "VMsgtu_vi"; base = Iop_VMsgtu_vi_8; break;
 
-      case Iop_VMsgt8_vx ... Iop_VMsgt64_vx:
-         str = "VMsgt_vx"; base = Iop_VMsgt8_vx; break;
-      case Iop_VMsgt8_vi ... Iop_VMsgt64_vi:
-         str = "VMsgt_vi"; base = Iop_VMsgt8_vi; break;
+      case Iop_VMsgt_vx_8 ... Iop_VMsgt_vx_64:
+         str = "VMsgt_vx"; base = Iop_VMsgt_vx_8; break;
+      case Iop_VMsgt_vi_8 ... Iop_VMsgt_vi_64:
+         str = "VMsgt_vi"; base = Iop_VMsgt_vi_8; break;
 
-      case Iop_VMacc8_vv ... Iop_VMacc64_vv:
-         str = "VMacc_vv"; base = Iop_VMacc8_vv; break;
-      case Iop_VMacc8_vx ... Iop_VMacc64_vx:
-         str = "VMacc_vx"; base = Iop_VMacc8_vx; break;
+      case Iop_VMacc_vv_8 ... Iop_VMacc_vv_64:
+         str = "VMacc_vv"; base = Iop_VMacc_vv_8; break;
+      case Iop_VMacc_vx_8 ... Iop_VMacc_vx_64:
+         str = "VMacc_vx"; base = Iop_VMacc_vx_8; break;
 
-      case Iop_VNmsac8_vv ... Iop_VNmsac64_vv:
-         str = "VNmsac_vv"; base = Iop_VNmsac8_vv; break;
-      case Iop_VNmsac8_vx ... Iop_VNmsac64_vx:
-         str = "VNmsac_vx"; base = Iop_VNmsac8_vx; break;
+      case Iop_VNmsac_vv_8 ... Iop_VNmsac_vv_64:
+         str = "VNmsac_vv"; base = Iop_VNmsac_vv_8; break;
+      case Iop_VNmsac_vx_8 ... Iop_VNmsac_vx_64:
+         str = "VNmsac_vx"; base = Iop_VNmsac_vx_8; break;
 
-      case Iop_VMadd8_vv ... Iop_VMadd64_vv:
-         str = "VMadd_vv"; base = Iop_VMadd8_vv; break;
-      case Iop_VMadd8_vx ... Iop_VMadd64_vx:
-         str = "VMadd_vx"; base = Iop_VMadd8_vx; break;
+      case Iop_VMadd_vv_8 ... Iop_VMadd_vv_64:
+         str = "VMadd_vv"; base = Iop_VMadd_vv_8; break;
+      case Iop_VMadd_vx_8 ... Iop_VMadd_vx_64:
+         str = "VMadd_vx"; base = Iop_VMadd_vx_8; break;
 
-      case Iop_VNmsub8_vv ... Iop_VNmsub64_vv:
-         str = "VNmsub_vv"; base = Iop_VNmsub8_vv; break;
-      case Iop_VNmsub8_vx ... Iop_VNmsub64_vx:
-         str = "VNmsub_vx"; base = Iop_VNmsub8_vx; break;
+      case Iop_VNmsub_vv_8 ... Iop_VNmsub_vv_64:
+         str = "VNmsub_vv"; base = Iop_VNmsub_vv_8; break;
+      case Iop_VNmsub_vx_8 ... Iop_VNmsub_vx_64:
+         str = "VNmsub_vx"; base = Iop_VNmsub_vx_8; break;
 
-      case Iop_VSll8_vv ... Iop_VSll64_vv:
-         str = "VSll_vv"; base = Iop_VSll8_vv; break;
-      case Iop_VSll8_vx ... Iop_VSll64_vx:
-         str = "VSll_vx"; base = Iop_VSll8_vx; break;
-      case Iop_VSll8_vi ... Iop_VSll64_vi:
-         str = "VSll_vi"; base = Iop_VSll8_vi; break;
+      case Iop_VSll_vv_8 ... Iop_VSll_vv_64:
+         str = "VSll_vv"; base = Iop_VSll_vv_8; break;
+      case Iop_VSll_vx_8 ... Iop_VSll_vx_64:
+         str = "VSll_vx"; base = Iop_VSll_vx_8; break;
+      case Iop_VSll_vi_8 ... Iop_VSll_vi_64:
+         str = "VSll_vi"; base = Iop_VSll_vi_8; break;
 
-      case Iop_VSrl8_vv ... Iop_VSrl64_vv:
-         str = "VSrl_vv"; base = Iop_VSrl8_vv; break;
-      case Iop_VSrl8_vx ... Iop_VSrl64_vx:
-         str = "VSrl_vx"; base = Iop_VSrl8_vx; break;
-      case Iop_VSrl8_vi ... Iop_VSrl64_vi:
-         str = "VSrl_vi"; base = Iop_VSrl8_vi; break;
+      case Iop_VSrl_vv_8 ... Iop_VSrl_vv_64:
+         str = "VSrl_vv"; base = Iop_VSrl_vv_8; break;
+      case Iop_VSrl_vx_8 ... Iop_VSrl_vx_64:
+         str = "VSrl_vx"; base = Iop_VSrl_vx_8; break;
+      case Iop_VSrl_vi_8 ... Iop_VSrl_vi_64:
+         str = "VSrl_vi"; base = Iop_VSrl_vi_8; break;
 
-      case Iop_VSra8_vv ... Iop_VSra64_vv:
-         str = "VSra_vv"; base = Iop_VSra8_vv; break;
-      case Iop_VSra8_vx ... Iop_VSra64_vx:
-         str = "VSra_vx"; base = Iop_VSra8_vx; break;
-      case Iop_VSra8_vi ... Iop_VSra64_vi:
-         str = "VSra_vi"; base = Iop_VSra8_vi; break;
+      case Iop_VSra_vv_8 ... Iop_VSra_vv_64:
+         str = "VSra_vv"; base = Iop_VSra_vv_8; break;
+      case Iop_VSra_vx_8 ... Iop_VSra_vx_64:
+         str = "VSra_vx"; base = Iop_VSra_vx_8; break;
+      case Iop_VSra_vi_8 ... Iop_VSra_vi_64:
+         str = "VSra_vi"; base = Iop_VSra_vi_8; break;
 
-      case Iop_VWaddu8_vv ... Iop_VWaddu32_vv:
-         str = "VWaddu_vv"; base = Iop_VWaddu8_vv; break;
-      case Iop_VWaddu8_vx ... Iop_VWaddu32_vx:
-         str = "VWaddu_vx"; base = Iop_VWaddu8_vx; break;
-      case Iop_VWadd8_vv ... Iop_VWadd32_vv:
-         str = "VWadd_vv"; base = Iop_VWadd8_vv; break;
-      case Iop_VWadd8_vx ... Iop_VWadd32_vx:
-         str = "VWadd_vx"; base = Iop_VWadd8_vx; break;
-      case Iop_VWsubu8_vv ... Iop_VWsubu32_vv:
-         str = "VWsubu_vv"; base = Iop_VWsubu8_vv; break;
-      case Iop_VWsubu8_vx ... Iop_VWsubu32_vx:
-         str = "VWsubu_vx"; base = Iop_VWsubu8_vx; break;
-      case Iop_VWsub8_vv ... Iop_VWsub32_vv:
-         str = "VWsub_vv"; base = Iop_VWsub8_vv; break;
-      case Iop_VWsub8_vx ... Iop_VWsub32_vx:
-         str = "VWsub_vx"; base = Iop_VWsub8_vx; break;
-      case Iop_VWaddu8_wv ... Iop_VWaddu32_wv:
-         str = "VWaddu_wv"; base = Iop_VWaddu8_wv; break;
-      case Iop_VWaddu8_wx ... Iop_VWaddu32_wx:
-         str = "VWaddu_wx"; base = Iop_VWaddu8_wx; break;
-      case Iop_VWadd8_wv ... Iop_VWadd32_wv:
-         str = "VWadd_wv"; base = Iop_VWadd8_wv; break;
-      case Iop_VWadd8_wx ... Iop_VWadd32_wx:
-         str = "VWadd_wx"; base = Iop_VWadd8_wx; break;
-      case Iop_VWsubu8_wv ... Iop_VWsubu32_wv:
-         str = "VWsubu_wv"; base = Iop_VWsubu8_wv; break;
-      case Iop_VWsubu8_wx ... Iop_VWsubu32_wx:
-         str = "VWsubu_wx"; base = Iop_VWsubu8_wx; break;
-      case Iop_VWsub8_wv ... Iop_VWsub32_wv:
-         str = "VWsub_wv"; base = Iop_VWsub8_wv; break;
-      case Iop_VWsub8_wx ... Iop_VWsub32_wx:
-         str = "VWsub_wx"; base = Iop_VWsub8_wx; break;
+      case Iop_VWaddu_vv_8 ... Iop_VWaddu_vv_32:
+         str = "VWaddu_vv"; base = Iop_VWaddu_vv_8; break;
+      case Iop_VWaddu_vx_8 ... Iop_VWaddu_vx_32:
+         str = "VWaddu_vx"; base = Iop_VWaddu_vx_8; break;
+      case Iop_VWadd_vv_8 ... Iop_VWadd_vv_32:
+         str = "VWadd_vv"; base = Iop_VWadd_vv_8; break;
+      case Iop_VWadd_vx_8 ... Iop_VWadd_vx_32:
+         str = "VWadd_vx"; base = Iop_VWadd_vx_8; break;
+      case Iop_VWsubu_vv_8 ... Iop_VWsubu_vv_32:
+         str = "VWsubu_vv"; base = Iop_VWsubu_vv_8; break;
+      case Iop_VWsubu_vx_8 ... Iop_VWsubu_vx_32:
+         str = "VWsubu_vx"; base = Iop_VWsubu_vx_8; break;
+      case Iop_VWsub_vv_8 ... Iop_VWsub_vv_32:
+         str = "VWsub_vv"; base = Iop_VWsub_vv_8; break;
+      case Iop_VWsub_vx_8 ... Iop_VWsub_vx_32:
+         str = "VWsub_vx"; base = Iop_VWsub_vx_8; break;
+      case Iop_VWaddu_wv_8 ... Iop_VWaddu_wv_32:
+         str = "VWaddu_wv"; base = Iop_VWaddu_wv_8; break;
+      case Iop_VWaddu_wx_8 ... Iop_VWaddu_wx_32:
+         str = "VWaddu_wx"; base = Iop_VWaddu_wx_8; break;
+      case Iop_VWadd_wv_8 ... Iop_VWadd_wv_32:
+         str = "VWadd_wv"; base = Iop_VWadd_wv_8; break;
+      case Iop_VWadd_wx_8 ... Iop_VWadd_wx_32:
+         str = "VWadd_wx"; base = Iop_VWadd_wx_8; break;
+      case Iop_VWsubu_wv_8 ... Iop_VWsubu_wv_32:
+         str = "VWsubu_wv"; base = Iop_VWsubu_wv_8; break;
+      case Iop_VWsubu_wx_8 ... Iop_VWsubu_wx_32:
+         str = "VWsubu_wx"; base = Iop_VWsubu_wx_8; break;
+      case Iop_VWsub_wv_8 ... Iop_VWsub_wv_32:
+         str = "VWsub_wv"; base = Iop_VWsub_wv_8; break;
+      case Iop_VWsub_wx_8 ... Iop_VWsub_wx_32:
+         str = "VWsub_wx"; base = Iop_VWsub_wx_8; break;
 
-      case Iop_VWmulu8_vv ... Iop_VWmulu32_vv:
-         str = "VWmulu_vv"; base = Iop_VWmulu8_vv; break;
-      case Iop_VWmulu8_vx ... Iop_VWmulu32_vx:
-         str = "VWmulu_vx"; base = Iop_VWmulu8_vx; break;
-      case Iop_VWmulsu8_vv ... Iop_VWmulsu32_vv:
-         str = "VWmulsu_vv"; base = Iop_VWmulsu8_vv; break;
-      case Iop_VWmulsu8_vx ... Iop_VWmulsu32_vx:
-         str = "VWmulsu_vx"; base = Iop_VWmulsu8_vx; break;
-      case Iop_VWmul8_vv ... Iop_VWmul32_vv:
-         str = "VWmul_vv"; base = Iop_VWmul8_vv; break;
-      case Iop_VWmul8_vx ... Iop_VWmul32_vx:
-         str = "VWmul_vx"; base = Iop_VWmul8_vx; break;
+      case Iop_VWmulu_vv_8 ... Iop_VWmulu_vv_32:
+         str = "VWmulu_vv"; base = Iop_VWmulu_vv_8; break;
+      case Iop_VWmulu_vx_8 ... Iop_VWmulu_vx_32:
+         str = "VWmulu_vx"; base = Iop_VWmulu_vx_8; break;
+      case Iop_VWmulsu_vv_8 ... Iop_VWmulsu_vv_32:
+         str = "VWmulsu_vv"; base = Iop_VWmulsu_vv_8; break;
+      case Iop_VWmulsu_vx_8 ... Iop_VWmulsu_vx_32:
+         str = "VWmulsu_vx"; base = Iop_VWmulsu_vx_8; break;
+      case Iop_VWmul_vv_8 ... Iop_VWmul_vv_32:
+         str = "VWmul_vv"; base = Iop_VWmul_vv_8; break;
+      case Iop_VWmul_vx_8 ... Iop_VWmul_vx_32:
+         str = "VWmul_vx"; base = Iop_VWmul_vx_8; break;
 
-      case Iop_VWmaccu8_vv ... Iop_VWmaccu32_vv:
-         str = "VWmaccu_vv"; base = Iop_VWmaccu8_vv; break;
-      case Iop_VWmaccu8_vx ... Iop_VWmaccu32_vx:
-         str = "VWmaccu_vx"; base = Iop_VWmaccu8_vx; break;
-      case Iop_VWmacc8_vv ... Iop_VWmacc32_vv:
-         str = "VWmacc_vv"; base = Iop_VWmacc8_vv; break;
-      case Iop_VWmacc8_vx ... Iop_VWmacc32_vx:
-         str = "VWmacc_vx"; base = Iop_VWmacc8_vx; break;
-      case Iop_VWmaccsu8_vv ... Iop_VWmaccsu32_vv:
-         str = "VWmaccsu_vv"; base = Iop_VWmaccsu8_vv; break;
-      case Iop_VWmaccsu8_vx ... Iop_VWmaccsu32_vx:
-         str = "VWmaccsu_vx"; base = Iop_VWmaccsu8_vx; break;
-      case Iop_VWmaccus8_vx ... Iop_VWmaccus32_vx:
-         str = "VWmaccus_vx"; base = Iop_VWmaccus8_vx; break;
+      case Iop_VWmaccu_vv_8 ... Iop_VWmaccu_vv_32:
+         str = "VWmaccu_vv"; base = Iop_VWmaccu_vv_8; break;
+      case Iop_VWmaccu_vx_8 ... Iop_VWmaccu_vx_32:
+         str = "VWmaccu_vx"; base = Iop_VWmaccu_vx_8; break;
+      case Iop_VWmacc_vv_8 ... Iop_VWmacc_vv_32:
+         str = "VWmacc_vv"; base = Iop_VWmacc_vv_8; break;
+      case Iop_VWmacc_vx_8 ... Iop_VWmacc_vx_32:
+         str = "VWmacc_vx"; base = Iop_VWmacc_vx_8; break;
+      case Iop_VWmaccsu_vv_8 ... Iop_VWmaccsu_vv_32:
+         str = "VWmaccsu_vv"; base = Iop_VWmaccsu_vv_8; break;
+      case Iop_VWmaccsu_vx_8 ... Iop_VWmaccsu_vx_32:
+         str = "VWmaccsu_vx"; base = Iop_VWmaccsu_vx_8; break;
+      case Iop_VWmaccus_vx_8 ... Iop_VWmaccus_vx_32:
+         str = "VWmaccus_vx"; base = Iop_VWmaccus_vx_8; break;
 
-      case Iop_VZext16_vf2 ... Iop_VZext64_vf2:
-         str = "Zext_vf2-"; base = Iop_VZext16_vf2 - 1; break;
-      case Iop_VZext32_vf4 ... Iop_VZext64_vf4:
-         str = "Zext_vf4-"; base = Iop_VZext32_vf4 - 2; break;
-     case Iop_VZext64_vf8:
-         str = "Zext_vf8-"; base = Iop_VZext64_vf8 - 3; break;
-      case Iop_VSext16_vf2 ... Iop_VSext64_vf2:
-         str = "Sext_vf2-"; base = Iop_VSext16_vf2 - 1; break;
-      case Iop_VSext32_vf4 ... Iop_VSext64_vf4:
-         str = "Sext_vf4-"; base = Iop_VSext32_vf4 - 2; break;
-     case Iop_VSext64_vf8:
-         str = "Sext_vf8-"; base = Iop_VSext64_vf8 - 3; break;
+      case Iop_VZext_vf2_16 ... Iop_VZext_vf2_64:
+         str = "Zext_vf2-"; base = Iop_VZext_vf2_16 - 1; break;
+      case Iop_VZext_vf4_32 ... Iop_VZext_vf4_64:
+         str = "Zext_vf4-"; base = Iop_VZext_vf4_32 - 2; break;
+     case Iop_VZext_vf8_64:
+         str = "Zext_vf8-"; base = Iop_VZext_vf8_64 - 3; break;
+      case Iop_VSext_vf2_16 ... Iop_VSext_vf2_64:
+         str = "Sext_vf2-"; base = Iop_VSext_vf2_16 - 1; break;
+      case Iop_VSext_vf4_32 ... Iop_VSext_vf4_64:
+         str = "Sext_vf4-"; base = Iop_VSext_vf4_32 - 2; break;
+     case Iop_VSext_vf8_64:
+         str = "Sext_vf8-"; base = Iop_VSext_vf8_64 - 3; break;
 
-      case Iop_VCmpNEZ8 ... Iop_VCmpNEZ64:
-         str = "VCmpNEZ"; base = Iop_VCmpNEZ8; break;
-      case Iop_VNot8 ... Iop_VNot64:
-         str = "VNot"; base = Iop_VNot8; break;
-      case Iop_VExpandBitsTo8 ... Iop_VExpandBitsTo64:
-         str = "VExpandBitsTo"; base = Iop_VExpandBitsTo8; break;
+      case Iop_VCmpNEZ_8 ... Iop_VCmpNEZ_64:
+         str = "VCmpNEZ"; base = Iop_VCmpNEZ_8; break;
+      case Iop_VNot_8 ... Iop_VNot_64:
+         str = "VNot"; base = Iop_VNot_8; break;
+      case Iop_VExpandBitsTo_8 ... Iop_VExpandBitsTo_64:
+         str = "VExpandBitsTo"; base = Iop_VExpandBitsTo_8; break;
       /* other cases must explicitly "return;" */
       case Iop_8Uto16:   vex_printf("8Uto16");  return;
       case Iop_8Uto32:   vex_printf("8Uto32");  return;
@@ -2120,122 +2120,122 @@ Bool primopMightTrap ( IROp op )
    case Iop_Rotx32: case Iop_Rotx64:
    case Iop_2xMultU64Add128CarryOut:
 
-   case Iop_VAdd8_vv ... Iop_VAdd64_vv:
-   case Iop_VAdd8_vx ... Iop_VAdd64_vx:
-   case Iop_VAdd8_vi ... Iop_VAdd64_vi:
+   case Iop_VAdd_vv_8 ... Iop_VAdd_vv_64:
+   case Iop_VAdd_vx_8 ... Iop_VAdd_vx_64:
+   case Iop_VAdd_vi_8 ... Iop_VAdd_vi_64:
 
-   case Iop_VOr8_vv ... Iop_VOr64_vv:
-   case Iop_VOr8_vx ... Iop_VOr64_vx:
-   case Iop_VOr8_vi ... Iop_VOr64_vi:
+   case Iop_VOr_vv_8 ... Iop_VOr_vv_64:
+   case Iop_VOr_vx_8 ... Iop_VOr_vx_64:
+   case Iop_VOr_vi_8 ... Iop_VOr_vi_64:
 
-   case Iop_VXor8_vv ... Iop_VXor64_vv:
-   case Iop_VXor8_vx ... Iop_VXor64_vx:
-   case Iop_VXor8_vi ... Iop_VXor64_vi:
+   case Iop_VXor_vv_8 ... Iop_VXor_vv_64:
+   case Iop_VXor_vx_8 ... Iop_VXor_vx_64:
+   case Iop_VXor_vi_8 ... Iop_VXor_vi_64:
 
-   case Iop_VAnd8_vv ... Iop_VAnd64_vv:
-   case Iop_VAnd8_vx ... Iop_VAnd64_vx:
-   case Iop_VAnd8_vi ... Iop_VAnd64_vi:
+   case Iop_VAnd_vv_8 ... Iop_VAnd_vv_64:
+   case Iop_VAnd_vx_8 ... Iop_VAnd_vx_64:
+   case Iop_VAnd_vi_8 ... Iop_VAnd_vi_64:
 
-   case Iop_VSub8_vv ... Iop_VSub64_vv:
-   case Iop_VSub8_vx ... Iop_VSub64_vx:
+   case Iop_VSub_vv_8 ... Iop_VSub_vv_64:
+   case Iop_VSub_vx_8 ... Iop_VSub_vx_64:
 
-   case Iop_VRsub8_vx ... Iop_VRsub64_vx:
-   case Iop_VRsub8_vi ... Iop_VRsub64_vi:
+   case Iop_VRsub_vx_8 ... Iop_VRsub_vx_64:
+   case Iop_VRsub_vi_8 ... Iop_VRsub_vi_64:
 
-   case Iop_VMseq8_vv ... Iop_VMseq64_vv:
-   case Iop_VMseq8_vx ... Iop_VMseq64_vx:
-   case Iop_VMseq8_vi ... Iop_VMseq64_vi:
+   case Iop_VMseq_vv_8 ... Iop_VMseq_vv_64:
+   case Iop_VMseq_vx_8 ... Iop_VMseq_vx_64:
+   case Iop_VMseq_vi_8 ... Iop_VMseq_vi_64:
 
-   case Iop_VMsne8_vv ... Iop_VMsne64_vv:
-   case Iop_VMsne8_vx ... Iop_VMsne64_vx:
-   case Iop_VMsne8_vi ... Iop_VMsne64_vi:
+   case Iop_VMsne_vv_8 ... Iop_VMsne_vv_64:
+   case Iop_VMsne_vx_8 ... Iop_VMsne_vx_64:
+   case Iop_VMsne_vi_8 ... Iop_VMsne_vi_64:
 
-   case Iop_VMsltu8_vv ... Iop_VMsltu64_vv:
-   case Iop_VMsltu8_vx ... Iop_VMsltu64_vx:
+   case Iop_VMsltu_vv_8 ... Iop_VMsltu_vv_64:
+   case Iop_VMsltu_vx_8 ... Iop_VMsltu_vx_64:
 
-   case Iop_VMslt8_vv ... Iop_VMslt64_vv:
-   case Iop_VMslt8_vx ... Iop_VMslt64_vx:
+   case Iop_VMslt_vv_8 ... Iop_VMslt_vv_64:
+   case Iop_VMslt_vx_8 ... Iop_VMslt_vx_64:
 
-   case Iop_VMsleu8_vv ... Iop_VMsleu64_vv:
-   case Iop_VMsleu8_vx ... Iop_VMsleu64_vx:
-   case Iop_VMsleu8_vi ... Iop_VMsleu64_vi:
+   case Iop_VMsleu_vv_8 ... Iop_VMsleu_vv_64:
+   case Iop_VMsleu_vx_8 ... Iop_VMsleu_vx_64:
+   case Iop_VMsleu_vi_8 ... Iop_VMsleu_vi_64:
 
-   case Iop_VMsle8_vv ... Iop_VMsle64_vv:
-   case Iop_VMsle8_vx ... Iop_VMsle64_vx:
-   case Iop_VMsle8_vi ... Iop_VMsle64_vi:
+   case Iop_VMsle_vv_8 ... Iop_VMsle_vv_64:
+   case Iop_VMsle_vx_8 ... Iop_VMsle_vx_64:
+   case Iop_VMsle_vi_8 ... Iop_VMsle_vi_64:
 
-   case Iop_VMsgtu8_vx ... Iop_VMsgtu64_vx:
-   case Iop_VMsgtu8_vi ... Iop_VMsgtu64_vi:
+   case Iop_VMsgtu_vx_8 ... Iop_VMsgtu_vx_64:
+   case Iop_VMsgtu_vi_8 ... Iop_VMsgtu_vi_64:
 
-   case Iop_VMsgt8_vx ... Iop_VMsgt64_vx:
-   case Iop_VMsgt8_vi ... Iop_VMsgt64_vi:
+   case Iop_VMsgt_vx_8 ... Iop_VMsgt_vx_64:
+   case Iop_VMsgt_vi_8 ... Iop_VMsgt_vi_64:
 
-   case Iop_VMacc8_vv ... Iop_VMacc64_vv:
-   case Iop_VMacc8_vx ... Iop_VMacc64_vx:
+   case Iop_VMacc_vv_8 ... Iop_VMacc_vv_64:
+   case Iop_VMacc_vx_8 ... Iop_VMacc_vx_64:
 
-   case Iop_VNmsac8_vv ... Iop_VNmsac64_vv:
-   case Iop_VNmsac8_vx ... Iop_VNmsac64_vx:
+   case Iop_VNmsac_vv_8 ... Iop_VNmsac_vv_64:
+   case Iop_VNmsac_vx_8 ... Iop_VNmsac_vx_64:
 
-   case Iop_VMadd8_vv ... Iop_VMadd64_vv:
-   case Iop_VMadd8_vx ... Iop_VMadd64_vx:
+   case Iop_VMadd_vv_8 ... Iop_VMadd_vv_64:
+   case Iop_VMadd_vx_8 ... Iop_VMadd_vx_64:
 
-   case Iop_VNmsub8_vv ... Iop_VNmsub64_vv:
-   case Iop_VNmsub8_vx ... Iop_VNmsub64_vx:
+   case Iop_VNmsub_vv_8 ... Iop_VNmsub_vv_64:
+   case Iop_VNmsub_vx_8 ... Iop_VNmsub_vx_64:
 
-   case Iop_VSll8_vv ... Iop_VSll64_vv:
-   case Iop_VSll8_vx ... Iop_VSll64_vx:
-   case Iop_VSll8_vi ... Iop_VSll64_vi:
+   case Iop_VSll_vv_8 ... Iop_VSll_vv_64:
+   case Iop_VSll_vx_8 ... Iop_VSll_vx_64:
+   case Iop_VSll_vi_8 ... Iop_VSll_vi_64:
 
-   case Iop_VSrl8_vv ... Iop_VSrl64_vv:
-   case Iop_VSrl8_vx ... Iop_VSrl64_vx:
-   case Iop_VSrl8_vi ... Iop_VSrl64_vi:
+   case Iop_VSrl_vv_8 ... Iop_VSrl_vv_64:
+   case Iop_VSrl_vx_8 ... Iop_VSrl_vx_64:
+   case Iop_VSrl_vi_8 ... Iop_VSrl_vi_64:
 
-   case Iop_VSra8_vv ... Iop_VSra64_vv:
-   case Iop_VSra8_vx ... Iop_VSra64_vx:
-   case Iop_VSra8_vi ... Iop_VSra64_vi:
+   case Iop_VSra_vv_8 ... Iop_VSra_vv_64:
+   case Iop_VSra_vx_8 ... Iop_VSra_vx_64:
+   case Iop_VSra_vi_8 ... Iop_VSra_vi_64:
 
-   case Iop_VWaddu8_vv ... Iop_VWaddu32_vv:
-   case Iop_VWaddu8_vx ... Iop_VWaddu32_vx:
-   case Iop_VWadd8_vv ... Iop_VWadd32_vv:
-   case Iop_VWadd8_vx ... Iop_VWadd32_vx:
-   case Iop_VWsubu8_vv ... Iop_VWsubu32_vv:
-   case Iop_VWsubu8_vx ... Iop_VWsubu32_vx:
-   case Iop_VWsub8_vv ... Iop_VWsub32_vv:
-   case Iop_VWsub8_vx ... Iop_VWsub32_vx:
-   case Iop_VWaddu8_wv ... Iop_VWaddu32_wv:
-   case Iop_VWaddu8_wx ... Iop_VWaddu32_wx:
-   case Iop_VWadd8_wv ... Iop_VWadd32_wv:
-   case Iop_VWadd8_wx ... Iop_VWadd32_wx:
-   case Iop_VWsubu8_wv ... Iop_VWsubu32_wv:
-   case Iop_VWsubu8_wx ... Iop_VWsubu32_wx:
-   case Iop_VWsub8_wv ... Iop_VWsub32_wv:
-   case Iop_VWsub8_wx ... Iop_VWsub32_wx:
+   case Iop_VWaddu_vv_8 ... Iop_VWaddu_vv_32:
+   case Iop_VWaddu_vx_8 ... Iop_VWaddu_vx_32:
+   case Iop_VWadd_vv_8 ... Iop_VWadd_vv_32:
+   case Iop_VWadd_vx_8 ... Iop_VWadd_vx_32:
+   case Iop_VWsubu_vv_8 ... Iop_VWsubu_vv_32:
+   case Iop_VWsubu_vx_8 ... Iop_VWsubu_vx_32:
+   case Iop_VWsub_vv_8 ... Iop_VWsub_vv_32:
+   case Iop_VWsub_vx_8 ... Iop_VWsub_vx_32:
+   case Iop_VWaddu_wv_8 ... Iop_VWaddu_wv_32:
+   case Iop_VWaddu_wx_8 ... Iop_VWaddu_wx_32:
+   case Iop_VWadd_wv_8 ... Iop_VWadd_wv_32:
+   case Iop_VWadd_wx_8 ... Iop_VWadd_wx_32:
+   case Iop_VWsubu_wv_8 ... Iop_VWsubu_wv_32:
+   case Iop_VWsubu_wx_8 ... Iop_VWsubu_wx_32:
+   case Iop_VWsub_wv_8 ... Iop_VWsub_wv_32:
+   case Iop_VWsub_wx_8 ... Iop_VWsub_wx_32:
 
-   case Iop_VWmulu8_vv ... Iop_VWmulu32_vv:
-   case Iop_VWmulu8_vx ... Iop_VWmulu32_vx:
-   case Iop_VWmulsu8_vv ... Iop_VWmulsu32_vv:
-   case Iop_VWmulsu8_vx ... Iop_VWmulsu32_vx:
-   case Iop_VWmul8_vv ... Iop_VWmul32_vv:
-   case Iop_VWmul8_vx ... Iop_VWmul32_vx:
+   case Iop_VWmulu_vv_8 ... Iop_VWmulu_vv_32:
+   case Iop_VWmulu_vx_8 ... Iop_VWmulu_vx_32:
+   case Iop_VWmulsu_vv_8 ... Iop_VWmulsu_vv_32:
+   case Iop_VWmulsu_vx_8 ... Iop_VWmulsu_vx_32:
+   case Iop_VWmul_vv_8 ... Iop_VWmul_vv_32:
+   case Iop_VWmul_vx_8 ... Iop_VWmul_vx_32:
 
-   case Iop_VWmaccu8_vv ... Iop_VWmaccu32_vv:
-   case Iop_VWmaccu8_vx ... Iop_VWmaccu32_vx:
-   case Iop_VWmacc8_vv ... Iop_VWmacc32_vv:
-   case Iop_VWmacc8_vx ... Iop_VWmacc32_vx:
-   case Iop_VWmaccsu8_vv ... Iop_VWmaccsu32_vv:
-   case Iop_VWmaccsu8_vx ... Iop_VWmaccsu32_vx:
-   case Iop_VWmaccus8_vx ... Iop_VWmaccus32_vx:
+   case Iop_VWmaccu_vv_8 ... Iop_VWmaccu_vv_32:
+   case Iop_VWmaccu_vx_8 ... Iop_VWmaccu_vx_32:
+   case Iop_VWmacc_vv_8 ... Iop_VWmacc_vv_32:
+   case Iop_VWmacc_vx_8 ... Iop_VWmacc_vx_32:
+   case Iop_VWmaccsu_vv_8 ... Iop_VWmaccsu_vv_32:
+   case Iop_VWmaccsu_vx_8 ... Iop_VWmaccsu_vx_32:
+   case Iop_VWmaccus_vx_8 ... Iop_VWmaccus_vx_32:
 
-   case Iop_VZext16_vf2 ... Iop_VZext64_vf2:
-   case Iop_VZext32_vf4 ... Iop_VZext64_vf4:
-   case Iop_VZext64_vf8:
-   case Iop_VSext16_vf2 ... Iop_VSext64_vf2:
-   case Iop_VSext32_vf4 ... Iop_VSext64_vf4:
-   case Iop_VSext64_vf8:
+   case Iop_VZext_vf2_16 ... Iop_VZext_vf2_64:
+   case Iop_VZext_vf4_32 ... Iop_VZext_vf4_64:
+   case Iop_VZext_vf8_64:
+   case Iop_VSext_vf2_16 ... Iop_VSext_vf2_64:
+   case Iop_VSext_vf4_32 ... Iop_VSext_vf4_64:
+   case Iop_VSext_vf8_64:
 
-   case Iop_VCmpNEZ8 ... Iop_VCmpNEZ64:
-   case Iop_VNot8 ... Iop_VNot64:
-   case Iop_VExpandBitsTo8 ... Iop_VExpandBitsTo64:
+   case Iop_VCmpNEZ_8 ... Iop_VCmpNEZ_64:
+   case Iop_VNot_8 ... Iop_VNot_64:
+   case Iop_VExpandBitsTo_8 ... Iop_VExpandBitsTo_64:
       return False;
 
    case Iop_INVALID: case Iop_LAST:
@@ -4714,273 +4714,273 @@ void typeOfPrimop ( IROp op,
       case Iop_Rotx64:
          QUATERNARY(Ity_I64, Ity_I8, Ity_I8, Ity_I8, Ity_I64);
 
-      case Iop_VAdd8_vv    ... Iop_VAdd64_vv:
-         VEC_VV_BINARY(Iop_VAdd8_vv);
-      case Iop_VAdd8_vx    ... Iop_VAdd64_vx:
-         VEC_VXI_BINARY(Iop_VAdd8_vx);
-      case Iop_VAdd8_vi    ... Iop_VAdd64_vi:
-         VEC_VXI_BINARY(Iop_VAdd8_vi);
+      case Iop_VAdd_vv_8    ... Iop_VAdd_vv_64:
+         VEC_VV_BINARY(Iop_VAdd_vv_8);
+      case Iop_VAdd_vx_8    ... Iop_VAdd_vx_64:
+         VEC_VXI_BINARY(Iop_VAdd_vx_8);
+      case Iop_VAdd_vi_8    ... Iop_VAdd_vi_64:
+         VEC_VXI_BINARY(Iop_VAdd_vi_8);
 
-      case Iop_VOr8_vv     ... Iop_VOr64_vv:
-         VEC_VV_BINARY(Iop_VOr8_vv);
-      case Iop_VOr8_vx     ... Iop_VOr64_vx:
-         VEC_VXI_BINARY(Iop_VOr8_vx);
-      case Iop_VOr8_vi     ... Iop_VOr64_vi:
-         VEC_VXI_BINARY(Iop_VOr8_vi);
+      case Iop_VOr_vv_8     ... Iop_VOr_vv_64:
+         VEC_VV_BINARY(Iop_VOr_vv_8);
+      case Iop_VOr_vx_8     ... Iop_VOr_vx_64:
+         VEC_VXI_BINARY(Iop_VOr_vx_8);
+      case Iop_VOr_vi_8     ... Iop_VOr_vi_64:
+         VEC_VXI_BINARY(Iop_VOr_vi_8);
 
-      case Iop_VXor8_vv    ... Iop_VXor64_vv:
-         VEC_VV_BINARY(Iop_VXor8_vv);
-      case Iop_VXor8_vx    ... Iop_VXor64_vx:
-         VEC_VXI_BINARY(Iop_VXor8_vx);
-      case Iop_VXor8_vi    ... Iop_VXor64_vi:
-         VEC_VXI_BINARY(Iop_VXor8_vi);
+      case Iop_VXor_vv_8    ... Iop_VXor_vv_64:
+         VEC_VV_BINARY(Iop_VXor_vv_8);
+      case Iop_VXor_vx_8    ... Iop_VXor_vx_64:
+         VEC_VXI_BINARY(Iop_VXor_vx_8);
+      case Iop_VXor_vi_8    ... Iop_VXor_vi_64:
+         VEC_VXI_BINARY(Iop_VXor_vi_8);
 
-      case Iop_VAnd8_vv    ... Iop_VAnd64_vv:
-         VEC_VV_BINARY(Iop_VAnd8_vv);
-      case Iop_VAnd8_vx    ... Iop_VAnd64_vx:
-         VEC_VXI_BINARY(Iop_VAnd8_vx);
-      case Iop_VAnd8_vi    ... Iop_VAnd64_vi:
-         VEC_VXI_BINARY(Iop_VAnd8_vi);
+      case Iop_VAnd_vv_8    ... Iop_VAnd_vv_64:
+         VEC_VV_BINARY(Iop_VAnd_vv_8);
+      case Iop_VAnd_vx_8    ... Iop_VAnd_vx_64:
+         VEC_VXI_BINARY(Iop_VAnd_vx_8);
+      case Iop_VAnd_vi_8    ... Iop_VAnd_vi_64:
+         VEC_VXI_BINARY(Iop_VAnd_vi_8);
 
-      case Iop_VSub8_vv    ... Iop_VSub64_vv:
-         VEC_VV_BINARY(Iop_VSub8_vv);
-      case Iop_VSub8_vx    ... Iop_VSub64_vx:
-         VEC_VXI_BINARY(Iop_VSub8_vx);
+      case Iop_VSub_vv_8    ... Iop_VSub_vv_64:
+         VEC_VV_BINARY(Iop_VSub_vv_8);
+      case Iop_VSub_vx_8    ... Iop_VSub_vx_64:
+         VEC_VXI_BINARY(Iop_VSub_vx_8);
 
-      case Iop_VRsub8_vx    ... Iop_VRsub64_vx:
-         VEC_VXI_BINARY(Iop_VRsub8_vx);
-      case Iop_VRsub8_vi    ... Iop_VRsub64_vi:
-         VEC_VXI_BINARY(Iop_VRsub8_vi);
+      case Iop_VRsub_vx_8    ... Iop_VRsub_vx_64:
+         VEC_VXI_BINARY(Iop_VRsub_vx_8);
+      case Iop_VRsub_vi_8    ... Iop_VRsub_vi_64:
+         VEC_VXI_BINARY(Iop_VRsub_vi_8);
 
-      case Iop_VMinu8_vv    ... Iop_VMinu64_vv:
-         VEC_VV_BINARY(Iop_VMinu8_vv);
-      case Iop_VMinu8_vx    ... Iop_VMinu64_vx:
-         VEC_VXI_BINARY(Iop_VMinu8_vx);
-      case Iop_VMin8_vv    ... Iop_VMin64_vv:
-         VEC_VV_BINARY(Iop_VMin8_vv);
-      case Iop_VMin8_vx    ... Iop_VMin64_vx:
-         VEC_VXI_BINARY(Iop_VMin8_vx);
+      case Iop_VMinu_vv_8    ... Iop_VMinu_vv_64:
+         VEC_VV_BINARY(Iop_VMinu_vv_8);
+      case Iop_VMinu_vx_8    ... Iop_VMinu_vx_64:
+         VEC_VXI_BINARY(Iop_VMinu_vx_8);
+      case Iop_VMin_vv_8    ... Iop_VMin_vv_64:
+         VEC_VV_BINARY(Iop_VMin_vv_8);
+      case Iop_VMin_vx_8    ... Iop_VMin_vx_64:
+         VEC_VXI_BINARY(Iop_VMin_vx_8);
 
-      case Iop_VMaxu8_vv    ... Iop_VMaxu64_vv:
-         VEC_VV_BINARY(Iop_VMaxu8_vv);
-      case Iop_VMaxu8_vx    ... Iop_VMaxu64_vx:
-         VEC_VXI_BINARY(Iop_VMaxu8_vx);
-      case Iop_VMax8_vv    ... Iop_VMax64_vv:
-         VEC_VV_BINARY(Iop_VMax8_vv);
-      case Iop_VMax8_vx    ... Iop_VMax64_vx:
-         VEC_VXI_BINARY(Iop_VMax8_vx);
+      case Iop_VMaxu_vv_8    ... Iop_VMaxu_vv_64:
+         VEC_VV_BINARY(Iop_VMaxu_vv_8);
+      case Iop_VMaxu_vx_8    ... Iop_VMaxu_vx_64:
+         VEC_VXI_BINARY(Iop_VMaxu_vx_8);
+      case Iop_VMax_vv_8    ... Iop_VMax_vv_64:
+         VEC_VV_BINARY(Iop_VMax_vv_8);
+      case Iop_VMax_vx_8    ... Iop_VMax_vx_64:
+         VEC_VXI_BINARY(Iop_VMax_vx_8);
 
-      case Iop_VMul8_vv    ... Iop_VMul64_vv:
-         VEC_VV_BINARY(Iop_VMul8_vv);
-      case Iop_VMul8_vx    ... Iop_VMul64_vx:
-         VEC_VXI_BINARY(Iop_VMul8_vx);
+      case Iop_VMul_vv_8    ... Iop_VMul_vv_64:
+         VEC_VV_BINARY(Iop_VMul_vv_8);
+      case Iop_VMul_vx_8    ... Iop_VMul_vx_64:
+         VEC_VXI_BINARY(Iop_VMul_vx_8);
 
-      case Iop_VMulh8_vv    ... Iop_VMulh64_vv:
-         VEC_VV_BINARY(Iop_VMulh8_vv);
-      case Iop_VMulh8_vx    ... Iop_VMulh64_vx:
-         VEC_VXI_BINARY(Iop_VMulh8_vx);
+      case Iop_VMulh_vv_8    ... Iop_VMulh_vv_64:
+         VEC_VV_BINARY(Iop_VMulh_vv_8);
+      case Iop_VMulh_vx_8    ... Iop_VMulh_vx_64:
+         VEC_VXI_BINARY(Iop_VMulh_vx_8);
 
-      case Iop_VMulhu8_vv    ... Iop_VMulhu64_vv:
-         VEC_VV_BINARY(Iop_VMulhu8_vv);
-      case Iop_VMulhu8_vx    ... Iop_VMulhu64_vx:
-         VEC_VXI_BINARY(Iop_VMulhu8_vx);
+      case Iop_VMulhu_vv_8    ... Iop_VMulhu_vv_64:
+         VEC_VV_BINARY(Iop_VMulhu_vv_8);
+      case Iop_VMulhu_vx_8    ... Iop_VMulhu_vx_64:
+         VEC_VXI_BINARY(Iop_VMulhu_vx_8);
 
-      case Iop_VMulhsu8_vv    ... Iop_VMulhsu64_vv:
-         VEC_VV_BINARY(Iop_VMulhsu8_vv);
-      case Iop_VMulhsu8_vx    ... Iop_VMulhsu64_vx:
-         VEC_VXI_BINARY(Iop_VMulhsu8_vx);
+      case Iop_VMulhsu_vv_8    ... Iop_VMulhsu_vv_64:
+         VEC_VV_BINARY(Iop_VMulhsu_vv_8);
+      case Iop_VMulhsu_vx_8    ... Iop_VMulhsu_vx_64:
+         VEC_VXI_BINARY(Iop_VMulhsu_vx_8);
 
-      case Iop_VDivu8_vv    ... Iop_VDivu64_vv:
-         VEC_VV_BINARY(Iop_VDivu8_vv);
-      case Iop_VDivu8_vx    ... Iop_VDivu64_vx:
-         VEC_VXI_BINARY(Iop_VDivu8_vx);
+      case Iop_VDivu_vv_8    ... Iop_VDivu_vv_64:
+         VEC_VV_BINARY(Iop_VDivu_vv_8);
+      case Iop_VDivu_vx_8    ... Iop_VDivu_vx_64:
+         VEC_VXI_BINARY(Iop_VDivu_vx_8);
 
-      case Iop_VDiv8_vv    ... Iop_VDiv64_vv:
-         VEC_VV_BINARY(Iop_VDiv8_vv);
-      case Iop_VDiv8_vx    ... Iop_VDiv64_vx:
-         VEC_VXI_BINARY(Iop_VDiv8_vx);
+      case Iop_VDiv_vv_8    ... Iop_VDiv_vv_64:
+         VEC_VV_BINARY(Iop_VDiv_vv_8);
+      case Iop_VDiv_vx_8    ... Iop_VDiv_vx_64:
+         VEC_VXI_BINARY(Iop_VDiv_vx_8);
 
-      case Iop_VRemu8_vv    ... Iop_VRemu64_vv:
-         VEC_VV_BINARY(Iop_VRemu8_vv);
-      case Iop_VRemu8_vx    ... Iop_VRemu64_vx:
-         VEC_VXI_BINARY(Iop_VRemu8_vx);
+      case Iop_VRemu_vv_8    ... Iop_VRemu_vv_64:
+         VEC_VV_BINARY(Iop_VRemu_vv_8);
+      case Iop_VRemu_vx_8    ... Iop_VRemu_vx_64:
+         VEC_VXI_BINARY(Iop_VRemu_vx_8);
 
-      case Iop_VRem8_vv    ... Iop_VRem64_vv:
-         VEC_VV_BINARY(Iop_VRem8_vv);
-      case Iop_VRem8_vx    ... Iop_VRem64_vx:
-         VEC_VXI_BINARY(Iop_VRem8_vx);
+      case Iop_VRem_vv_8    ... Iop_VRem_vv_64:
+         VEC_VV_BINARY(Iop_VRem_vv_8);
+      case Iop_VRem_vx_8    ... Iop_VRem_vx_64:
+         VEC_VXI_BINARY(Iop_VRem_vx_8);
 
-      case Iop_VMseq8_vv    ... Iop_VMseq64_vv:
-         VEC_VVto1_BINARY(Iop_VMseq8_vv);
-      case Iop_VMseq8_vx    ... Iop_VMseq64_vx:
-         VEC_VXIto1_BINARY(Iop_VMseq8_vx);
-      case Iop_VMseq8_vi    ... Iop_VMseq64_vi:
-         VEC_VXIto1_BINARY(Iop_VMseq8_vi);
+      case Iop_VMseq_vv_8    ... Iop_VMseq_vv_64:
+         VEC_VVto1_BINARY(Iop_VMseq_vv_8);
+      case Iop_VMseq_vx_8    ... Iop_VMseq_vx_64:
+         VEC_VXIto1_BINARY(Iop_VMseq_vx_8);
+      case Iop_VMseq_vi_8    ... Iop_VMseq_vi_64:
+         VEC_VXIto1_BINARY(Iop_VMseq_vi_8);
 
-      case Iop_VMsne8_vv    ... Iop_VMsne64_vv:
-         VEC_VVto1_BINARY(Iop_VMsne8_vv);
-      case Iop_VMsne8_vx    ... Iop_VMsne64_vx:
-         VEC_VXIto1_BINARY(Iop_VMsne8_vx);
-      case Iop_VMsne8_vi    ... Iop_VMsne64_vi:
-         VEC_VXIto1_BINARY(Iop_VMsne8_vi);
+      case Iop_VMsne_vv_8    ... Iop_VMsne_vv_64:
+         VEC_VVto1_BINARY(Iop_VMsne_vv_8);
+      case Iop_VMsne_vx_8    ... Iop_VMsne_vx_64:
+         VEC_VXIto1_BINARY(Iop_VMsne_vx_8);
+      case Iop_VMsne_vi_8    ... Iop_VMsne_vi_64:
+         VEC_VXIto1_BINARY(Iop_VMsne_vi_8);
 
-      case Iop_VMsltu8_vv    ... Iop_VMsltu64_vv:
-         VEC_VVto1_BINARY(Iop_VMsltu8_vv);
-      case Iop_VMsltu8_vx    ... Iop_VMsltu64_vx:
-         VEC_VXIto1_BINARY(Iop_VMsltu8_vx);
+      case Iop_VMsltu_vv_8    ... Iop_VMsltu_vv_64:
+         VEC_VVto1_BINARY(Iop_VMsltu_vv_8);
+      case Iop_VMsltu_vx_8    ... Iop_VMsltu_vx_64:
+         VEC_VXIto1_BINARY(Iop_VMsltu_vx_8);
 
-      case Iop_VMslt8_vv    ... Iop_VMslt64_vv:
-         VEC_VVto1_BINARY(Iop_VMslt8_vv);
-      case Iop_VMslt8_vx    ... Iop_VMslt64_vx:
-         VEC_VXIto1_BINARY(Iop_VMslt8_vx);
+      case Iop_VMslt_vv_8    ... Iop_VMslt_vv_64:
+         VEC_VVto1_BINARY(Iop_VMslt_vv_8);
+      case Iop_VMslt_vx_8    ... Iop_VMslt_vx_64:
+         VEC_VXIto1_BINARY(Iop_VMslt_vx_8);
 
-      case Iop_VMsleu8_vv    ... Iop_VMsleu64_vv:
-         VEC_VVto1_BINARY(Iop_VMsleu8_vv);
-      case Iop_VMsleu8_vx    ... Iop_VMsleu64_vx:
-         VEC_VXIto1_BINARY(Iop_VMsleu8_vx);
-      case Iop_VMsleu8_vi    ... Iop_VMsleu64_vi:
-         VEC_VXIto1_BINARY(Iop_VMsleu8_vi);
+      case Iop_VMsleu_vv_8    ... Iop_VMsleu_vv_64:
+         VEC_VVto1_BINARY(Iop_VMsleu_vv_8);
+      case Iop_VMsleu_vx_8    ... Iop_VMsleu_vx_64:
+         VEC_VXIto1_BINARY(Iop_VMsleu_vx_8);
+      case Iop_VMsleu_vi_8    ... Iop_VMsleu_vi_64:
+         VEC_VXIto1_BINARY(Iop_VMsleu_vi_8);
 
-      case Iop_VMsle8_vv    ... Iop_VMsle64_vv:
-         VEC_VVto1_BINARY(Iop_VMsle8_vv);
-      case Iop_VMsle8_vx    ... Iop_VMsle64_vx:
-         VEC_VXIto1_BINARY(Iop_VMsle8_vx);
-      case Iop_VMsle8_vi    ... Iop_VMsle64_vi:
-         VEC_VXIto1_BINARY(Iop_VMsle8_vi);
+      case Iop_VMsle_vv_8    ... Iop_VMsle_vv_64:
+         VEC_VVto1_BINARY(Iop_VMsle_vv_8);
+      case Iop_VMsle_vx_8    ... Iop_VMsle_vx_64:
+         VEC_VXIto1_BINARY(Iop_VMsle_vx_8);
+      case Iop_VMsle_vi_8    ... Iop_VMsle_vi_64:
+         VEC_VXIto1_BINARY(Iop_VMsle_vi_8);
 
-      case Iop_VMsgtu8_vx    ... Iop_VMsgtu64_vx:
-         VEC_VXIto1_BINARY(Iop_VMsgtu8_vx);
-      case Iop_VMsgtu8_vi    ... Iop_VMsgtu64_vi:
-         VEC_VXIto1_BINARY(Iop_VMsgtu8_vi);
+      case Iop_VMsgtu_vx_8    ... Iop_VMsgtu_vx_64:
+         VEC_VXIto1_BINARY(Iop_VMsgtu_vx_8);
+      case Iop_VMsgtu_vi_8    ... Iop_VMsgtu_vi_64:
+         VEC_VXIto1_BINARY(Iop_VMsgtu_vi_8);
 
-      case Iop_VMsgt8_vx    ... Iop_VMsgt64_vx:
-         VEC_VXIto1_BINARY(Iop_VMsgt8_vx);
-      case Iop_VMsgt8_vi    ... Iop_VMsgt64_vi:
-         VEC_VXIto1_BINARY(Iop_VMsgt8_vi);
+      case Iop_VMsgt_vx_8    ... Iop_VMsgt_vx_64:
+         VEC_VXIto1_BINARY(Iop_VMsgt_vx_8);
+      case Iop_VMsgt_vi_8    ... Iop_VMsgt_vi_64:
+         VEC_VXIto1_BINARY(Iop_VMsgt_vi_8);
 
-      case Iop_VMacc8_vv    ... Iop_VMacc64_vv:
-         VEC_VV_TERNARY(Iop_VMacc8_vv);
-      case Iop_VMacc8_vx    ... Iop_VMacc64_vx:
-         VEC_VXI_TERNARY(Iop_VMacc8_vx);
+      case Iop_VMacc_vv_8    ... Iop_VMacc_vv_64:
+         VEC_VV_TERNARY(Iop_VMacc_vv_8);
+      case Iop_VMacc_vx_8    ... Iop_VMacc_vx_64:
+         VEC_VXI_TERNARY(Iop_VMacc_vx_8);
 
-      case Iop_VNmsac8_vv    ... Iop_VNmsac64_vv:
-         VEC_VV_TERNARY(Iop_VNmsac8_vv);
-      case Iop_VNmsac8_vx    ... Iop_VNmsac64_vx:
-         VEC_VXI_TERNARY(Iop_VNmsac8_vx);
+      case Iop_VNmsac_vv_8    ... Iop_VNmsac_vv_64:
+         VEC_VV_TERNARY(Iop_VNmsac_vv_8);
+      case Iop_VNmsac_vx_8    ... Iop_VNmsac_vx_64:
+         VEC_VXI_TERNARY(Iop_VNmsac_vx_8);
 
-      case Iop_VMadd8_vv    ... Iop_VMadd64_vv:
-         VEC_VV_TERNARY(Iop_VMadd8_vv);
-      case Iop_VMadd8_vx    ... Iop_VMadd64_vx:
-         VEC_VXI_TERNARY(Iop_VMadd8_vx);
+      case Iop_VMadd_vv_8    ... Iop_VMadd_vv_64:
+         VEC_VV_TERNARY(Iop_VMadd_vv_8);
+      case Iop_VMadd_vx_8    ... Iop_VMadd_vx_64:
+         VEC_VXI_TERNARY(Iop_VMadd_vx_8);
 
-      case Iop_VNmsub8_vv    ... Iop_VNmsub64_vv:
-         VEC_VV_TERNARY(Iop_VNmsub8_vv);
-      case Iop_VNmsub8_vx    ... Iop_VNmsub64_vx:
-         VEC_VXI_TERNARY(Iop_VNmsub8_vx);
+      case Iop_VNmsub_vv_8    ... Iop_VNmsub_vv_64:
+         VEC_VV_TERNARY(Iop_VNmsub_vv_8);
+      case Iop_VNmsub_vx_8    ... Iop_VNmsub_vx_64:
+         VEC_VXI_TERNARY(Iop_VNmsub_vx_8);
 
-      case Iop_VSll8_vv    ... Iop_VSll64_vv:
-         VEC_VV_BINARY(Iop_VSll8_vv);
-      case Iop_VSll8_vx    ... Iop_VSll64_vx:
-         VEC_VXI_BINARY(Iop_VSll8_vx);
-      case Iop_VSll8_vi    ... Iop_VSll64_vi:
-         VEC_VXI_BINARY(Iop_VSll8_vi);
+      case Iop_VSll_vv_8    ... Iop_VSll_vv_64:
+         VEC_VV_BINARY(Iop_VSll_vv_8);
+      case Iop_VSll_vx_8    ... Iop_VSll_vx_64:
+         VEC_VXI_BINARY(Iop_VSll_vx_8);
+      case Iop_VSll_vi_8    ... Iop_VSll_vi_64:
+         VEC_VXI_BINARY(Iop_VSll_vi_8);
 
-      case Iop_VSrl8_vv    ... Iop_VSrl64_vv:
-         VEC_VV_BINARY(Iop_VSrl8_vv);
-      case Iop_VSrl8_vx    ... Iop_VSrl64_vx:
-         VEC_VXI_BINARY(Iop_VSrl8_vx);
-      case Iop_VSrl8_vi    ... Iop_VSrl64_vi:
-         VEC_VXI_BINARY(Iop_VSrl8_vi);
+      case Iop_VSrl_vv_8    ... Iop_VSrl_vv_64:
+         VEC_VV_BINARY(Iop_VSrl_vv_8);
+      case Iop_VSrl_vx_8    ... Iop_VSrl_vx_64:
+         VEC_VXI_BINARY(Iop_VSrl_vx_8);
+      case Iop_VSrl_vi_8    ... Iop_VSrl_vi_64:
+         VEC_VXI_BINARY(Iop_VSrl_vi_8);
 
-      case Iop_VSra8_vv    ... Iop_VSra64_vv:
-         VEC_VV_BINARY(Iop_VSra8_vv);
-      case Iop_VSra8_vx    ... Iop_VSra64_vx:
-         VEC_VXI_BINARY(Iop_VSra8_vx);
-      case Iop_VSra8_vi    ... Iop_VSra64_vi:
-         VEC_VXI_BINARY(Iop_VSra8_vi);
+      case Iop_VSra_vv_8    ... Iop_VSra_vv_64:
+         VEC_VV_BINARY(Iop_VSra_vv_8);
+      case Iop_VSra_vx_8    ... Iop_VSra_vx_64:
+         VEC_VXI_BINARY(Iop_VSra_vx_8);
+      case Iop_VSra_vi_8    ... Iop_VSra_vi_64:
+         VEC_VXI_BINARY(Iop_VSra_vi_8);
 
-      case Iop_VWaddu8_vv ... Iop_VWaddu32_vv:
-         VEC_VV_BINARY_W(Iop_VWaddu8_vv);
-      case Iop_VWaddu8_vx ... Iop_VWaddu32_vx:
-         VEC_VX_BINARY_W(Iop_VWaddu8_vx);
-      case Iop_VWadd8_vv ... Iop_VWadd32_vv:
-         VEC_VV_BINARY_W(Iop_VWadd8_vv);
-      case Iop_VWadd8_vx ... Iop_VWadd32_vx:
-         VEC_VX_BINARY_W(Iop_VWadd8_vx);
+      case Iop_VWaddu_vv_8 ... Iop_VWaddu_vv_32:
+         VEC_VV_BINARY_W(Iop_VWaddu_vv_8);
+      case Iop_VWaddu_vx_8 ... Iop_VWaddu_vx_32:
+         VEC_VX_BINARY_W(Iop_VWaddu_vx_8);
+      case Iop_VWadd_vv_8 ... Iop_VWadd_vv_32:
+         VEC_VV_BINARY_W(Iop_VWadd_vv_8);
+      case Iop_VWadd_vx_8 ... Iop_VWadd_vx_32:
+         VEC_VX_BINARY_W(Iop_VWadd_vx_8);
 
-      case Iop_VWsubu8_vv ... Iop_VWsubu32_vv:
-         VEC_VV_BINARY_W(Iop_VWsubu8_vv);
-      case Iop_VWsubu8_vx ... Iop_VWsubu32_vx:
-         VEC_VX_BINARY_W(Iop_VWsubu8_vx);
-      case Iop_VWsub8_vv ... Iop_VWsub32_vv:
-         VEC_VV_BINARY_W(Iop_VWsub8_vv);
-      case Iop_VWsub8_vx ... Iop_VWsub32_vx:
-         VEC_VX_BINARY_W(Iop_VWsub8_vx);
+      case Iop_VWsubu_vv_8 ... Iop_VWsubu_vv_32:
+         VEC_VV_BINARY_W(Iop_VWsubu_vv_8);
+      case Iop_VWsubu_vx_8 ... Iop_VWsubu_vx_32:
+         VEC_VX_BINARY_W(Iop_VWsubu_vx_8);
+      case Iop_VWsub_vv_8 ... Iop_VWsub_vv_32:
+         VEC_VV_BINARY_W(Iop_VWsub_vv_8);
+      case Iop_VWsub_vx_8 ... Iop_VWsub_vx_32:
+         VEC_VX_BINARY_W(Iop_VWsub_vx_8);
 
-      case Iop_VWaddu8_wv ... Iop_VWaddu32_wv:
-         VEC_WV_BINARY_W(Iop_VWaddu8_wv);
-      case Iop_VWaddu8_wx ... Iop_VWaddu32_wx:
-         VEC_WX_BINARY_W(Iop_VWaddu8_wx);
-      case Iop_VWadd8_wv ... Iop_VWadd32_wv:
-         VEC_WV_BINARY_W(Iop_VWadd8_wv);
-      case Iop_VWadd8_wx ... Iop_VWadd32_wx:
-         VEC_WX_BINARY_W(Iop_VWadd8_wx);
-      case Iop_VWsubu8_wv ... Iop_VWsubu32_wv:
-         VEC_WV_BINARY_W(Iop_VWsubu8_wv);
-      case Iop_VWsubu8_wx ... Iop_VWsubu32_wx:
-         VEC_WX_BINARY_W(Iop_VWsubu8_wx);
-      case Iop_VWsub8_wv ... Iop_VWsub32_wv:
-         VEC_WV_BINARY_W(Iop_VWsub8_wv);
-      case Iop_VWsub8_wx ... Iop_VWsub32_wx:
-         VEC_WX_BINARY_W(Iop_VWsub8_wx);
+      case Iop_VWaddu_wv_8 ... Iop_VWaddu_wv_32:
+         VEC_WV_BINARY_W(Iop_VWaddu_wv_8);
+      case Iop_VWaddu_wx_8 ... Iop_VWaddu_wx_32:
+         VEC_WX_BINARY_W(Iop_VWaddu_wx_8);
+      case Iop_VWadd_wv_8 ... Iop_VWadd_wv_32:
+         VEC_WV_BINARY_W(Iop_VWadd_wv_8);
+      case Iop_VWadd_wx_8 ... Iop_VWadd_wx_32:
+         VEC_WX_BINARY_W(Iop_VWadd_wx_8);
+      case Iop_VWsubu_wv_8 ... Iop_VWsubu_wv_32:
+         VEC_WV_BINARY_W(Iop_VWsubu_wv_8);
+      case Iop_VWsubu_wx_8 ... Iop_VWsubu_wx_32:
+         VEC_WX_BINARY_W(Iop_VWsubu_wx_8);
+      case Iop_VWsub_wv_8 ... Iop_VWsub_wv_32:
+         VEC_WV_BINARY_W(Iop_VWsub_wv_8);
+      case Iop_VWsub_wx_8 ... Iop_VWsub_wx_32:
+         VEC_WX_BINARY_W(Iop_VWsub_wx_8);
 
-      case Iop_VWmulu8_vv ... Iop_VWmulu32_vv:
-         VEC_VV_BINARY_W(Iop_VWmulu8_vv);
-      case Iop_VWmulu8_vx ... Iop_VWmulu32_vx:
-         VEC_VX_BINARY_W(Iop_VWmulu8_vx);
-      case Iop_VWmulsu8_vv ... Iop_VWmulsu32_vv:
-         VEC_VV_BINARY_W(Iop_VWmulsu8_vv);
-      case Iop_VWmulsu8_vx ... Iop_VWmulsu32_vx:
-         VEC_VX_BINARY_W(Iop_VWmulsu8_vx);
-      case Iop_VWmul8_vv ... Iop_VWmul32_vv:
-         VEC_VV_BINARY_W(Iop_VWmul8_vv);
-      case Iop_VWmul8_vx ... Iop_VWmul32_vx:
-         VEC_VX_BINARY_W(Iop_VWmul8_vx);
+      case Iop_VWmulu_vv_8 ... Iop_VWmulu_vv_32:
+         VEC_VV_BINARY_W(Iop_VWmulu_vv_8);
+      case Iop_VWmulu_vx_8 ... Iop_VWmulu_vx_32:
+         VEC_VX_BINARY_W(Iop_VWmulu_vx_8);
+      case Iop_VWmulsu_vv_8 ... Iop_VWmulsu_vv_32:
+         VEC_VV_BINARY_W(Iop_VWmulsu_vv_8);
+      case Iop_VWmulsu_vx_8 ... Iop_VWmulsu_vx_32:
+         VEC_VX_BINARY_W(Iop_VWmulsu_vx_8);
+      case Iop_VWmul_vv_8 ... Iop_VWmul_vv_32:
+         VEC_VV_BINARY_W(Iop_VWmul_vv_8);
+      case Iop_VWmul_vx_8 ... Iop_VWmul_vx_32:
+         VEC_VX_BINARY_W(Iop_VWmul_vx_8);
 
-      case Iop_VWmaccu8_vv    ... Iop_VWmaccu32_vv:
-         VEC_VV_TERNARY_W(Iop_VWmaccu8_vv);
-      case Iop_VWmaccu8_vx    ... Iop_VWmaccu32_vx:
-         VEC_VX_TERNARY_W(Iop_VWmaccu8_vx);
-      case Iop_VWmacc8_vv    ... Iop_VWmacc32_vv:
-         VEC_VV_TERNARY_W(Iop_VWmacc8_vv);
-      case Iop_VWmacc8_vx    ... Iop_VWmacc32_vx:
-         VEC_VX_TERNARY_W(Iop_VWmacc8_vx);
-      case Iop_VWmaccsu8_vv    ... Iop_VWmaccsu32_vv:
-         VEC_VV_TERNARY_W(Iop_VWmaccsu8_vv);
-      case Iop_VWmaccsu8_vx    ... Iop_VWmaccsu32_vx:
-         VEC_VX_TERNARY_W(Iop_VWmaccsu8_vx);
-      case Iop_VWmaccus8_vx    ... Iop_VWmaccus32_vx:
-         VEC_VX_TERNARY_W(Iop_VWmaccus8_vx);
+      case Iop_VWmaccu_vv_8    ... Iop_VWmaccu_vv_32:
+         VEC_VV_TERNARY_W(Iop_VWmaccu_vv_8);
+      case Iop_VWmaccu_vx_8    ... Iop_VWmaccu_vx_32:
+         VEC_VX_TERNARY_W(Iop_VWmaccu_vx_8);
+      case Iop_VWmacc_vv_8    ... Iop_VWmacc_vv_32:
+         VEC_VV_TERNARY_W(Iop_VWmacc_vv_8);
+      case Iop_VWmacc_vx_8    ... Iop_VWmacc_vx_32:
+         VEC_VX_TERNARY_W(Iop_VWmacc_vx_8);
+      case Iop_VWmaccsu_vv_8    ... Iop_VWmaccsu_vv_32:
+         VEC_VV_TERNARY_W(Iop_VWmaccsu_vv_8);
+      case Iop_VWmaccsu_vx_8    ... Iop_VWmaccsu_vx_32:
+         VEC_VX_TERNARY_W(Iop_VWmaccsu_vx_8);
+      case Iop_VWmaccus_vx_8    ... Iop_VWmaccus_vx_32:
+         VEC_VX_TERNARY_W(Iop_VWmaccus_vx_8);
 
-      case Iop_VZext16_vf2: VEC_UNARY_GENERIC(Ity_VLen16, Ity_VLen8);
-      case Iop_VZext32_vf2: VEC_UNARY_GENERIC(Ity_VLen32, Ity_VLen16);
-      case Iop_VZext64_vf2: VEC_UNARY_GENERIC(Ity_VLen64, Ity_VLen32);
-      case Iop_VZext32_vf4: VEC_UNARY_GENERIC(Ity_VLen32, Ity_VLen8);
-      case Iop_VZext64_vf4: VEC_UNARY_GENERIC(Ity_VLen64, Ity_VLen16);
-      case Iop_VZext64_vf8: VEC_UNARY_GENERIC(Ity_VLen64, Ity_VLen8);
-      case Iop_VSext16_vf2: VEC_UNARY_GENERIC(Ity_VLen16, Ity_VLen8);
-      case Iop_VSext32_vf2: VEC_UNARY_GENERIC(Ity_VLen32, Ity_VLen16);
-      case Iop_VSext64_vf2: VEC_UNARY_GENERIC(Ity_VLen64, Ity_VLen32);
-      case Iop_VSext32_vf4: VEC_UNARY_GENERIC(Ity_VLen32, Ity_VLen8);
-      case Iop_VSext64_vf4: VEC_UNARY_GENERIC(Ity_VLen64, Ity_VLen16);
-      case Iop_VSext64_vf8: VEC_UNARY_GENERIC(Ity_VLen64, Ity_VLen8);
+      case Iop_VZext_vf2_16: VEC_UNARY_GENERIC(Ity_VLen16, Ity_VLen8);
+      case Iop_VZext_vf2_32: VEC_UNARY_GENERIC(Ity_VLen32, Ity_VLen16);
+      case Iop_VZext_vf2_64: VEC_UNARY_GENERIC(Ity_VLen64, Ity_VLen32);
+      case Iop_VZext_vf4_32: VEC_UNARY_GENERIC(Ity_VLen32, Ity_VLen8);
+      case Iop_VZext_vf4_64: VEC_UNARY_GENERIC(Ity_VLen64, Ity_VLen16);
+      case Iop_VZext_vf8_64: VEC_UNARY_GENERIC(Ity_VLen64, Ity_VLen8);
+      case Iop_VSext_vf2_16: VEC_UNARY_GENERIC(Ity_VLen16, Ity_VLen8);
+      case Iop_VSext_vf2_32: VEC_UNARY_GENERIC(Ity_VLen32, Ity_VLen16);
+      case Iop_VSext_vf2_64: VEC_UNARY_GENERIC(Ity_VLen64, Ity_VLen32);
+      case Iop_VSext_vf4_32: VEC_UNARY_GENERIC(Ity_VLen32, Ity_VLen8);
+      case Iop_VSext_vf4_64: VEC_UNARY_GENERIC(Ity_VLen64, Ity_VLen16);
+      case Iop_VSext_vf8_64: VEC_UNARY_GENERIC(Ity_VLen64, Ity_VLen8);
 
-      case Iop_VCmpNEZ8 ... Iop_VCmpNEZ64:
-         VEC_UNARY(Iop_VCmpNEZ8);
-      case Iop_VNot8 ... Iop_VNot64:
-         VEC_UNARY(Iop_VNot8);
-      case Iop_VExpandBitsTo8 ... Iop_VExpandBitsTo64: {
-         IRType base = Ity_VLen8 + bop - Iop_VExpandBitsTo8;
+      case Iop_VCmpNEZ_8 ... Iop_VCmpNEZ_64:
+         VEC_UNARY(Iop_VCmpNEZ_8);
+      case Iop_VNot_8 ... Iop_VNot_64:
+         VEC_UNARY(Iop_VNot_8);
+      case Iop_VExpandBitsTo_8 ... Iop_VExpandBitsTo_64: {
+         IRType base = Ity_VLen8 + bop - Iop_VExpandBitsTo_8;
          UInt vl = VLofVecIROp(op);
          IRType dst_ty = typeofVecIR (vl, base);
          IRType src_ty = typeofVecIR (vl, Ity_VLen1);
