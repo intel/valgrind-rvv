@@ -4179,6 +4179,9 @@ static Bool dis_rvv_reduce(/*MB_OUT*/ DisResult* dres,
    case 0b000101: base_op = (vm == 0) ? Iop_VRedmin_vsm_8 : Iop_VRedmin_vs_8; break;
    case 0b000110: base_op = (vm == 0) ? Iop_VRedmaxu_vsm_8 : Iop_VRedmaxu_vs_8; break;
    case 0b000111: base_op = (vm == 0) ? Iop_VRedmax_vsm_8 : Iop_VRedmax_vs_8; break;
+   /* NOTE: funct3 of vred and vwred is not same */
+   case 0b110000: base_op = (vm == 0) ? Iop_VWredsumu_vsm_8 : Iop_VWredsumu_vs_8; break;
+   case 0b110001: base_op = (vm == 0) ? Iop_VWredsum_vsm_8 : Iop_VWredsum_vs_8; break;
    default: vassert(0);
    }
 
@@ -4444,6 +4447,9 @@ static Bool dis_opivv(/*MB_OUT*/ DisResult* dres,
       return dis_rvv2_v_v(dres, irsb, insn, guest_pc_curr_instr, guest, Iop_VSrl_vv_8);
    case 0b101001:
       return dis_rvv2_v_v(dres, irsb, insn, guest_pc_curr_instr, guest, Iop_VSra_vv_8);
+   case 0b110000:
+   case 0b110001:
+      return dis_rvv_reduce(dres, irsb, insn, guest_pc_curr_instr, guest);
 
    default:
       return False;

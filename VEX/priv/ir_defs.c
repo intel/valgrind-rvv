@@ -511,6 +511,16 @@ void ppIROp ( IROp op )
       case Iop_VRedmax_vsm_8 ... Iop_VRedmax_vsm_64:
          str = "VRedmax_vsm"; base = Iop_VRedmax_vsm_8; break;
 
+      case Iop_VWredsumu_vs_8 ... Iop_VWredsumu_vs_32:
+         str = "VWredsumu_vs"; base = Iop_VWredsumu_vs_8; break;
+      case Iop_VWredsum_vs_8 ... Iop_VWredsum_vs_32:
+         str = "VWredsum_vs"; base = Iop_VWredsum_vs_8; break;
+
+      case Iop_VWredsumu_vsm_8 ... Iop_VWredsumu_vsm_32:
+         str = "VWredsumu_vsm"; base = Iop_VWredsumu_vsm_8; break;
+      case Iop_VWredsum_vsm_8 ... Iop_VWredsum_vsm_32:
+         str = "VWredsum_vsm"; base = Iop_VWredsum_vsm_8; break;
+
       /* other cases must explicitly "return;" */
       case Iop_8Uto16:   vex_printf("8Uto16");  return;
       case Iop_8Uto32:   vex_printf("8Uto32");  return;
@@ -2324,6 +2334,11 @@ Bool primopMightTrap ( IROp op )
    case Iop_VRedmaxu_vsm_8 ... Iop_VRedmaxu_vsm_64:
    case Iop_VRedmax_vsm_8 ... Iop_VRedmax_vsm_64:
 
+   case Iop_VWredsumu_vs_8 ... Iop_VWredsumu_vs_32:
+   case Iop_VWredsum_vs_8 ... Iop_VWredsum_vs_32:
+   case Iop_VWredsumu_vsm_8 ... Iop_VWredsumu_vsm_32:
+   case Iop_VWredsum_vsm_8 ... Iop_VWredsum_vsm_32:
+
       return False;
 
    case Iop_INVALID: case Iop_LAST:
@@ -3782,6 +3797,26 @@ void typeOfPrimop ( IROp op,
          TERNARY(Ity_I64, src2_ty, mask_ty, dst_ty); \
       }
 
+#  define VEC_VS_BINARY_W(bop_base) \
+      { \
+         IRType base = Ity_VLen8 + bop - bop_base; \
+         UInt vl = VLofVecIROp(op); \
+         IRType src2_ty = typeofVecIR (vl, base); \
+         IRType dst_ty = typeofVecIR (1, base + 1); \
+         BINARY(Ity_I64, src2_ty, dst_ty); \
+      }
+
+/* vs with mask */
+#  define VEC_VS_TERNARY_W(bop_base) \
+      { \
+         IRType base = Ity_VLen8 + bop - bop_base; \
+         UInt vl = VLofVecIROp(op); \
+         IRType src2_ty = typeofVecIR (vl, base); \
+         IRType mask_ty = typeofVecIR(vl, Ity_VLen1); \
+         IRType dst_ty = typeofVecIR (1, base + 1); \
+         TERNARY(Ity_I64, src2_ty, mask_ty, dst_ty); \
+      }
+
    /* Rounding mode values are always Ity_I32, encoded as per
       IRRoundingMode */
    const IRType ity_RMode = Ity_I32;
@@ -5166,6 +5201,16 @@ void typeOfPrimop ( IROp op,
          VEC_VS_TERNARY(Iop_VRedmaxu_vsm_8);
       case Iop_VRedmax_vsm_8 ... Iop_VRedmax_vsm_64:
          VEC_VS_TERNARY(Iop_VRedmax_vsm_8);
+
+      case Iop_VWredsumu_vs_8 ... Iop_VWredsumu_vs_32:
+         VEC_VS_BINARY_W(Iop_VWredsumu_vs_8);
+      case Iop_VWredsum_vs_8 ... Iop_VWredsum_vs_32:
+         VEC_VS_BINARY_W(Iop_VWredsum_vs_8);
+
+      case Iop_VWredsumu_vsm_8 ... Iop_VWredsumu_vsm_32:
+         VEC_VS_TERNARY_W(Iop_VWredsumu_vsm_8);
+      case Iop_VWredsum_vsm_8 ... Iop_VWredsum_vsm_32:
+         VEC_VS_TERNARY_W(Iop_VWredsum_vsm_8);
 
       default:
          ppIROp(op);

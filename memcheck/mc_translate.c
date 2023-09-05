@@ -3811,6 +3811,8 @@ IRAtom* expr2vbits_Triop ( MCEnv* mce,
          return vatom2;  // FIXME
 
       // FIXME
+      case Iop_VWredsumu_vsm_8 ... Iop_VWredsumu_vsm_32:
+      case Iop_VWredsum_vsm_8 ... Iop_VWredsum_vsm_32:
       case Iop_VRedsum_vsm_8 ... Iop_VRedsum_vsm_64:
       case Iop_VRedand_vsm_8 ... Iop_VRedand_vsm_64:
       case Iop_VRedor_vsm_8 ... Iop_VRedor_vsm_64:
@@ -5562,6 +5564,8 @@ IRAtom* expr2vbits_Binop ( MCEnv* mce,
          return binary_w_v_vx(mce, vatom1, vatom2, 8 << (bop - Iop_VWmul_vx_8));
 
       // FIXME
+      case Iop_VWredsumu_vs_8 ... Iop_VWredsumu_vs_32:
+      case Iop_VWredsum_vs_8 ... Iop_VWredsum_vs_32:
       case Iop_VRedsum_vs_8 ... Iop_VRedsum_vs_64:
       case Iop_VRedand_vs_8 ... Iop_VRedand_vs_64:
       case Iop_VRedor_vs_8 ... Iop_VRedor_vs_64:

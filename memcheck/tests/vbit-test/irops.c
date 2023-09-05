@@ -1310,6 +1310,14 @@ static irop_t irops[] = {
   { DEFOP(Iop_V##op##_vsm_32, UNDEF_UNKNOWN), }, \
   { DEFOP(Iop_V##op##_vsm_64, UNDEF_UNKNOWN), }
 
+#define DEFOP_W_RED(op) \
+  { DEFOP(Iop_V##op##_vs_8, UNDEF_UNKNOWN), },    \
+  { DEFOP(Iop_V##op##_vs_16, UNDEF_UNKNOWN), },   \
+  { DEFOP(Iop_V##op##_vs_32, UNDEF_UNKNOWN), },   \
+  { DEFOP(Iop_V##op##_vsm_8, UNDEF_UNKNOWN), },   \
+  { DEFOP(Iop_V##op##_vsm_16, UNDEF_UNKNOWN), },  \
+  { DEFOP(Iop_V##op##_vsm_32, UNDEF_UNKNOWN), }
+
   DEFOP_VV1_IEXT(Zext),
   DEFOP_VV1_IEXT(Sext),
 
@@ -1389,6 +1397,9 @@ static irop_t irops[] = {
   DEFOP_V_RED(Redand),
   DEFOP_V_RED(Redor),
   DEFOP_V_RED(Redxor),
+
+  DEFOP_W_RED(Wredsumu),
+  DEFOP_W_RED(Wredsum),
 
   /* These are fake ones */
   { DEFOP(Iop_SSS_Start, UNDEF_UNKNOWN), },

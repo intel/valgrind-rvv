@@ -2584,6 +2584,17 @@ GEN_VEXT_RED(VRedxor_vs, 16, int16_t, int16_t, DO_XOR)
 GEN_VEXT_RED(VRedxor_vs, 32, int32_t, int32_t, DO_XOR)
 GEN_VEXT_RED(VRedxor_vs, 64, int64_t, int64_t, DO_XOR)
 
+/* Vector Widening Integer Reduction Instructions */
+/* signed sum reduction into double-width accumulator */
+GEN_VEXT_RED(VWredsum_vs, 8, int16_t, int8_t, DO_ADD)
+GEN_VEXT_RED(VWredsum_vs, 16, int32_t, int16_t, DO_ADD)
+GEN_VEXT_RED(VWredsum_vs, 32, int64_t, int32_t, DO_ADD)
+
+/* Unsigned sum reduction into double-width accumulator */
+GEN_VEXT_RED(VWredsumu_vs, 8, uint16_t, uint8_t, DO_ADD)
+GEN_VEXT_RED(VWredsumu_vs, 16, uint32_t, uint16_t, DO_ADD)
+GEN_VEXT_RED(VWredsumu_vs, 32, uint64_t, uint32_t, DO_ADD)
+
 struct Iop_handler {
    const char* name;
    const void* fn;
@@ -2709,6 +2720,14 @@ struct Iop_handler {
    [Iop_V##op##_vsm_32] = {"Iop_V" #op "_vsm_32", h_Iop_V##op##_vsm_32}, \
    [Iop_V##op##_vsm_64] = {"Iop_V" #op "_vsm_64", h_Iop_V##op##_vsm_64}
 
+#define HW_RED(op) \
+   [Iop_V##op##_vs_8]  = {"Iop_V" #op "_vs_8", h_Iop_V##op##_vs_8},         \
+   [Iop_V##op##_vs_16] = {"Iop_V" #op "_vs_16", h_Iop_V##op##_vs_16},       \
+   [Iop_V##op##_vs_32] = {"Iop_V" #op "_vs_32", h_Iop_V##op##_vs_32},       \
+   [Iop_V##op##_vsm_8]  = {"Iop_V" #op "_vsm_8", h_Iop_V##op##_vsm_8},   \
+   [Iop_V##op##_vsm_16] = {"Iop_V" #op "_vsm_16", h_Iop_V##op##_vsm_16}, \
+   [Iop_V##op##_vsm_32] = {"Iop_V" #op "_vsm_32", h_Iop_V##op##_vsm_32}
+
 static const struct Iop_handler IOP_HANDLERS[] = {
    H_V_VXI(And),
    H_V_VXI(Or),
@@ -2775,6 +2794,9 @@ static const struct Iop_handler IOP_HANDLERS[] = {
    H_RED(Redmin),
    H_RED(Redmaxu),
    H_RED(Redmax),
+
+   HW_RED(Wredsumu),
+   HW_RED(Wredsum),
 
    H_V1_IEXT(Zext),
    H_V1_IEXT(Sext),
