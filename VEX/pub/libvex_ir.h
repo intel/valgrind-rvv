@@ -2080,152 +2080,61 @@ typedef
       Iop_V##op##_vf4_32, Iop_V##op##_vf4_64, \
       Iop_V##op##_vf8_64
 
-#define IOPVV2(op) \
+#define IOPVV2_V_V(op) \
       Iop_V##op##_vv_8, Iop_V##op##_vv_16, Iop_V##op##_vv_32, Iop_V##op##_vv_64
 
-#define IOPVX2(op) \
+#define IOPVV2_V_X(op) \
       Iop_V##op##_vx_8, Iop_V##op##_vx_16, Iop_V##op##_vx_32, Iop_V##op##_vx_64
 
-#define IOPVI2(op) \
+#define IOPVV2_V_I(op) \
       Iop_V##op##_vi_8, Iop_V##op##_vi_16, Iop_V##op##_vi_32, Iop_V##op##_vi_64
 
-#define WIOPVV2(op) \
+#define IOPVV2_V_VX(op) \
+      IOPVV2_V_V(op), \
+      IOPVV2_V_X(op)
+
+#define IOPVV2_V_XI(op) \
+      IOPVV2_V_X(op), \
+      IOPVV2_V_I(op)
+
+#define IOPVV2_V_VXI(op) \
+      IOPVV2_V_V(op), \
+      IOPVV2_V_X(op), \
+      IOPVV2_V_I(op)
+
+#define IOPVV2W_V_V(op) \
       Iop_V##op##_vv_8, Iop_V##op##_vv_16, Iop_V##op##_vv_32
 
-#define WIOPVX2(op) \
+#define IOPVV2W_V_X(op) \
       Iop_V##op##_vx_8, Iop_V##op##_vx_16, Iop_V##op##_vx_32
 
-#define WIOPWV2(op) \
+#define IOPVV2W_V_VX(op) \
+      IOPVV2W_V_V(op), \
+      IOPVV2W_V_X(op)
+
+#define IOPVV2W_W_V(op) \
       Iop_V##op##_wv_8, Iop_V##op##_wv_16, Iop_V##op##_wv_32
 
-#define WIOPWX2(op) \
+#define IOPVV2W_W_X(op) \
       Iop_V##op##_wx_8, Iop_V##op##_wx_16, Iop_V##op##_wx_32
 
-      Iop_VV2_Start,
-      IOPVV2(Add),
-      IOPVV2(Or),
-      IOPVV2(Xor),
-      IOPVV2(And),
-      IOPVV2(Sub),
-      IOPVV2(Minu),
-      IOPVV2(Min),
-      IOPVV2(Maxu),
-      IOPVV2(Max),
-      IOPVV2(Mul),
-      IOPVV2(Mulh),
-      IOPVV2(Mulhu),
-      IOPVV2(Mulhsu),
-      IOPVV2(Divu),
-      IOPVV2(Div),
-      IOPVV2(Remu),
-      IOPVV2(Rem),
-      IOPVV2(Mseq),
-      IOPVV2(Msne),
-      IOPVV2(Msltu),
-      IOPVV2(Mslt),
-      IOPVV2(Msleu),
-      IOPVV2(Msle),
-      IOPVV2(Sll),
-      IOPVV2(Srl),
-      IOPVV2(Sra),
+#define IOPVV2W_W_VX(op) \
+      IOPVV2W_W_V(op), \
+      IOPVV2W_W_X(op)
 
-      WIOPVV2(Waddu),
-      WIOPVV2(Wadd),
-      WIOPVV2(Wsubu),
-      WIOPVV2(Wsub),
-      WIOPWV2(Waddu),
-      WIOPWV2(Wadd),
-      WIOPWV2(Wsubu),
-      WIOPWV2(Wsub),
+#define IOPVV3_V_V(op) IOPVV2_V_V(op)
+#define IOPVV3_V_X(op) IOPVV2_V_X(op)
 
-      WIOPVV2(Wmulu),
-      WIOPVV2(Wmulsu),
-      WIOPVV2(Wmul),
-      Iop_VV2_End,
+#define IOPVV3_V_VX(op) \
+      IOPVV3_V_V(op), \
+      IOPVV3_V_X(op)
 
-      Iop_VX2_Start,
-      IOPVX2(Add),
-      IOPVX2(Or),
-      IOPVX2(Xor),
-      IOPVX2(And),
-      IOPVX2(Sub),
-      IOPVX2(Rsub),
-      IOPVX2(Minu),
-      IOPVX2(Min),
-      IOPVX2(Maxu),
-      IOPVX2(Max),
-      IOPVX2(Mul),
-      IOPVX2(Mulh),
-      IOPVX2(Mulhu),
-      IOPVX2(Mulhsu),
-      IOPVX2(Divu),
-      IOPVX2(Div),
-      IOPVX2(Remu),
-      IOPVX2(Rem),
-      IOPVX2(Mseq),
-      IOPVX2(Msne),
-      IOPVX2(Msltu),
-      IOPVX2(Mslt),
-      IOPVX2(Msleu),
-      IOPVX2(Msle),
-      IOPVX2(Msgtu),
-      IOPVX2(Msgt),
-      IOPVX2(Sll),
-      IOPVX2(Srl),
-      IOPVX2(Sra),
-      WIOPVX2(Waddu),
-      WIOPVX2(Wadd),
-      WIOPVX2(Wsubu),
-      WIOPVX2(Wsub),
-      WIOPWX2(Waddu),
-      WIOPWX2(Wadd),
-      WIOPWX2(Wsubu),
-      WIOPWX2(Wsub),
+#define IOPVV3W_V_V(op) IOPVV2W_V_V(op)
+#define IOPVV3W_V_X(op) IOPVV2W_V_X(op)
 
-      WIOPVX2(Wmulu),
-      WIOPVX2(Wmulsu),
-      WIOPVX2(Wmul),
-      Iop_VX2_End,
-
-      Iop_VI2_Start,
-      IOPVI2(Add),
-      IOPVI2(Or),
-      IOPVI2(Xor),
-      IOPVI2(And),
-      IOPVI2(Rsub),
-      IOPVI2(Mseq),
-      IOPVI2(Msne),
-      IOPVI2(Msleu),
-      IOPVI2(Msle),
-      IOPVI2(Msgtu),
-      IOPVI2(Msgt),
-      IOPVI2(Sll),
-      IOPVI2(Srl),
-      IOPVI2(Sra),
-      Iop_VI2_End,
-
-      Iop_VV3_Start,
-      IOPVV2(Macc),
-      IOPVV2(Nmsac),
-      IOPVV2(Madd),
-      IOPVV2(Nmsub),
-
-      WIOPVV2(Wmaccu),
-      WIOPVV2(Wmacc),
-      WIOPVV2(Wmaccsu),
-      Iop_VV3_End,
-
-      Iop_VX3_Start,
-      IOPVX2(Macc),
-      IOPVX2(Nmsac),
-      IOPVX2(Madd),
-      IOPVX2(Nmsub),
-
-      WIOPVX2(Wmaccu),
-      WIOPVX2(Wmacc),
-      WIOPVX2(Wmaccsu),
-      WIOPVX2(Wmaccus),
-      Iop_VX3_End,
+#define IOPVV3W_V_VX(op) \
+      IOPVV3W_V_V(op), \
+      IOPVV3W_V_X(op)
 
       IOPVV1_IEXT(Zext),
       IOPVV1_IEXT(Sext),
@@ -2233,6 +2142,71 @@ typedef
       IOPVV1(Not),
       IOPVV1(CmpNEZ),
       IOPVV1(ExpandBitsTo),
+
+      IOPVV2_V_VXI(Add),
+      IOPVV2_V_VX(Sub),
+      IOPVV2_V_XI(Rsub),
+
+      IOPVV2_V_VXI(And),
+      IOPVV2_V_VXI(Or),
+      IOPVV2_V_VXI(Xor),
+
+      IOPVV2_V_VXI(Sll),
+      IOPVV2_V_VXI(Srl),
+      IOPVV2_V_VXI(Sra),
+
+      IOPVV2_V_VXI(Mseq),
+      IOPVV2_V_VXI(Msne),
+      IOPVV2_V_VX(Msltu),
+      IOPVV2_V_VX(Mslt),
+      IOPVV2_V_VXI(Msleu),
+      IOPVV2_V_VXI(Msle),
+      IOPVV2_V_XI(Msgtu),
+      IOPVV2_V_XI(Msgt),
+
+      IOPVV2_V_VX(Minu),
+      IOPVV2_V_VX(Min),
+      IOPVV2_V_VX(Maxu),
+      IOPVV2_V_VX(Max),
+
+      IOPVV2_V_VX(Mul),
+      IOPVV2_V_VX(Mulh),
+      IOPVV2_V_VX(Mulhu),
+      IOPVV2_V_VX(Mulhsu),
+
+      IOPVV2_V_VX(Divu),
+      IOPVV2_V_VX(Div),
+      IOPVV2_V_VX(Remu),
+      IOPVV2_V_VX(Rem),
+
+      IOPVV2W_V_VX(Waddu),
+      IOPVV2W_V_VX(Wadd),
+      IOPVV2W_V_VX(Wsubu),
+      IOPVV2W_V_VX(Wsub),
+
+      IOPVV2W_W_VX(Waddu),
+      IOPVV2W_W_VX(Wadd),
+      IOPVV2W_W_VX(Wsubu),
+      IOPVV2W_W_VX(Wsub),
+
+      IOPVV2W_V_VX(Wmulu),
+      IOPVV2W_V_VX(Wmulsu),
+      IOPVV2W_V_VX(Wmul),
+
+      Iop_SSS_Start,
+      Iop_SSS_End,
+
+      Iop_SSD_Start,
+      IOPVV3_V_VX(Macc),
+      IOPVV3_V_VX(Nmsac),
+      IOPVV3_V_VX(Madd),
+      IOPVV3_V_VX(Nmsub),
+
+      IOPVV3W_V_VX(Wmaccu),
+      IOPVV3W_V_VX(Wmacc),
+      IOPVV3W_V_VX(Wmaccsu),
+      IOPVV3W_V_X(Wmaccus),
+      Iop_SSD_End,
 
       Iop_LAST      /* must be the last enumerator */
    }
@@ -3453,6 +3427,8 @@ extern Bool isPlausibleIRType ( IRType ty );
 
 void vex_inject_ir(IRSB *, IREndness);
 
+extern Bool isVecIRExpr ( const IRTypeEnv* tyenv, const IRExpr* e );
+extern Bool isVecIRType ( IRType ty );
 
 #endif /* ndef __LIBVEX_IR_H */
 

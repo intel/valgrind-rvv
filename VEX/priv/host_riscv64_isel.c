@@ -104,7 +104,8 @@ typedef struct {
        __typeof__ (b) _b = (b); \
      _a > _b ? _a : _b; })
 
-#define ROUND_UP(a, b)  (((a) + (b) - 1) / (b))
+#define DIV_ROUND_UP(a, b)  (((a) + (b) - 1) / (b))
+#define ROUND_UP(a, b)  (((a) + (b) - 1) / (b) * (b))
 
 static HReg lookupIRTemp(ISelEnv* env, IRTemp tmp)
 {
@@ -2647,31 +2648,43 @@ static Bool iselVecExpr_R_wrk_unop(HReg dst[], ISelEnv* env, IRExpr* e)
    Int vl = VLofVecIRType(dst_ty);
 
    Int dst_sz = sizeofVecIRType(dst_ty);
-   Int dst_nregs = ROUND_UP(dst_sz, vlen_b);
+   Int dst_nregs = DIV_ROUND_UP(dst_sz, vlen_b);
+   Int sz = dst_sz;
 
-   IRType src_ty = typeOfIRExpr(env->type_env, e->Iex.Unop.arg);
-   Int src_sz = sizeofVecIRType(src_ty);
-   Int src_nregs = ROUND_UP(src_sz, vlen_b);
-
-   Int sz = MAX(src_sz, dst_sz);
-
+   Int src_nregs = 0;
    HReg src[MAX_REGS] = {0};
-   iselVecExpr_R(src, env, e->Iex.Unop.arg);
+   IRType src_ty = typeOfIRExpr(env->type_env, e->Iex.Unop.arg);
+   if (isVecIRType(src_ty)) {
+      Int src_sz = sizeofVecIRType(src_ty);
+      src_nregs = DIV_ROUND_UP(src_sz, vlen_b);
+      sz = MAX(src_sz, sz);
+
+      iselVecExpr_R(src, env, e->Iex.Unop.arg);
+   } else {
+      src[0] = iselIntExpr_R(env, e->Iex.Unop.arg);
+   }
+
 
    HReg argp = newVRegI(env);
-
    adjust_sp(env, -MAX_ARGS_STACK_SIZE);
-
    addInstr(env, RISCV64Instr_MV(argp, hregRISCV64_x2()));
-
    addInstr(env, RISCV64Instr_ALUImm(RISCV64op_ADDI, argp, argp, 15));
    addInstr(env, RISCV64Instr_ALUImm(RISCV64op_ANDI, argp, argp, ~(Int)15));
 
-   addInstr(env, RISCV64Instr_ALUImm(RISCV64op_ADDI, hregRISCV64_x10(), argp, 0));                 // a0 - dst
-   addInstr(env, RISCV64Instr_ALUImm(RISCV64op_ADDI, hregRISCV64_x11(), argp, sz));                // a1 - src
-   addInstr(env, RISCV64Instr_ALUImm(RISCV64op_ADDI, hregRISCV64_x12(), hregRISCV64_x0(), vl));    // a2 - vl
+   // a0 - dst
+   addInstr(env, RISCV64Instr_ALUImm(RISCV64op_ADDI, hregRISCV64_x10(), argp, 0));
 
-   storeVecReg(env, src, src_nregs, hregRISCV64_x11());
+   // a1 - src
+   if (isVecIRType(src_ty)) {
+      addInstr(env, RISCV64Instr_ALUImm(RISCV64op_ADDI, hregRISCV64_x11(), argp, sz));
+      storeVecReg(env, src, src_nregs, hregRISCV64_x11());
+   } else {
+      addInstr(env, RISCV64Instr_MV(hregRISCV64_x11(), src[0]));
+   }
+
+   // a2 - vl
+   addInstr(env, RISCV64Instr_ALUImm(RISCV64op_ADDI, hregRISCV64_x12(), hregRISCV64_x0(), vl));
+
    addInstr(env, RISCV64Instr_Call(mk_RetLoc_simple(RLPri_None), (Addr64) fn, INVALID_HREG, 3, 0));
    loadVecReg(env, dst, dst_nregs, argp);
 
@@ -2679,7 +2692,7 @@ static Bool iselVecExpr_R_wrk_unop(HReg dst[], ISelEnv* env, IRExpr* e)
    return True;
 }
 
-static Bool iselVecExpr_R_wrk_binop_vv(HReg dst[], ISelEnv* env, IRExpr* e)
+static Bool iselVecExpr_R_wrk_binop(HReg dst[], ISelEnv* env, IRExpr* e)
 {
    const void* fn = IOP_HANDLERS[e->Iex.Binop.op & IR_OP_MASK].fn;
    if (fn == 0) {
@@ -2687,88 +2700,73 @@ static Bool iselVecExpr_R_wrk_binop_vv(HReg dst[], ISelEnv* env, IRExpr* e)
    }
 
    const Int vlen_b = VLEN / 8;
-   IRType dst_ty = typeOfIRExpr(env->type_env, e);
-   Int vl = VLofVecIRType(dst_ty);
-
-   Int dst_sz = sizeofVecIRType(dst_ty);
-   Int dst_nregs = ROUND_UP(dst_sz, vlen_b);
-
-   IRType src1_ty = typeOfIRExpr(env->type_env, e->Iex.Binop.arg2);
-   Int src1_sz = sizeofVecIRType(src1_ty);
-   Int src1_nregs = ROUND_UP(src1_sz, vlen_b);
-
-   IRType src2_ty = typeOfIRExpr(env->type_env, e->Iex.Binop.arg2);
-   Int src2_sz = sizeofVecIRType(src2_ty);
-   Int src2_nregs = ROUND_UP(src2_sz, vlen_b);
-
-   Int sz = MAX(src1_sz, src2_sz);
-   sz = MAX(sz, dst_sz);
+   Int vl = 0;
+   Int sz = 0;  // address gap between parameters
 
    HReg src1[MAX_REGS] = {0};
    HReg src2[MAX_REGS] = {0};
-   iselVecExpr_R(src1, env, e->Iex.Binop.arg1);
-   iselVecExpr_R(src2, env, e->Iex.Binop.arg2);
 
-   HReg argp = newVRegI(env);
-
-   adjust_sp(env, -MAX_ARGS_STACK_SIZE);
-   addInstr(env, RISCV64Instr_MV(argp, hregRISCV64_x2()));
-
-   addInstr(env, RISCV64Instr_ALUImm(RISCV64op_ADDI, argp, argp, 15));
-   addInstr(env, RISCV64Instr_ALUImm(RISCV64op_ANDI, argp, argp, ~(Int)15));
-
-   addInstr(env, RISCV64Instr_ALUImm(RISCV64op_ADDI, hregRISCV64_x10(), argp, 0));                 // a0 - dst
-   addInstr(env, RISCV64Instr_ALUImm(RISCV64op_ADDI, hregRISCV64_x11(), argp, sz));                // a1 - src1
-   addInstr(env, RISCV64Instr_ALUImm(RISCV64op_ADDI, hregRISCV64_x12(), argp, sz * 2));            // a2 - src2
-   addInstr(env, RISCV64Instr_ALUImm(RISCV64op_ADDI, hregRISCV64_x13(), hregRISCV64_x0(), vl));    // a3 - vl
-
-   storeVecReg(env, src1, src1_nregs, hregRISCV64_x11());
-   storeVecReg(env, src2, src2_nregs, hregRISCV64_x12());
-   addInstr(env, RISCV64Instr_Call(mk_RetLoc_simple(RLPri_None), (Addr64) fn, INVALID_HREG, 4, 0));
-   loadVecReg(env, dst, dst_nregs, argp);
-
-   adjust_sp(env, MAX_ARGS_STACK_SIZE);
-   return True;
-}
-
-static Bool iselVecExpr_R_wrk_binop_vx(HReg dst[], ISelEnv* env, IRExpr* e)
-{
-   const void* fn = IOP_HANDLERS[e->Iex.Binop.op & IR_OP_MASK].fn;
-   if (fn == 0) {
-      return False;
+   Int dst_nregs = 1;
+   IRType dst_ty = typeOfIRExpr(env->type_env, e);
+   if (isVecIRType(dst_ty)) {
+      Int dst_sz = ROUND_UP(sizeofVecIRType(dst_ty), vlen_b);
+      dst_nregs = dst_sz / vlen_b;
+      sz = MAX(sz, dst_sz);
+      vl = VLofVecIRType(dst_ty);
    }
 
-   const Int vlen_b = VLEN / 8;
-   IRType dst_ty = typeOfIRExpr(env->type_env, e);
-   Int vl = VLofVecIRType(dst_ty);
+   Int src1_nregs = 0;
+   IRType src1_ty = typeOfIRExpr(env->type_env, e->Iex.Binop.arg1);
+   if (isVecIRType(src1_ty)) {
+      src1_nregs = DIV_ROUND_UP(sizeofVecIRType(src1_ty), vlen_b);
 
-   Int dst_sz = sizeofVecIRType(dst_ty);
-   Int dst_nregs = ROUND_UP(dst_sz, vlen_b);
+      iselVecExpr_R(src1, env, e->Iex.Binop.arg1);
+   } else {
+      src1[0] = iselIntExpr_R(env, e->Iex.Binop.arg1);
+   }
 
+   Int src2_nregs = 0;
    IRType src2_ty = typeOfIRExpr(env->type_env, e->Iex.Binop.arg2);
-   Int src2_sz = sizeofVecIRType(src2_ty);
-   Int src2_nregs = ROUND_UP(src2_sz, vlen_b);
+   if (isVecIRType(src2_ty)) {
+      Int src2_sz = ROUND_UP(sizeofVecIRType(src2_ty), vlen_b);
+      src2_nregs = src2_sz / vlen_b;
+      sz = MAX(sz, src2_sz);
+      /* vl in src2 overwrites dst vl, which could be 1 for reduce */
+      vl = VLofVecIRType(src2_ty);
 
-   Int sz = MAX(dst_sz, src2_sz);
-
-   HReg src1 = iselIntExpr_R(env, e->Iex.Binop.arg1);
-   HReg src2[MAX_REGS] = {0};
-   iselVecExpr_R(src2, env, e->Iex.Binop.arg2);
+      iselVecExpr_R(src2, env, e->Iex.Binop.arg2);
+   } else {
+      src2[0] = iselIntExpr_R(env, e->Iex.Binop.arg2);
+   }
 
    HReg argp = newVRegI(env);
-
    adjust_sp(env, -MAX_ARGS_STACK_SIZE);
    addInstr(env, RISCV64Instr_MV(argp, hregRISCV64_x2()));
-
    addInstr(env, RISCV64Instr_ALUImm(RISCV64op_ADDI, argp, argp, 15));
    addInstr(env, RISCV64Instr_ALUImm(RISCV64op_ANDI, argp, argp, ~(Int)15));
 
-   addInstr(env, RISCV64Instr_ALUImm(RISCV64op_ADDI, hregRISCV64_x10(), argp, 0));                 // a0 - dst
-   addInstr(env, RISCV64Instr_MV(hregRISCV64_x11(), src1));                                        // a1 - src1
-   addInstr(env, RISCV64Instr_ALUImm(RISCV64op_ADDI, hregRISCV64_x12(), argp, sz));                // a2 - src2
-   addInstr(env, RISCV64Instr_ALUImm(RISCV64op_ADDI, hregRISCV64_x13(), hregRISCV64_x0(), vl));    // a3 - vl
+   // a0 - dst
+   addInstr(env, RISCV64Instr_ALUImm(RISCV64op_ADDI, hregRISCV64_x10(), argp, 0));
 
-   storeVecReg(env, src2, src2_nregs, hregRISCV64_x12());
+   // a1 - src1
+   if (isVecIRType(src1_ty)) {
+      addInstr(env, RISCV64Instr_ALUImm(RISCV64op_ADDI, hregRISCV64_x11(), argp, sz));
+      storeVecReg(env, src1, src1_nregs, hregRISCV64_x11());
+   } else {
+      addInstr(env, RISCV64Instr_MV(hregRISCV64_x11(), src1[0]));
+   }
+
+   // a2 - src2
+   if (isVecIRType(src2_ty)) {
+      addInstr(env, RISCV64Instr_ALUImm(RISCV64op_ADDI, hregRISCV64_x12(), argp, sz * 2));
+      storeVecReg(env, src2, src2_nregs, hregRISCV64_x12());
+   } else {
+      addInstr(env, RISCV64Instr_MV(hregRISCV64_x12(), src2[0]));
+   }
+
+   // a3 - vl
+   addInstr(env, RISCV64Instr_ALUImm(RISCV64op_ADDI, hregRISCV64_x13(), hregRISCV64_x0(), vl));
+
    addInstr(env, RISCV64Instr_Call(mk_RetLoc_simple(RLPri_None), (Addr64) fn, INVALID_HREG, 4, 0));
    loadVecReg(env, dst, dst_nregs, argp);
 
@@ -2776,7 +2774,7 @@ static Bool iselVecExpr_R_wrk_binop_vx(HReg dst[], ISelEnv* env, IRExpr* e)
    return True;
 }
 
-static Bool iselVecExpr_R_wrk_triop_vv(HReg dst[], ISelEnv* env, IRExpr* e)
+static Bool iselVecExpr_R_wrk_triop_sss(HReg dst[], ISelEnv* env, IRExpr* e)
 {
    const void* fn = IOP_HANDLERS[e->Iex.Triop.details->op & IR_OP_MASK].fn;
    if (fn == 0) {
@@ -2784,53 +2782,101 @@ static Bool iselVecExpr_R_wrk_triop_vv(HReg dst[], ISelEnv* env, IRExpr* e)
    }
 
    const Int vlen_b = VLEN / 8;
-   IRType dst_ty = typeOfIRExpr(env->type_env, e);
-   Int vl = VLofVecIRType(dst_ty);
-
-   Int dst_sz = sizeofVecIRType(dst_ty);
-   Int dst_nregs = ROUND_UP(dst_sz, vlen_b);
-
-   IRType src1_ty = typeOfIRExpr(env->type_env, e->Iex.Triop.details->arg2);
-   Int src1_sz = sizeofVecIRType(src1_ty);
-   Int src1_nregs = ROUND_UP(src1_sz, vlen_b);
-
-   IRType src2_ty = typeOfIRExpr(env->type_env, e->Iex.Triop.details->arg2);
-   Int src2_sz = sizeofVecIRType(src2_ty);
-   Int src2_nregs = ROUND_UP(src2_sz, vlen_b);
-
-   Int sz = MAX(src1_sz, src2_sz);
-   sz = MAX(sz, dst_sz);
+   Int vl = 0;
+   Int sz = 0;  // address gap between parameters
 
    HReg src1[MAX_REGS] = {0};
    HReg src2[MAX_REGS] = {0};
-   iselVecExpr_R(src1, env, e->Iex.Triop.details->arg1);
-   iselVecExpr_R(src2, env, e->Iex.Triop.details->arg2);
-   iselVecExpr_R(dst, env, e->Iex.Triop.details->arg3);
+   HReg src3[MAX_REGS] = {0};
+
+   Int dst_nregs = 1;
+   IRType dst_ty = typeOfIRExpr(env->type_env, e);
+   if (isVecIRType(dst_ty)) {
+      Int dst_sz = ROUND_UP(sizeofVecIRType(dst_ty), vlen_b);
+      dst_nregs = dst_sz / vlen_b;
+      sz = MAX(sz, dst_sz);
+      vl = VLofVecIRType(dst_ty);
+   }
+
+   Int src1_nregs = 0;
+   IRType src1_ty = typeOfIRExpr(env->type_env, e->Iex.Triop.details->arg1);
+   if (isVecIRType(src1_ty)) {
+      src1_nregs = DIV_ROUND_UP(sizeofVecIRType(src1_ty), vlen_b);
+
+      iselVecExpr_R(src1, env, e->Iex.Triop.details->arg1);
+   } else {
+      src1[0] = iselIntExpr_R(env, e->Iex.Triop.details->arg1);
+   }
+
+   Int src2_nregs = 0;
+   IRType src2_ty = typeOfIRExpr(env->type_env, e->Iex.Triop.details->arg2);
+   if (isVecIRType(src2_ty)) {
+      Int src2_sz = ROUND_UP(sizeofVecIRType(src2_ty), vlen_b);
+      src2_nregs = src2_sz / vlen_b;
+      sz = MAX(sz, src2_sz);
+      /* vl in src2 overwrites dst vl, which could be 1 for reduce */
+      vl = VLofVecIRType(src2_ty);
+
+      iselVecExpr_R(src2, env, e->Iex.Triop.details->arg2);
+   } else {
+      src2[0] = iselIntExpr_R(env, e->Iex.Triop.details->arg2);
+   }
+
+   Int src3_nregs = 0;
+   IRType src3_ty = typeOfIRExpr(env->type_env, e->Iex.Triop.details->arg3);
+   if (isVecIRType(src3_ty)) {
+      src3_nregs = DIV_ROUND_UP(sizeofVecIRType(src3_ty), vlen_b);
+
+      iselVecExpr_R(src3, env, e->Iex.Triop.details->arg3);
+   } else {
+      src3[0] = iselIntExpr_R(env, e->Iex.Triop.details->arg3);
+   }
 
    HReg argp = newVRegI(env);
-
    adjust_sp(env, -MAX_ARGS_STACK_SIZE);
    addInstr(env, RISCV64Instr_MV(argp, hregRISCV64_x2()));
-
    addInstr(env, RISCV64Instr_ALUImm(RISCV64op_ADDI, argp, argp, 15));
    addInstr(env, RISCV64Instr_ALUImm(RISCV64op_ANDI, argp, argp, ~(Int)15));
 
-   addInstr(env, RISCV64Instr_ALUImm(RISCV64op_ADDI, hregRISCV64_x10(), argp, 0));                 // a0 - dst
-   addInstr(env, RISCV64Instr_ALUImm(RISCV64op_ADDI, hregRISCV64_x11(), argp, sz));                // a1 - src1
-   addInstr(env, RISCV64Instr_ALUImm(RISCV64op_ADDI, hregRISCV64_x12(), argp, sz * 2));            // a2 - src2
-   addInstr(env, RISCV64Instr_ALUImm(RISCV64op_ADDI, hregRISCV64_x13(), hregRISCV64_x0(), vl));    // a3 - vl
+   // a0 - dst
+   addInstr(env, RISCV64Instr_ALUImm(RISCV64op_ADDI, hregRISCV64_x10(), argp, 0));
 
-   storeVecReg(env, src1, src1_nregs, hregRISCV64_x11());
-   storeVecReg(env, src2, src2_nregs, hregRISCV64_x12());
-   storeVecReg(env, dst, dst_nregs, hregRISCV64_x10());
-   addInstr(env, RISCV64Instr_Call(mk_RetLoc_simple(RLPri_None), (Addr64) fn, INVALID_HREG, 4, 0));
+   // a1 - src1
+   if (isVecIRType(src1_ty)) {
+      addInstr(env, RISCV64Instr_ALUImm(RISCV64op_ADDI, hregRISCV64_x11(), argp, sz));
+      storeVecReg(env, src1, src1_nregs, hregRISCV64_x11());
+   } else {
+      addInstr(env, RISCV64Instr_MV(hregRISCV64_x11(), src1[0]));
+   }
+
+
+   // a2 - src2
+   if (isVecIRType(src2_ty)) {
+      addInstr(env, RISCV64Instr_ALUImm(RISCV64op_ADDI, hregRISCV64_x12(), argp, sz * 2));
+      storeVecReg(env, src2, src2_nregs, hregRISCV64_x12());
+   } else {
+      addInstr(env, RISCV64Instr_MV(hregRISCV64_x12(), src2[0]));
+   }
+
+   // a3 - src3
+   if (isVecIRType(src3_ty)) {
+      addInstr(env, RISCV64Instr_ALUImm(RISCV64op_ADDI, hregRISCV64_x13(), argp, sz * 3));
+      storeVecReg(env, src3, src3_nregs, hregRISCV64_x13());
+   } else {
+      addInstr(env, RISCV64Instr_MV(hregRISCV64_x13(), src3[0]));
+   }
+
+   // a4 - vl
+   addInstr(env, RISCV64Instr_ALUImm(RISCV64op_ADDI, hregRISCV64_x14(), hregRISCV64_x0(), vl));
+
+   addInstr(env, RISCV64Instr_Call(mk_RetLoc_simple(RLPri_None), (Addr64) fn, INVALID_HREG, 5, 0));
    loadVecReg(env, dst, dst_nregs, argp);
 
    adjust_sp(env, MAX_ARGS_STACK_SIZE);
    return True;
 }
 
-static Bool iselVecExpr_R_wrk_triop_vx(HReg dst[], ISelEnv* env, IRExpr* e)
+static Bool iselVecExpr_R_wrk_triop_ssd(HReg dst[], ISelEnv* env, IRExpr* e)
 {
    const void* fn = IOP_HANDLERS[e->Iex.Triop.details->op & IR_OP_MASK].fn;
    if (fn == 0) {
@@ -2838,38 +2884,79 @@ static Bool iselVecExpr_R_wrk_triop_vx(HReg dst[], ISelEnv* env, IRExpr* e)
    }
 
    const Int vlen_b = VLEN / 8;
-   IRType dst_ty = typeOfIRExpr(env->type_env, e);
-   Int vl = VLofVecIRType(dst_ty);
+   Int vl = 0;
+   Int sz = 0;  // address gap between parameters
 
-   Int dst_sz = sizeofVecIRType(dst_ty);
-   Int dst_nregs = ROUND_UP(dst_sz, vlen_b);
-
-   IRType src2_ty = typeOfIRExpr(env->type_env, e->Iex.Triop.details->arg2);
-   Int src2_sz = sizeofVecIRType(src2_ty);
-   Int src2_nregs = ROUND_UP(src2_sz, vlen_b);
-
-   Int sz = MAX(dst_sz, src2_sz);
-
-   HReg src1 = iselIntExpr_R(env, e->Iex.Triop.details->arg1);
+   HReg src1[MAX_REGS] = {0};
    HReg src2[MAX_REGS] = {0};
-   iselVecExpr_R(src2, env, e->Iex.Triop.details->arg2);
+
+   Int dst_nregs = 1;
+   IRType dst_ty = typeOfIRExpr(env->type_env, e);
+   if (isVecIRType(dst_ty)) {
+      Int dst_sz = ROUND_UP(sizeofVecIRType(dst_ty), vlen_b);
+      dst_nregs = dst_sz / vlen_b;
+      sz = MAX(sz, dst_sz);
+      vl = VLofVecIRType(dst_ty);
+   }
+
+   Int src1_nregs = 0;
+   IRType src1_ty = typeOfIRExpr(env->type_env, e->Iex.Triop.details->arg1);
+   if (isVecIRType(src1_ty)) {
+      src1_nregs = DIV_ROUND_UP(sizeofVecIRType(src1_ty), vlen_b);
+
+      iselVecExpr_R(src1, env, e->Iex.Triop.details->arg1);
+   } else {
+      src1[0] = iselIntExpr_R(env, e->Iex.Triop.details->arg1);
+   }
+
+   Int src2_nregs = 0;
+   IRType src2_ty = typeOfIRExpr(env->type_env, e->Iex.Triop.details->arg2);
+   if (isVecIRType(src2_ty)) {
+      Int src2_sz = ROUND_UP(sizeofVecIRType(src2_ty), vlen_b);
+      src2_nregs = src2_sz / vlen_b;
+      sz = MAX(sz, src2_sz);
+      /* vl in src2 overwrites dst vl, which could be 1 for reduce */
+      vl = VLofVecIRType(src2_ty);
+
+      iselVecExpr_R(src2, env, e->Iex.Triop.details->arg2);
+   } else {
+      src2[0] = iselIntExpr_R(env, e->Iex.Triop.details->arg2);
+   }
+
+   IRType src3_ty = typeOfIRExpr(env->type_env, e->Iex.Triop.details->arg3);
+   vassert(isVecIRType(src3_ty));
    iselVecExpr_R(dst, env, e->Iex.Triop.details->arg3);
 
    HReg argp = newVRegI(env);
-
    adjust_sp(env, -MAX_ARGS_STACK_SIZE);
    addInstr(env, RISCV64Instr_MV(argp, hregRISCV64_x2()));
-
    addInstr(env, RISCV64Instr_ALUImm(RISCV64op_ADDI, argp, argp, 15));
    addInstr(env, RISCV64Instr_ALUImm(RISCV64op_ANDI, argp, argp, ~(Int)15));
 
-   addInstr(env, RISCV64Instr_ALUImm(RISCV64op_ADDI, hregRISCV64_x10(), argp, 0));                 // a0 - dst
-   addInstr(env, RISCV64Instr_MV(hregRISCV64_x11(), src1));                                        // a1 - src1
-   addInstr(env, RISCV64Instr_ALUImm(RISCV64op_ADDI, hregRISCV64_x12(), argp, sz));                // a2 - src2
-   addInstr(env, RISCV64Instr_ALUImm(RISCV64op_ADDI, hregRISCV64_x13(), hregRISCV64_x0(), vl));    // a3 - vl
-
-   storeVecReg(env, src2, src2_nregs, hregRISCV64_x12());
+   // a0 - dst
+   addInstr(env, RISCV64Instr_ALUImm(RISCV64op_ADDI, hregRISCV64_x10(), argp, 0));
    storeVecReg(env, dst, dst_nregs, hregRISCV64_x10());
+
+   // a1 - src1
+   if (isVecIRType(src1_ty)) {
+      addInstr(env, RISCV64Instr_ALUImm(RISCV64op_ADDI, hregRISCV64_x11(), argp, sz));
+      storeVecReg(env, src1, src1_nregs, hregRISCV64_x11());
+   } else {
+      addInstr(env, RISCV64Instr_MV(hregRISCV64_x11(), src1[0]));
+   }
+
+
+   // a2 - src2
+   if (isVecIRType(src2_ty)) {
+      addInstr(env, RISCV64Instr_ALUImm(RISCV64op_ADDI, hregRISCV64_x12(), argp, sz * 2));
+      storeVecReg(env, src2, src2_nregs, hregRISCV64_x12());
+   } else {
+      addInstr(env, RISCV64Instr_MV(hregRISCV64_x12(), src2[0]));
+   }
+
+   // a3 - vl
+   addInstr(env, RISCV64Instr_ALUImm(RISCV64op_ADDI, hregRISCV64_x13(), hregRISCV64_x0(), vl));
+
    addInstr(env, RISCV64Instr_Call(mk_RetLoc_simple(RLPri_None), (Addr64) fn, INVALID_HREG, 4, 0));
    loadVecReg(env, dst, dst_nregs, argp);
 
@@ -2883,7 +2970,7 @@ static void iselVecExpr_R_wrk(HReg dst[], ISelEnv* env, IRExpr* e)
    //Int vl = VLofVecIRType(ty);
    Int sz = sizeofVecIRType(ty);
    Int vlen_b = VLEN / 8;
-   Int nregs = ROUND_UP(sz, vlen_b);
+   Int nregs = DIV_ROUND_UP(sz, vlen_b);
    Int vl_ldst64 = vlen_b / 8;
 
    for (int i = 0; i < nregs; ++i) {
@@ -2931,16 +3018,7 @@ static void iselVecExpr_R_wrk(HReg dst[], ISelEnv* env, IRExpr* e)
          break;
       }
       case Iex_Binop: {
-         Bool ret = False;
-         IROp bop = e->Iex.Binop.op & IR_OP_MASK;
-         if (bop > Iop_VV2_Start && bop < Iop_VV2_End) {
-            ret = iselVecExpr_R_wrk_binop_vv(dst, env, e);
-         } else if (bop > Iop_VX2_Start && bop < Iop_VX2_End) {
-            ret = iselVecExpr_R_wrk_binop_vx(dst, env, e);
-         } else if (bop > Iop_VI2_Start && bop < Iop_VI2_End) {
-            ret = iselVecExpr_R_wrk_binop_vx(dst, env, e);
-         }
-
+         Bool ret = iselVecExpr_R_wrk_binop(dst, env, e);
          if (ret == True) {
             return;
          }
@@ -2968,10 +3046,10 @@ static void iselVecExpr_R_wrk(HReg dst[], ISelEnv* env, IRExpr* e)
       case Iex_Triop: {
          Bool ret = False;
          IROp bop = e->Iex.Triop.details->op & IR_OP_MASK;
-         if (bop > Iop_VV3_Start && bop < Iop_VV3_End) {
-            ret = iselVecExpr_R_wrk_triop_vv(dst, env, e);
-         } else if (bop > Iop_VX3_Start && bop < Iop_VX3_End) {
-            ret = iselVecExpr_R_wrk_triop_vx(dst, env, e);
+         if (bop > Iop_SSS_Start && bop < Iop_SSS_End) {
+            ret = iselVecExpr_R_wrk_triop_sss(dst, env, e);
+         } else if (bop > Iop_SSD_Start && bop < Iop_SSD_End) {
+            ret = iselVecExpr_R_wrk_triop_ssd(dst, env, e);
          }
 
          if (ret == True) {
@@ -3444,7 +3522,7 @@ static void iselStmt(ISelEnv* env, IRStmt* stmt)
          //Int vl = VLofVecIRType(tyd);
          Int sz = sizeofVecIRType(tyd);
          Int vlen_b = VLEN / 8;
-         Int nregs = ROUND_UP(sz, vlen_b);
+         Int nregs = DIV_ROUND_UP(sz, vlen_b);
          Int vl_ldst64  = vlen_b / 8;
 
          HReg src[MAX_REGS] = {0};
@@ -3486,7 +3564,7 @@ static void iselStmt(ISelEnv* env, IRStmt* stmt)
       if (vty >= Ity_VLen1 && vty <= Ity_VLen64) {
          Int sz = sizeofVecIRType(ty);
          Int vlen_b = VLEN / 8;
-         Int nregs = ROUND_UP(sz, vlen_b);
+         Int nregs = DIV_ROUND_UP(sz, vlen_b);
 
          HReg dst[MAX_REGS];
          HReg src[MAX_REGS];

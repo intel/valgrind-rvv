@@ -62,6 +62,18 @@ Int sizeofVecIRType ( IRType ty)
    return VLofVecIRType(ty) * sizeofVecIRTypeElem(ty);
 }
 
+Bool isVecIRExpr ( const IRTypeEnv* tyenv, const IRExpr* e )
+{
+   IRType ty = typeOfIRExpr(tyenv, e);
+   ty &= IR_TYPE_MASK;
+   return (ty >= Ity_VLen1 && ty <= Ity_VLen64);
+}
+
+Bool isVecIRType ( IRType ty )
+{
+   ty &= IR_TYPE_MASK;
+   return (ty >= Ity_VLen1 && ty <= Ity_VLen64);
+}
 
 /*---------------------------------------------------------------*/
 /*--- Printing the IR                                         ---*/

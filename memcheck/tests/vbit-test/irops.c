@@ -1190,72 +1190,13 @@ static irop_t irops[] = {
   { DEFOP(Iop_ReinterpV128asI128, UNDEF_ALL_64x2), .ppc64 = 1, .ppc32 = 1 },
   { DEFOP(Iop_ReinterpI128asV128, UNDEF_ALL_64x2), .ppc64 = 1, .ppc32 = 1 },
 
-#define DEFOP_V(op) \
+#define DEFOP_VV1(op) \
   { DEFOP(Iop_V##op##_8, UNDEF_UNKNOWN), },  \
   { DEFOP(Iop_V##op##_16, UNDEF_UNKNOWN), }, \
   { DEFOP(Iop_V##op##_32, UNDEF_UNKNOWN), }, \
   { DEFOP(Iop_V##op##_64, UNDEF_UNKNOWN), }
 
-#define DEFOP_V_V(op) \
-  { DEFOP(Iop_V##op##_vv_8, UNDEF_UNKNOWN), },  \
-  { DEFOP(Iop_V##op##_vv_16, UNDEF_UNKNOWN), }, \
-  { DEFOP(Iop_V##op##_vv_32, UNDEF_UNKNOWN), }, \
-  { DEFOP(Iop_V##op##_vv_64, UNDEF_UNKNOWN), }
-
-#define DEFOP_V_X(op) \
-  { DEFOP(Iop_V##op##_vx_8, UNDEF_UNKNOWN), },  \
-  { DEFOP(Iop_V##op##_vx_16, UNDEF_UNKNOWN), }, \
-  { DEFOP(Iop_V##op##_vx_32, UNDEF_UNKNOWN), }, \
-  { DEFOP(Iop_V##op##_vx_64, UNDEF_UNKNOWN), }
-
-#define DEFOP_V_I(op) \
-  { DEFOP(Iop_V##op##_vi_8, UNDEF_UNKNOWN), },  \
-  { DEFOP(Iop_V##op##_vi_16, UNDEF_UNKNOWN), }, \
-  { DEFOP(Iop_V##op##_vi_32, UNDEF_UNKNOWN), }, \
-  { DEFOP(Iop_V##op##_vi_64, UNDEF_UNKNOWN), }
-
-#define DEFOP_V_VX(op) \
-  DEFOP_V_V(op), \
-  DEFOP_V_X(op)
-
-#define DEFOP_V_XI(op) \
-  DEFOP_V_X(op), \
-  DEFOP_V_I(op)
-
-#define DEFOP_V_VXI(op) \
-  DEFOP_V_V(op), \
-  DEFOP_V_X(op), \
-  DEFOP_V_I(op)
-
-#define DEFOPW_V_V(op) \
-  { DEFOP(Iop_V##op##_vv_8, UNDEF_UNKNOWN), },  \
-  { DEFOP(Iop_V##op##_vv_16, UNDEF_UNKNOWN), }, \
-  { DEFOP(Iop_V##op##_vv_32, UNDEF_UNKNOWN), }
-
-#define DEFOPW_V_X(op) \
-  { DEFOP(Iop_V##op##_vx_8, UNDEF_UNKNOWN), },  \
-  { DEFOP(Iop_V##op##_vx_16, UNDEF_UNKNOWN), }, \
-  { DEFOP(Iop_V##op##_vx_32, UNDEF_UNKNOWN), }
-
-#define DEFOPW_V_VX(op) \
-  DEFOPW_V_V(op), \
-  DEFOPW_V_X(op)
-
-#define DEFOPW_W_V(op) \
-  { DEFOP(Iop_V##op##_wv_8, UNDEF_UNKNOWN), },  \
-  { DEFOP(Iop_V##op##_wv_16, UNDEF_UNKNOWN), }, \
-  { DEFOP(Iop_V##op##_wv_32, UNDEF_UNKNOWN), }
-
-#define DEFOPW_W_X(op) \
-  { DEFOP(Iop_V##op##_wx_8, UNDEF_UNKNOWN), },  \
-  { DEFOP(Iop_V##op##_wx_16, UNDEF_UNKNOWN), }, \
-  { DEFOP(Iop_V##op##_wx_32, UNDEF_UNKNOWN), }
-
-#define DEFOPW_W_VX(op) \
-  DEFOPW_W_V(op), \
-  DEFOPW_W_X(op)
-
-#define DEFOP_V_EXT(op) \
+#define DEFOP_VV1_IEXT(op) \
   { DEFOP(Iop_V##op##_vf2_16, UNDEF_UNKNOWN), },  \
   { DEFOP(Iop_V##op##_vf2_32, UNDEF_UNKNOWN), },  \
   { DEFOP(Iop_V##op##_vf2_64, UNDEF_UNKNOWN), },  \
@@ -1263,83 +1204,149 @@ static irop_t irops[] = {
   { DEFOP(Iop_V##op##_vf4_64, UNDEF_UNKNOWN), },  \
   { DEFOP(Iop_V##op##_vf8_64, UNDEF_UNKNOWN), }
 
-  DEFOP_V_VXI(Add),
-  DEFOP_V_VXI(Or),
-  DEFOP_V_VXI(Xor),
-  DEFOP_V_VXI(And),
-  DEFOP_V_VX(Sub),
-  DEFOP_V_XI(Rsub),
+#define DEFOP_VV2_V_V(op) \
+  { DEFOP(Iop_V##op##_vv_8, UNDEF_UNKNOWN), },  \
+  { DEFOP(Iop_V##op##_vv_16, UNDEF_UNKNOWN), }, \
+  { DEFOP(Iop_V##op##_vv_32, UNDEF_UNKNOWN), }, \
+  { DEFOP(Iop_V##op##_vv_64, UNDEF_UNKNOWN), }
 
-  DEFOP_V_VX(Minu),
-  DEFOP_V_VX(Min),
-  DEFOP_V_VX(Maxu),
-  DEFOP_V_VX(Max),
-  DEFOP_V_VX(Mul),
-  DEFOP_V_VX(Mulh),
-  DEFOP_V_VX(Mulhu),
-  DEFOP_V_VX(Mulhsu),
+#define DEFOP_VV2_V_X(op) \
+  { DEFOP(Iop_V##op##_vx_8, UNDEF_UNKNOWN), },  \
+  { DEFOP(Iop_V##op##_vx_16, UNDEF_UNKNOWN), }, \
+  { DEFOP(Iop_V##op##_vx_32, UNDEF_UNKNOWN), }, \
+  { DEFOP(Iop_V##op##_vx_64, UNDEF_UNKNOWN), }
 
-  DEFOP_V_VX(Divu),
-  DEFOP_V_VX(Div),
-  DEFOP_V_VX(Remu),
-  DEFOP_V_VX(Rem),
+#define DEFOP_VV2_V_I(op) \
+  { DEFOP(Iop_V##op##_vi_8, UNDEF_UNKNOWN), },  \
+  { DEFOP(Iop_V##op##_vi_16, UNDEF_UNKNOWN), }, \
+  { DEFOP(Iop_V##op##_vi_32, UNDEF_UNKNOWN), }, \
+  { DEFOP(Iop_V##op##_vi_64, UNDEF_UNKNOWN), }
 
-  DEFOP_V_VXI(Mseq),
-  DEFOP_V_VXI(Msne),
-  DEFOP_V_VX(Msltu),
-  DEFOP_V_VX(Mslt),
-  DEFOP_V_VXI(Msleu),
-  DEFOP_V_VXI(Msle),
-  DEFOP_V_XI(Msgtu),
-  DEFOP_V_XI(Msgt),
+#define DEFOP_VV2_V_VX(op) \
+  DEFOP_VV2_V_V(op), \
+  DEFOP_VV2_V_X(op)
 
-  DEFOP_V_VX(Macc),
-  DEFOP_V_VX(Nmsac),
-  DEFOP_V_VX(Madd),
-  DEFOP_V_VX(Nmsub),
+#define DEFOP_VV2_V_XI(op) \
+  DEFOP_VV2_V_X(op), \
+  DEFOP_VV2_V_I(op)
 
-  DEFOP_V_VXI(Sll),
-  DEFOP_V_VXI(Srl),
-  DEFOP_V_VXI(Sra),
+#define DEFOP_VV2_V_VXI(op) \
+  DEFOP_VV2_V_V(op), \
+  DEFOP_VV2_V_X(op), \
+  DEFOP_VV2_V_I(op)
 
-  DEFOPW_V_VX(Waddu),
-  DEFOPW_V_VX(Wadd),
-  DEFOPW_V_VX(Wsubu),
-  DEFOPW_V_VX(Wsub),
+#define DEFOP_VV2W_V_V(op) \
+  { DEFOP(Iop_V##op##_vv_8, UNDEF_UNKNOWN), },  \
+  { DEFOP(Iop_V##op##_vv_16, UNDEF_UNKNOWN), }, \
+  { DEFOP(Iop_V##op##_vv_32, UNDEF_UNKNOWN), }
 
-  DEFOPW_W_VX(Waddu),
-  DEFOPW_W_VX(Wadd),
-  DEFOPW_W_VX(Wsubu),
-  DEFOPW_W_VX(Wsub),
+#define DEFOP_VV2W_V_X(op) \
+  { DEFOP(Iop_V##op##_vx_8, UNDEF_UNKNOWN), },  \
+  { DEFOP(Iop_V##op##_vx_16, UNDEF_UNKNOWN), }, \
+  { DEFOP(Iop_V##op##_vx_32, UNDEF_UNKNOWN), }
 
-  DEFOPW_V_VX(Wmulu),
-  DEFOPW_V_VX(Wmulsu),
-  DEFOPW_V_VX(Wmul),
+#define DEFOP_VV2W_V_VX(op) \
+  DEFOP_VV2W_V_V(op), \
+  DEFOP_VV2W_V_X(op)
 
-  DEFOPW_V_VX(Wmaccu),
-  DEFOPW_V_VX(Wmacc),
-  DEFOPW_V_VX(Wmaccsu),
-  DEFOPW_V_X(Wmaccus),
+#define DEFOP_VV2W_W_V(op) \
+  { DEFOP(Iop_V##op##_wv_8, UNDEF_UNKNOWN), },  \
+  { DEFOP(Iop_V##op##_wv_16, UNDEF_UNKNOWN), }, \
+  { DEFOP(Iop_V##op##_wv_32, UNDEF_UNKNOWN), }
 
-  DEFOP_V_EXT(Zext),
-  DEFOP_V_EXT(Sext),
+#define DEFOP_VV2W_W_X(op) \
+  { DEFOP(Iop_V##op##_wx_8, UNDEF_UNKNOWN), },  \
+  { DEFOP(Iop_V##op##_wx_16, UNDEF_UNKNOWN), }, \
+  { DEFOP(Iop_V##op##_wx_32, UNDEF_UNKNOWN), }
+
+#define DEFOP_VV2W_W_VX(op) \
+  DEFOP_VV2W_W_V(op), \
+  DEFOP_VV2W_W_X(op)
+
+#define DEFOP_VV3_V_V(op) DEFOP_VV2_V_V(op)
+#define DEFOP_VV3_V_X(op) DEFOP_VV2_V_X(op)
+
+#define DEFOP_VV3_V_VX(op) \
+      DEFOP_VV3_V_V(op), \
+      DEFOP_VV3_V_X(op)
+
+#define DEFOP_VV3W_V_V(op) DEFOP_VV2W_V_V(op)
+#define DEFOP_VV3W_V_X(op) DEFOP_VV2W_V_X(op)
+
+#define DEFOP_VV3W_V_VX(op) \
+      DEFOP_VV3W_V_V(op), \
+      DEFOP_VV3W_V_X(op)
+
+  DEFOP_VV1_IEXT(Zext),
+  DEFOP_VV1_IEXT(Sext),
+
+  DEFOP_VV1(CmpNEZ),
+  DEFOP_VV1(Not),
+  DEFOP_VV1(ExpandBitsTo),
+
+  DEFOP_VV2_V_VXI(Add),
+  DEFOP_VV2_V_VX(Sub),
+  DEFOP_VV2_V_XI(Rsub),
+  DEFOP_VV2_V_VXI(Or),
+  DEFOP_VV2_V_VXI(Xor),
+  DEFOP_VV2_V_VXI(And),
+
+  DEFOP_VV2_V_VX(Minu),
+  DEFOP_VV2_V_VX(Min),
+  DEFOP_VV2_V_VX(Maxu),
+  DEFOP_VV2_V_VX(Max),
+  DEFOP_VV2_V_VX(Mul),
+  DEFOP_VV2_V_VX(Mulh),
+  DEFOP_VV2_V_VX(Mulhu),
+  DEFOP_VV2_V_VX(Mulhsu),
+
+  DEFOP_VV2_V_VX(Divu),
+  DEFOP_VV2_V_VX(Div),
+  DEFOP_VV2_V_VX(Remu),
+  DEFOP_VV2_V_VX(Rem),
+
+  DEFOP_VV2_V_VXI(Mseq),
+  DEFOP_VV2_V_VXI(Msne),
+  DEFOP_VV2_V_VX(Msltu),
+  DEFOP_VV2_V_VX(Mslt),
+  DEFOP_VV2_V_VXI(Msleu),
+  DEFOP_VV2_V_VXI(Msle),
+  DEFOP_VV2_V_XI(Msgtu),
+  DEFOP_VV2_V_XI(Msgt),
+
+  DEFOP_VV2_V_VXI(Sll),
+  DEFOP_VV2_V_VXI(Srl),
+  DEFOP_VV2_V_VXI(Sra),
+
+  DEFOP_VV2W_V_VX(Waddu),
+  DEFOP_VV2W_V_VX(Wadd),
+  DEFOP_VV2W_V_VX(Wsubu),
+  DEFOP_VV2W_V_VX(Wsub),
+
+  DEFOP_VV2W_W_VX(Waddu),
+  DEFOP_VV2W_W_VX(Wadd),
+  DEFOP_VV2W_W_VX(Wsubu),
+  DEFOP_VV2W_W_VX(Wsub),
+
+  DEFOP_VV2W_V_VX(Wmulu),
+  DEFOP_VV2W_V_VX(Wmulsu),
+  DEFOP_VV2W_V_VX(Wmul),
+
+  DEFOP_VV3_V_VX(Macc),
+  DEFOP_VV3_V_VX(Nmsac),
+  DEFOP_VV3_V_VX(Madd),
+  DEFOP_VV3_V_VX(Nmsub),
+
+  DEFOP_VV3W_V_VX(Wmaccu),
+  DEFOP_VV3W_V_VX(Wmacc),
+  DEFOP_VV3W_V_VX(Wmaccsu),
+  DEFOP_VV3W_V_X(Wmaccus),
 
   /* These are fake ones */
-  { DEFOP(Iop_VV2_Start, UNDEF_UNKNOWN), },
-  { DEFOP(Iop_VV2_End, UNDEF_UNKNOWN), },
-  { DEFOP(Iop_VX2_Start, UNDEF_UNKNOWN), },
-  { DEFOP(Iop_VX2_End, UNDEF_UNKNOWN), },
-  { DEFOP(Iop_VI2_Start, UNDEF_UNKNOWN), },
-  { DEFOP(Iop_VI2_End, UNDEF_UNKNOWN), },
-
-  { DEFOP(Iop_VV3_Start, UNDEF_UNKNOWN), },
-  { DEFOP(Iop_VV3_End, UNDEF_UNKNOWN), },
-  { DEFOP(Iop_VX3_Start, UNDEF_UNKNOWN), },
-  { DEFOP(Iop_VX3_End, UNDEF_UNKNOWN), },
-
-  DEFOP_V(CmpNEZ),
-  DEFOP_V(Not),
-  DEFOP_V(ExpandBitsTo),
+  { DEFOP(Iop_SSS_Start, UNDEF_UNKNOWN), },
+  { DEFOP(Iop_SSS_End, UNDEF_UNKNOWN), },
+  { DEFOP(Iop_SSD_Start, UNDEF_UNKNOWN), },
+  { DEFOP(Iop_SSD_End, UNDEF_UNKNOWN), },
 };
 
 /* Force compile time failure in case libvex_ir.h::IROp was updated
