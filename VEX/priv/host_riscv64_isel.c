@@ -2746,7 +2746,7 @@ static void h_Iop_##NAME##m_##SFX(void *vd, Long s1, void *vs2,   \
 
 #define GEN_VEXT_VMADC_VX_NOM(NAME, SFX, ETYPE, DO_OP)            \
 static void h_Iop_##NAME##_##SFX(void *vd, Long s1, void *vs2,    \
-                              void *v0, int len)                  \
+                                 int len)                         \
 {                                                                 \
     for (int i = 0; i < len; ++i) {                               \
         ETYPE s2 = *((ETYPE *)vs2 + i);                           \
