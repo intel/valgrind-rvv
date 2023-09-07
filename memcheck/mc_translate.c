@@ -5668,6 +5668,38 @@ IRAtom* expr2vbits_Binop ( MCEnv* mce,
       case Iop_VMsbc_vx_8 ... Iop_VMsbc_vx_64:
          return binaryM_v_vxi(mce, vatom1, vatom2, bop - Iop_VMsbc_vx_8);
 
+      case Iop_VNsrl_wv_8 ... Iop_VNsrl_wv_32:
+         //complainIfUndefined(mce, atom1, NULL);
+         return mkPCast_v(mce, assignNew('V', mce,
+                                 typeOfIRExpr(mce->sb->tyenv, vatom2) - 1,
+                                 binop(op, atom1, vatom2)),
+                          8 << (bop - Iop_VNsrl_wv_8));
+      case Iop_VNsrl_wx_8 ... Iop_VNsrl_wx_32:
+         return mkPCast_v(mce, assignNew('V', mce,
+                                 typeOfIRExpr(mce->sb->tyenv, vatom2) - 1,
+                                 binop(op, atom1, vatom2)),
+                          8 << (bop - Iop_VNsrl_wx_8));
+      case Iop_VNsrl_wi_8 ... Iop_VNsrl_wi_32:
+         return mkPCast_v(mce, assignNew('V', mce,
+                                 typeOfIRExpr(mce->sb->tyenv, vatom2) - 1,
+                                 binop(op, atom1, vatom2)),
+                          8 << (bop - Iop_VNsrl_wi_8));
+      case Iop_VNsra_wv_8 ... Iop_VNsra_wv_32:
+         return mkPCast_v(mce, assignNew('V', mce,
+                                 typeOfIRExpr(mce->sb->tyenv, vatom2) - 1,
+                                 binop(op, atom1, vatom2)),
+                          8 << (bop - Iop_VNsra_wv_8));
+      case Iop_VNsra_wx_8 ... Iop_VNsra_wx_32:
+         return mkPCast_v(mce, assignNew('V', mce,
+                                 typeOfIRExpr(mce->sb->tyenv, vatom2) - 1,
+                                 binop(op, atom1, vatom2)),
+                          8 << (bop - Iop_VNsra_wx_8));
+      case Iop_VNsra_wi_8 ... Iop_VNsra_wi_32:
+         return mkPCast_v(mce, assignNew('V', mce,
+                                 typeOfIRExpr(mce->sb->tyenv, vatom2) - 1,
+                                 binop(op, atom1, vatom2)),
+                          8 << (bop - Iop_VNsra_wi_8));
+
       default:
          ppIROp(op);
          VG_(tool_panic)("memcheck:expr2vbits_Binop");

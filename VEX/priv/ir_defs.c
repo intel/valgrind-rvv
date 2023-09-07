@@ -559,6 +559,19 @@ void ppIROp ( IROp op )
       case Iop_VMsbc_vx_8 ... Iop_VMsbc_vx_64:
          str = "VMsbc_vx"; base = Iop_VMsbc_vx_8; break;
 
+      case Iop_VNsrl_wv_8 ... Iop_VNsrl_wv_32:
+         str = "VNsrl_wv"; base = Iop_VNsrl_wv_8; break;
+      case Iop_VNsrl_wx_8 ... Iop_VNsrl_wx_32:
+         str = "VNsrl_wx"; base = Iop_VNsrl_wx_8; break;
+      case Iop_VNsrl_wi_8 ... Iop_VNsrl_wi_32:
+         str = "VNsrl_wi"; base = Iop_VNsrl_wi_8; break;
+      case Iop_VNsra_wv_8 ... Iop_VNsra_wv_32:
+         str = "VNsra_wv"; base = Iop_VNsra_wv_8; break;
+      case Iop_VNsra_wx_8 ... Iop_VNsra_wx_32:
+         str = "VNsra_wx"; base = Iop_VNsra_wx_8; break;
+      case Iop_VNsra_wi_8 ... Iop_VNsra_wi_32:
+         str = "VNsra_wi"; base = Iop_VNsra_wi_8; break;
+
       /* other cases must explicitly "return;" */
       case Iop_8Uto16:   vex_printf("8Uto16");  return;
       case Iop_8Uto32:   vex_printf("8Uto32");  return;
@@ -2401,6 +2414,13 @@ Bool primopMightTrap ( IROp op )
    case Iop_VMsbc_vv_8 ... Iop_VMsbc_vv_64:
    case Iop_VMsbc_vx_8 ... Iop_VMsbc_vx_64:
 
+	case Iop_VNsrl_wv_8 ... Iop_VNsrl_wv_32:
+	case Iop_VNsrl_wx_8 ... Iop_VNsrl_wx_32:
+	case Iop_VNsrl_wi_8 ... Iop_VNsrl_wi_32:
+	case Iop_VNsra_wv_8 ... Iop_VNsra_wv_32:
+	case Iop_VNsra_wx_8 ... Iop_VNsra_wx_32:
+	case Iop_VNsra_wi_8 ... Iop_VNsra_wi_32:
+
       return False;
 
    case Iop_INVALID: case Iop_LAST:
@@ -3727,6 +3747,22 @@ void typeOfPrimop ( IROp op,
          UInt vl = VLofVecIROp(op); \
          IRType ty = typeofVecIR (vl, base); \
          BINARY(Ity_I64, ty, ty); \
+      }
+
+#  define VEC_WV_BINARY(bop_base) \
+      { \
+         IRType base = Ity_VLen8 + bop - bop_base; \
+         UInt vl = VLofVecIROp(op); \
+         IRType ty = typeofVecIR (vl, base); \
+         BINARY(ty, ty + 1, ty); \
+      }
+
+#  define VEC_WXI_BINARY(bop_base) \
+      { \
+         IRType base = Ity_VLen8 + bop - bop_base; \
+         UInt vl = VLofVecIROp(op); \
+         IRType ty = typeofVecIR (vl, base); \
+         BINARY(Ity_I64, ty + 1, ty); \
       }
 
 #  define VEC_VV_BINARY_W(bop_base) \
@@ -5351,6 +5387,19 @@ void typeOfPrimop ( IROp op,
          IRType ty = typeofVecIR(vl, Ity_VLen1);
          BINARY(ty, ty, ty);
       }
+
+      case Iop_VNsrl_wv_8    ... Iop_VNsrl_wv_32:
+         VEC_WV_BINARY(Iop_VNsrl_wv_8);
+      case Iop_VNsrl_wx_8    ... Iop_VNsrl_wx_32:
+         VEC_WXI_BINARY(Iop_VNsrl_wx_8);
+      case Iop_VNsrl_wi_8    ... Iop_VNsrl_wi_32:
+         VEC_WXI_BINARY(Iop_VNsrl_wi_8);
+      case Iop_VNsra_wv_8    ... Iop_VNsra_wv_32:
+         VEC_WV_BINARY(Iop_VNsra_wv_8);
+      case Iop_VNsra_wx_8    ... Iop_VNsra_wx_32:
+         VEC_WXI_BINARY(Iop_VNsra_wx_8);
+      case Iop_VNsra_wi_8    ... Iop_VNsra_wi_32:
+         VEC_WXI_BINARY(Iop_VNsra_wi_8);
 
       default:
          ppIROp(op);

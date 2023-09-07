@@ -2216,6 +2216,20 @@ GEN_VEXT_SHIFT_VX(VSra_vx_16, int16_t, int16_t, DO_SRL, 0xf)
 GEN_VEXT_SHIFT_VX(VSra_vx_32, int32_t, int32_t, DO_SRL, 0x1f)
 GEN_VEXT_SHIFT_VX(VSra_vx_64, int64_t, int64_t, DO_SRL, 0x3f)
 
+/* Vector Narrowing Integer Right Shift Instructions */
+GEN_VEXT_SHIFT_VV(VNsrl_wv_8, uint8_t,  uint16_t, DO_SRL, 0xf)
+GEN_VEXT_SHIFT_VV(VNsrl_wv_16, uint16_t, uint32_t, DO_SRL, 0x1f)
+GEN_VEXT_SHIFT_VV(VNsrl_wv_32, uint32_t, uint64_t, DO_SRL, 0x3f)
+GEN_VEXT_SHIFT_VV(VNsra_wv_8, uint8_t,  int16_t, DO_SRL, 0xf)
+GEN_VEXT_SHIFT_VV(VNsra_wv_16, uint16_t, int32_t, DO_SRL, 0x1f)
+GEN_VEXT_SHIFT_VV(VNsra_wv_32, uint32_t, int64_t, DO_SRL, 0x3f)
+GEN_VEXT_SHIFT_VX(VNsrl_wx_8, uint8_t, uint16_t, DO_SRL, 0xf)
+GEN_VEXT_SHIFT_VX(VNsrl_wx_16, uint16_t, uint32_t, DO_SRL, 0x1f)
+GEN_VEXT_SHIFT_VX(VNsrl_wx_32, uint32_t, uint64_t, DO_SRL, 0x3f)
+GEN_VEXT_SHIFT_VX(VNsra_wx_8, int8_t, int16_t, DO_SRL, 0xf)
+GEN_VEXT_SHIFT_VX(VNsra_wx_16, int16_t, int32_t, DO_SRL, 0x1f)
+GEN_VEXT_SHIFT_VX(VNsra_wx_32, int32_t, int64_t, DO_SRL, 0x3f)
+
 /* Vector Integer Extension */
 #define GEN_VEXT_INT_EXT(NAME, ETYPE, DTYPE)            \
 static void h_Iop_##NAME(void *vd, void *vs2, int len)  \
@@ -2816,6 +2830,26 @@ struct Iop_handler {
    H_V_X(op), \
    H_V_I(op)
 
+#define H_W_V(op) \
+   [Iop_V##op##_wv_8]  = {"Iop_V" #op "_wv_8", h_Iop_V##op##_wv_8},   \
+   [Iop_V##op##_wv_16] = {"Iop_V" #op "_wv_16", h_Iop_V##op##_wv_16}, \
+   [Iop_V##op##_wv_32] = {"Iop_V" #op "_wv_32", h_Iop_V##op##_wv_32}
+
+#define H_W_X(op) \
+   [Iop_V##op##_wx_8]  = {"Iop_V" #op "_wx_8", h_Iop_V##op##_wx_8},   \
+   [Iop_V##op##_wx_16] = {"Iop_V" #op "_wx_16", h_Iop_V##op##_wx_16}, \
+   [Iop_V##op##_wx_32] = {"Iop_V" #op "_wx_32", h_Iop_V##op##_wx_32}
+
+#define H_W_I(op) \
+   [Iop_V##op##_wi_8]  = {"Iop_V" #op "_wi_8", h_Iop_V##op##_wx_8},   \
+   [Iop_V##op##_wi_16] = {"Iop_V" #op "_wi_16", h_Iop_V##op##_wx_16}, \
+   [Iop_V##op##_wi_32] = {"Iop_V" #op "_wi_32", h_Iop_V##op##_wx_32}
+
+#define H_W_VXI(op) \
+   H_W_V(op), \
+   H_W_X(op), \
+   H_W_I(op)
+
 #define HW_V_V(op) \
    [Iop_V##op##_vv_8]  = {"Iop_V" #op "_vv_8", h_Iop_V##op##_vv_8},   \
    [Iop_V##op##_vv_16] = {"Iop_V" #op "_vv_16", h_Iop_V##op##_vv_16}, \
@@ -2937,6 +2971,9 @@ static const struct Iop_handler IOP_HANDLERS[] = {
    H_V_VXI(Sll),
    H_V_VXI(Srl),
    H_V_VXI(Sra),
+
+   H_W_VXI(Nsrl),
+   H_W_VXI(Nsra),
 
    HW_VW_VX(Waddu),
    HW_VW_VX(Wadd),
