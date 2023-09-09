@@ -2256,6 +2256,9 @@ typedef
       Iop_VMand_mm, Iop_VMnand_mm, Iop_VMandn_mm, Iop_VMxor_mm,
       Iop_VMor_mm, Iop_VMnor_mm, Iop_VMorn_mm, Iop_VMxnor_mm,
 
+      Iop_VCpop_m,
+      Iop_VFirst_m,
+
       IOPVV2_V_VXI(Madc),
       IOPVV2_V_VX(Msbc),
 

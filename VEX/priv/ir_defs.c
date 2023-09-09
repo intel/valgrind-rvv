@@ -572,6 +572,9 @@ void ppIROp ( IROp op )
       case Iop_VNsra_wi_8 ... Iop_VNsra_wi_32:
          str = "VNsra_wi"; base = Iop_VNsra_wi_8; break;
 
+      case Iop_VCpop_m: vex_printf("VCpop_m"); return;
+      case Iop_VFirst_m: vex_printf("VFirst_m"); return;
+
       /* other cases must explicitly "return;" */
       case Iop_8Uto16:   vex_printf("8Uto16");  return;
       case Iop_8Uto32:   vex_printf("8Uto32");  return;
@@ -2420,6 +2423,9 @@ Bool primopMightTrap ( IROp op )
 	case Iop_VNsra_wv_8 ... Iop_VNsra_wv_32:
 	case Iop_VNsra_wx_8 ... Iop_VNsra_wx_32:
 	case Iop_VNsra_wi_8 ... Iop_VNsra_wi_32:
+
+   case Iop_VCpop_m:
+   case Iop_VFirst_m:
 
       return False;
 
@@ -5400,6 +5406,10 @@ void typeOfPrimop ( IROp op,
          VEC_WXI_BINARY(Iop_VNsra_wx_8);
       case Iop_VNsra_wi_8    ... Iop_VNsra_wi_32:
          VEC_WXI_BINARY(Iop_VNsra_wi_8);
+
+      case Iop_VCpop_m:
+      case Iop_VFirst_m:
+         UNARY(typeofVecIR(VLofVecIROp(op), Ity_VLen1), Ity_I64);
 
       default:
          ppIROp(op);

@@ -1450,6 +1450,9 @@ static irop_t irops[] = {
   { DEFOP(Iop_VMorn_mm, UNDEF_UNKNOWN), },
   { DEFOP(Iop_VMxnor_mm, UNDEF_UNKNOWN), },
 
+  { DEFOP(Iop_VCpop_m, UNDEF_UNKNOWN), },
+  { DEFOP(Iop_VFirst_m, UNDEF_UNKNOWN), },
+
   /* These are fake ones */
   { DEFOP(Iop_SSS_Start, UNDEF_UNKNOWN), },
   { DEFOP(Iop_SSS_End, UNDEF_UNKNOWN), },

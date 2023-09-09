@@ -999,7 +999,7 @@ static HReg iselIntExpr_R_wrk(ISelEnv* env, IRExpr* e)
 
    /* ---------------------- UNARY OP ----------------------- */
    case Iex_Unop: {
-      switch (e->Iex.Unop.op) {
+      switch (e->Iex.Unop.op & IR_OP_MASK) {
       case Iop_Not64:
       case Iop_Not32: {
          HReg dst = newVRegI(env);
@@ -1117,6 +1117,13 @@ static HReg iselIntExpr_R_wrk(ISelEnv* env, IRExpr* e)
          addInstr(env, RISCV64Instr_ALU(RISCV64op_OR, dst, src, neg));
          return dst;
       }
+      case Iop_VCpop_m:
+      case Iop_VFirst_m: {
+         HReg dst;
+         iselVecExpr_R(&dst, env, e);
+         return dst;
+      }
+
       default:
          break;
       }
@@ -2770,10 +2777,40 @@ GEN_VEXT_VMADC_VXM(VMsbc_vx, 16, uint16_t, DO_MSBC)
 GEN_VEXT_VMADC_VXM(VMsbc_vx, 32, uint32_t, DO_MSBC)
 GEN_VEXT_VMADC_VXM(VMsbc_vx, 64, uint64_t, DO_MSBC)
 
+/* Vector count population in mask vcpop */
+static void h_Iop_VCpop_m(void *dst, void *vs2, int len)
+{
+    ULong cnt = 0;
+    for (int i = 0; i < len; ++i) {
+        if (vext_elem_mask(vs2, i)) {
+           cnt++;
+        }
+    }
+
+    *(ULong *)dst = cnt;
+}
+
+/* vfirst find-first-set mask bit */
+static void h_Iop_VFirst_m(void *dst, void *vs2, int len)
+{
+    ULong first = -1ULL;
+    for (int i = 0; i < len; ++i) {
+         if (vext_elem_mask(vs2, i)) {
+             first = i;
+             break;
+         }
+    }
+
+    *(ULong *)dst = first;
+}
+
 struct Iop_handler {
    const char* name;
    const void* fn;
 };
+
+#define H_V_BASIC(op) \
+   [Iop_V##op] = {"Iop_V" #op, h_Iop_V##op}
 
 #define H_V1(op) \
    [Iop_V##op##_8]  = {"Iop_V" #op "_8", h_Iop_V##op##_8},   \
@@ -3031,6 +3068,9 @@ static const struct Iop_handler IOP_HANDLERS[] = {
    H_M_M(Morn),
    H_M_M(Mxnor),
 
+   H_V_BASIC(Cpop_m),
+   H_V_BASIC(First_m),
+
    [Iop_LAST] = {"Iop_LAST", 0}
 };
 
@@ -3086,12 +3126,17 @@ static Bool iselVecExpr_R_wrk_unop(HReg dst[], ISelEnv* env, IRExpr* e)
    }
 
    const Int vlen_b = VLEN / 8;
-   IRType dst_ty = typeOfIRExpr(env->type_env, e);
-   Int vl = VLofVecIRType(dst_ty);
+   Int vl = 0;
+   Int sz = 8;  // address gap between parameters
 
-   Int dst_sz = sizeofVecIRType(dst_ty);
-   Int dst_nregs = DIV_ROUND_UP(dst_sz, vlen_b);
-   Int sz = dst_sz;
+   Int dst_nregs = 1;
+   IRType dst_ty = typeOfIRExpr(env->type_env, e);
+   if (isVecIRType(dst_ty)) {
+      Int dst_sz = ROUND_UP(sizeofVecIRType(dst_ty), vlen_b);
+      dst_nregs = dst_sz / vlen_b;
+      sz = MAX(sz, dst_sz);
+      vl = VLofVecIRType(dst_ty);
+   }
 
    Int src_nregs = 0;
    HReg src[MAX_REGS] = {0};
@@ -3100,12 +3145,12 @@ static Bool iselVecExpr_R_wrk_unop(HReg dst[], ISelEnv* env, IRExpr* e)
       Int src_sz = sizeofVecIRType(src_ty);
       src_nregs = DIV_ROUND_UP(src_sz, vlen_b);
       sz = MAX(src_sz, sz);
+      vl = VLofVecIRType(src_ty);
 
       iselVecExpr_R(src, env, e->Iex.Unop.arg);
    } else {
       src[0] = iselIntExpr_R(env, e->Iex.Unop.arg);
    }
-
 
    HReg argp = newVRegI(env);
    adjust_sp(env, -MAX_ARGS_STACK_SIZE);
@@ -3128,7 +3173,11 @@ static Bool iselVecExpr_R_wrk_unop(HReg dst[], ISelEnv* env, IRExpr* e)
    addInstr(env, RISCV64Instr_ALUImm(RISCV64op_ADDI, hregRISCV64_x12(), hregRISCV64_x0(), vl));
 
    addInstr(env, RISCV64Instr_Call(mk_RetLoc_simple(RLPri_None), (Addr64) fn, INVALID_HREG, 3, 0));
-   loadVecReg(env, dst, dst_nregs, argp);
+   if (isVecIRType(dst_ty)) {
+      loadVecReg(env, dst, dst_nregs, argp);
+   } else {
+      addInstr(env, RISCV64Instr_Load(RISCV64op_LD, dst[0], argp, 0));
+   }
 
    adjust_sp(env, MAX_ARGS_STACK_SIZE);
    return True;
@@ -3408,15 +3457,17 @@ static Bool iselVecExpr_R_wrk_triop_ssd(HReg dst[], ISelEnv* env, IRExpr* e)
 
 static void iselVecExpr_R_wrk(HReg dst[], ISelEnv* env, IRExpr* e)
 {
-   IRType ty = typeOfIRExpr(env->type_env, e);
-   //Int vl = VLofVecIRType(ty);
-   Int sz = sizeofVecIRType(ty);
    Int vlen_b = VLEN / 8;
-   Int nregs = DIV_ROUND_UP(sz, vlen_b);
    Int vl_ldst64 = vlen_b / 8;
-
-   for (int i = 0; i < nregs; ++i) {
-      dst[i] = newVRegV(env);
+   IRType ty = typeOfIRExpr(env->type_env, e);
+   Int nregs = 0;
+   if (isVecIRType(ty)) {
+      nregs = DIV_ROUND_UP(sizeofVecIRType(ty), vlen_b);
+      for (int i = 0; i < nregs; ++i) {
+         dst[i] = newVRegV(env);
+      }
+   } else {
+      dst[0] = newVRegI(env);
    }
 
    switch (e->tag) {

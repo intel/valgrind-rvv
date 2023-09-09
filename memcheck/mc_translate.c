@@ -6188,6 +6188,11 @@ IRExpr* expr2vbits_Unop ( MCEnv* mce, IROp op, IRAtom* atom )
          IRType dst_ty = typeofVecIR (vl, base);
          return assignNew('V', mce, dst_ty, unop(op, mkU64(0)));
       }
+      case Iop_VCpop_m:
+      case Iop_VFirst_m:  // ignore the bits after first 1?
+         return mkPCastTo(mce, Ity_I64,
+                   assignNew('V', mce, Ity_I64,
+                      unop(opofVecIR (VLofVecIROp(op), Iop_VCpop_m), vatom)));
 
       case Iop_I64UtoF32:
       default:

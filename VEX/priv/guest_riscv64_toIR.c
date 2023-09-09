@@ -4355,6 +4355,52 @@ static Bool dis_rvv_addsub_carry(/*MB_OUT*/ DisResult* dres,
    return True;
 }
 
+static Bool dis_vcpop_m(/*MB_OUT*/ DisResult* dres,
+                        /*OUT*/ IRSB*         irsb,
+                        UInt                  insn,
+                        Addr                  guest_pc_curr_instr,
+                        VexGuestRISCV64State* guest)
+{
+   UInt vm = INSN(25, 25);
+   UInt vs2 = INSN(24, 20);
+   UInt rd = INSN(11, 7);
+
+   UInt vl = guest->guest_vl;
+   IRType ty = typeofVecIR(vl, Ity_VLen1);
+
+   IRExpr* e = getVReg(vs2, 0, ty);
+   if (vm == 0) {
+      IRExpr* mask = getVReg(0 /*v0*/, 0, ty);
+      e = binop(opofVecIR(vl, Iop_VMand_mm), e, mask);
+   }
+   putIReg64(irsb, rd, unop(opofVecIR(vl, Iop_VCpop_m), e));
+
+   return True;
+}
+
+static Bool dis_vfirst_m(/*MB_OUT*/ DisResult* dres,
+                         /*OUT*/ IRSB*         irsb,
+                         UInt                  insn,
+                         Addr                  guest_pc_curr_instr,
+                         VexGuestRISCV64State* guest)
+{
+   UInt vm = INSN(25, 25);
+   UInt vs2 = INSN(24, 20);
+   UInt rd = INSN(11, 7);
+
+   UInt vl = guest->guest_vl;
+   IRType ty = typeofVecIR(vl, Ity_VLen1);
+
+   IRExpr* e = getVReg(vs2, 0, ty);
+   if (vm == 0) {
+      IRExpr* mask = getVReg(0 /*v0*/, 0, ty);
+      e = binop(opofVecIR(vl, Iop_VMand_mm), e, mask);
+   }
+   putIReg64(irsb, rd, unop(opofVecIR(vl, Iop_VFirst_m), e));
+
+   return True;
+}
+
 static Bool dis_vmsbf_m(/*MB_OUT*/ DisResult* dres,
                         /*OUT*/ IRSB*         irsb,
                         UInt                  insn,
@@ -4433,72 +4479,6 @@ static Bool dis_vmsif_m(/*MB_OUT*/ DisResult* dres,
       putVReg(irsb, vd, mask_offset, res);
       prev = res;
    }
-
-   return True;
-}
-
-static ULong riscv_vfirst(VexGuestRISCV64State* guest, UInt vs2, UInt vm)
-{
-   ULong index = -1UL;
-   ULong* p0 = (ULong *)((char *)guest + OFFB_V0);
-   ULong* p = (ULong *)((char *)guest + OFFB_V0 + vs2 * sizeof(guest->guest_v0));
-
-   for (UInt o = 0; o < guest->guest_vl && index == -1; o += 64) {
-      UInt remain = guest->guest_vl - o;
-      UInt step = (remain > 64) ? 64 : remain;
-
-      ULong v = *p++;
-      ULong v0 = (vm == 1) ? -1UL : *p0++;
-      v &= v0;
-      for (ULong i = 0; i < step; ++i) {
-         if (v & (1UL << i)) {
-            index = i + o;
-            break;
-         }
-      }
-   }
-
-   return index;
-}
-
-// From Hacker's Delight
-static UInt round_down_to_pow2(UInt x)
-{
-    x = x | (x >> 1);
-    x = x | (x >> 2);
-    x = x | (x >> 4);
-    x = x | (x >> 8);
-    x = x | (x >> 16);
-    return x - (x >> 1);
-}
-
-static Bool dis_vfirst_m(/*MB_OUT*/ DisResult* dres,
-                         /*OUT*/ IRSB*         irsb,
-                         UInt                  insn,
-                         Addr                  guest_pc_curr_instr,
-                         VexGuestRISCV64State* guest)
-{
-   UInt vm = INSN(25, 25);
-   UInt vs2 = INSN(24, 20);
-   UInt rd = INSN(11, 7);
-
-   // lack ctz (count trailing zeros) like instruction in the backend, so use
-   // helper function
-   IRTemp index = newTemp(irsb, Ity_I64);
-   IRDirty *d = unsafeIRDirty_1_N(index,
-         0,
-         "riscv_vfirst",
-         &riscv_vfirst,
-         mkIRExprVec_3(IRExpr_GSPTR(), mkU32(vs2), mkU32(vm)));
-   d->nFxState = 1;
-   vex_bzero(&d->fxState, sizeof(d->fxState));
-   d->fxState[0].fx = Ifx_Read;
-   d->fxState[0].offset = offsetVReg(vs2);
-   // do_shadow_Dirty doesn't accept non-power-2 size yet
-   d->fxState[0].size = round_down_to_pow2(guest->guest_vl / 8);
-
-   stmt(irsb, IRStmt_Dirty(d));
-   putIReg64(irsb, rd, mkexpr(index));
 
    return True;
 }
@@ -4610,6 +4590,8 @@ static Bool dis_opmvv(/*MB_OUT*/ DisResult* dres,
       switch (INSN(19, 15)) {
       case 0b00000:
          return dis_rvv_vmv_x_s(dres, irsb, insn, guest_pc_curr_instr, guest);
+      case 0b10000:
+         return dis_vcpop_m(dres, irsb, insn, guest_pc_curr_instr, guest);
       case 0b10001:
          return dis_vfirst_m(dres, irsb, insn, guest_pc_curr_instr, guest);
       default:
