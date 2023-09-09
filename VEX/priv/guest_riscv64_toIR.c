@@ -4401,84 +4401,26 @@ static Bool dis_vfirst_m(/*MB_OUT*/ DisResult* dres,
    return True;
 }
 
-static Bool dis_vmsbf_m(/*MB_OUT*/ DisResult* dres,
-                        /*OUT*/ IRSB*         irsb,
-                        UInt                  insn,
-                        Addr                  guest_pc_curr_instr,
-                        VexGuestRISCV64State* guest)
+static Bool dis_vmsBIOf_m(/*MB_OUT*/ DisResult* dres,
+                          /*OUT*/ IRSB*         irsb,
+                          UInt                  insn,
+                          Addr                  guest_pc_curr_instr,
+                          VexGuestRISCV64State* guest,
+                          IROp                  op)
 {
    UInt vm = INSN(25, 25);
    UInt vs2 = INSN(24, 20);
    UInt vd = INSN(11, 7);
 
-   vassert(vm == 1);  // mask not supported yet
+   UInt vl = guest->guest_vl;
+   IRType ty = typeofVecIR(vl, Ity_VLen1);
 
-   IRExpr* not_found = mkU64(-1UL);
-   IRExpr* prev = not_found;
-   for (UInt i = 0; i < guest->guest_vl; i += 64) {
-      UInt mask_offset = i / 8;
-      // x = n - (n & n - 1) with only the rightmost set bit
-      // y = (x - 1) for vmsbf
-      IRExpr* n = getVReg(vs2, mask_offset, Ity_I64);
-      IRExpr* x = binop(Iop_Sub64,
-                        n,
-                        binop(Iop_And64,
-                              n,
-                              binop(Iop_Sub64,
-                                    n,
-                                    mkU64(1))));
-      IRExpr* y = binop(Iop_Sub64,
-                        x,
-                        mkU64(1));
-
-      IRExpr* cond = binop(Iop_CmpEQ64, prev, not_found);
-      IRExpr* res = IRExpr_ITE(cond, y, mkU64(0));
-
-      putVReg(irsb, vd, mask_offset, res);
-      prev = res;
+   IRExpr* e = getVReg(vs2, 0, ty);
+   if (vm == 0) {
+      IRExpr* mask = getVReg(0 /*v0*/, 0, ty);
+      e = binop(opofVecIR(vl, Iop_VMand_mm), e, mask);
    }
-
-   return True;
-}
-
-static Bool dis_vmsif_m(/*MB_OUT*/ DisResult* dres,
-                        /*OUT*/ IRSB*         irsb,
-                        UInt                  insn,
-                        Addr                  guest_pc_curr_instr,
-                        VexGuestRISCV64State* guest)
-{
-   UInt vm = INSN(25, 25);
-   UInt vs2 = INSN(24, 20);
-   UInt vd = INSN(11, 7);
-
-   vassert(vm == 1);  // mask not supported yet
-
-   IRExpr* not_found = mkU64(-1UL);
-   IRExpr* prev = not_found;
-   for (UInt i = 0; i < guest->guest_vl; i += 64) {
-      UInt mask_offset = i / 8;
-      // x = n - (n & n - 1) with only the rightmost set bit
-      // y = x + (x - 1) for vmsif
-      IRExpr* n = getVReg(vs2, mask_offset, Ity_I64);
-      IRExpr* x = binop(Iop_Sub64,
-                        n,
-                        binop(Iop_And64,
-                              n,
-                              binop(Iop_Sub64,
-                                    n,
-                                    mkU64(1))));
-      IRExpr* y = binop(Iop_Add64,
-                        x,
-                        binop(Iop_Sub64,
-                              x,
-                              mkU64(1)));
-
-      IRExpr* cond = binop(Iop_CmpEQ64, prev, not_found);
-      IRExpr* res = IRExpr_ITE(cond, y, mkU64(0));
-
-      putVReg(irsb, vd, mask_offset, res);
-      prev = res;
-   }
+   putVReg(irsb, vd, 0, unop(opofVecIR(vl, op), e));
 
    return True;
 }
@@ -4603,9 +4545,11 @@ static Bool dis_opmvv(/*MB_OUT*/ DisResult* dres,
    case 0b010100:
       switch (INSN(19, 15)) {
       case 0b00001:
-         return dis_vmsbf_m(dres, irsb, insn, guest_pc_curr_instr, guest);
+         return dis_vmsBIOf_m(dres, irsb, insn, guest_pc_curr_instr, guest, Iop_VMsbf_m);
       case 0b00011:
-         return dis_vmsif_m(dres, irsb, insn, guest_pc_curr_instr, guest);
+         return dis_vmsBIOf_m(dres, irsb, insn, guest_pc_curr_instr, guest, Iop_VMsif_m);
+      case 0b00010:
+         return dis_vmsBIOf_m(dres, irsb, insn, guest_pc_curr_instr, guest, Iop_VMsof_m);
       case 0b10001:
          return dis_vid_v(dres, irsb, insn, guest_pc_curr_instr, guest);
       default:

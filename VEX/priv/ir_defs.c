@@ -575,6 +575,10 @@ void ppIROp ( IROp op )
       case Iop_VCpop_m: vex_printf("VCpop_m"); return;
       case Iop_VFirst_m: vex_printf("VFirst_m"); return;
 
+      case Iop_VMsbf_m: vex_printf("VMsbf_m"); return;
+      case Iop_VMsif_m: vex_printf("VMsif_m"); return;
+      case Iop_VMsof_m: vex_printf("VMsof_m"); return;
+
       /* other cases must explicitly "return;" */
       case Iop_8Uto16:   vex_printf("8Uto16");  return;
       case Iop_8Uto32:   vex_printf("8Uto32");  return;
@@ -2426,6 +2430,10 @@ Bool primopMightTrap ( IROp op )
 
    case Iop_VCpop_m:
    case Iop_VFirst_m:
+
+   case Iop_VMsbf_m:
+   case Iop_VMsif_m:
+   case Iop_VMsof_m:
 
       return False;
 
@@ -5410,6 +5418,12 @@ void typeOfPrimop ( IROp op,
       case Iop_VCpop_m:
       case Iop_VFirst_m:
          UNARY(typeofVecIR(VLofVecIROp(op), Ity_VLen1), Ity_I64);
+
+      case Iop_VMsbf_m:
+      case Iop_VMsif_m:
+      case Iop_VMsof_m:
+         UNARY(typeofVecIR(VLofVecIROp(op), Ity_VLen1),
+               typeofVecIR(VLofVecIROp(op), Ity_VLen1));
 
       default:
          ppIROp(op);

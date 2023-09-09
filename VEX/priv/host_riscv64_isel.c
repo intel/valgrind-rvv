@@ -2804,6 +2804,54 @@ static void h_Iop_VFirst_m(void *dst, void *vs2, int len)
     *(ULong *)dst = first;
 }
 
+enum set_mask_type {
+    ONLY_FIRST = 1,
+    INCLUDE_FIRST,
+    BEFORE_FIRST,
+};
+
+static void vmsetm(void *vd, void *vs2, int len, enum set_mask_type type)
+{
+    Bool first_mask_bit = False;
+
+    for (int i = 0; i < len; ++i) {
+        /* write a zero to all following active elements */
+        if (first_mask_bit) {
+            vext_set_elem_mask(vd, i, 0);
+            continue;
+        }
+        if (vext_elem_mask(vs2, i)) {
+            first_mask_bit = True;
+            if (type == BEFORE_FIRST) {
+                vext_set_elem_mask(vd, i, 0);
+            } else {
+                vext_set_elem_mask(vd, i, 1);
+            }
+        } else {
+            if (type == ONLY_FIRST) {
+                vext_set_elem_mask(vd, i, 0);
+            } else {
+                vext_set_elem_mask(vd, i, 1);
+            }
+        }
+    }
+}
+
+static void h_Iop_VMsbf_m(void *vd, void *vs2, int len)
+{
+    vmsetm(vd, vs2, len, BEFORE_FIRST);
+}
+
+static void h_Iop_VMsif_m(void *vd, void *vs2, int len)
+{
+    vmsetm(vd, vs2, len, INCLUDE_FIRST);
+}
+
+static void h_Iop_VMsof_m(void *vd, void *vs2, int len)
+{
+    vmsetm(vd, vs2, len, ONLY_FIRST);
+}
+
 struct Iop_handler {
    const char* name;
    const void* fn;
@@ -3070,6 +3118,10 @@ static const struct Iop_handler IOP_HANDLERS[] = {
 
    H_V_BASIC(Cpop_m),
    H_V_BASIC(First_m),
+
+   H_V_BASIC(Msbf_m),
+   H_V_BASIC(Msif_m),
+   H_V_BASIC(Msof_m),
 
    [Iop_LAST] = {"Iop_LAST", 0}
 };

@@ -2258,6 +2258,9 @@ typedef
 
       Iop_VCpop_m,
       Iop_VFirst_m,
+      Iop_VMsbf_m,
+      Iop_VMsif_m,
+      Iop_VMsof_m,
 
       IOPVV2_V_VXI(Madc),
       IOPVV2_V_VX(Msbc),

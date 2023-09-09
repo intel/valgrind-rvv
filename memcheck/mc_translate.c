@@ -6194,6 +6194,11 @@ IRExpr* expr2vbits_Unop ( MCEnv* mce, IROp op, IRAtom* atom )
                    assignNew('V', mce, Ity_I64,
                       unop(opofVecIR (VLofVecIROp(op), Iop_VCpop_m), vatom)));
 
+      case Iop_VMsbf_m:
+      case Iop_VMsif_m:
+      case Iop_VMsof_m:
+         return vatom;  // FIXME: op (vmv.v.i?) for all-0s or 1s
+
       case Iop_I64UtoF32:
       default:
          ppIROp(op);
