@@ -3522,7 +3522,7 @@ IRAtom* binaryM_v_vxi ( MCEnv* mce, IRAtom* vatom1, IRAtom* vatom2, UInt index )
 
    UInt vl = VLofVecIRType(ty);
    IRType tym = typeofVecIR(vl, Ity_VLen1);
-   IROp to_mask_op = opofVecIR(vl, Iop_VMseq_vi_8 + index);
+   IROp to_mask_op = opofVecIR(vl, Iop_VMsne_vi_8 + index);
    return assignNew('V', mce, tym, binop(to_mask_op, mkU64(0), a12));
 }
 
@@ -3534,7 +3534,7 @@ IRAtom* ternaryM_v_vxi_m ( MCEnv* mce, IRAtom* vatom1, IRAtom* vatom2, IRAtom* v
 
    IRType tym = typeOfIRExpr(mce->sb->tyenv, vatom3);
    UInt vl = VLofVecIRType(tym);
-   IROp to_mask_op = opofVecIR(vl, Iop_VMseq_vi_8 + index);
+   IROp to_mask_op = opofVecIR(vl, Iop_VMsne_vi_8 + index);
 
    IRAtom* a12m = assignNew('V', mce, tym, binop(to_mask_op, mkU64(0), a12));
    return mkUifUVLen1(mce, a12m, vatom3);
@@ -5515,52 +5515,52 @@ IRAtom* expr2vbits_Binop ( MCEnv* mce,
          return binary_v(mce, vatom1, vatom2, 8 << (bop - Iop_VRem_vx_8));
 
       case Iop_VMseq_vv_8 ... Iop_VMseq_vv_64:
-         return binary_v(mce, vatom1, vatom2, 8 << (bop - Iop_VMseq_vv_8));
+         return binaryM_v_vxi(mce, vatom1, vatom2, bop - Iop_VMseq_vv_8);
       case Iop_VMseq_vx_8 ... Iop_VMseq_vx_64:
-         return binary_v(mce, vatom1, vatom2, 8 << (bop - Iop_VMseq_vx_8));
+         return binaryM_v_vxi(mce, vatom1, vatom2, bop - Iop_VMseq_vx_8);
       case Iop_VMseq_vi_8 ... Iop_VMseq_vi_64:
-         return mkPCast_v(mce, vatom2, 8 << (bop - Iop_VMseq_vi_8));
+         return binaryM_v_vxi(mce, mkU64(0), vatom2, bop - Iop_VMseq_vi_8);
 
       case Iop_VMsne_vv_8 ... Iop_VMsne_vv_64:
-         return binary_v(mce, vatom1, vatom2, 8 << (bop - Iop_VMsne_vv_8));
+         return binaryM_v_vxi(mce, vatom1, vatom2, bop - Iop_VMsne_vv_8);
       case Iop_VMsne_vx_8 ... Iop_VMsne_vx_64:
-         return binary_v(mce, vatom1, vatom2, 8 << (bop - Iop_VMsne_vx_8));
+         return binaryM_v_vxi(mce, vatom1, vatom2, bop - Iop_VMsne_vx_8);
       case Iop_VMsne_vi_8 ... Iop_VMsne_vi_64:
-         return mkPCast_v(mce, vatom2, 8 << (bop - Iop_VMsne_vi_8));
+         return binaryM_v_vxi(mce, mkU64(0), vatom2, bop - Iop_VMsne_vi_8);
 
       case Iop_VMsltu_vv_8 ... Iop_VMsltu_vv_64:
-         return binary_v(mce, vatom1, vatom2, 8 << (bop - Iop_VMsltu_vv_8));
+         return binaryM_v_vxi(mce, vatom1, vatom2, bop - Iop_VMsltu_vv_8);
       case Iop_VMsltu_vx_8 ... Iop_VMsltu_vx_64:
-         return binary_v(mce, vatom1, vatom2, 8 << (bop - Iop_VMsltu_vx_8));
+         return binaryM_v_vxi(mce, vatom1, vatom2, bop - Iop_VMsltu_vx_8);
 
       case Iop_VMslt_vv_8 ... Iop_VMslt_vv_64:
-         return binary_v(mce, vatom1, vatom2, 8 << (bop - Iop_VMslt_vv_8));
+         return binaryM_v_vxi(mce, vatom1, vatom2, bop - Iop_VMslt_vv_8);
       case Iop_VMslt_vx_8 ... Iop_VMslt_vx_64:
-         return binary_v(mce, vatom1, vatom2, 8 << (bop - Iop_VMslt_vx_8));
+         return binaryM_v_vxi(mce, vatom1, vatom2, bop - Iop_VMslt_vx_8);
 
       case Iop_VMsleu_vv_8 ... Iop_VMsleu_vv_64:
-         return binary_v(mce, vatom1, vatom2, 8 << (bop - Iop_VMsleu_vv_8));
+         return binaryM_v_vxi(mce, vatom1, vatom2, bop - Iop_VMsleu_vv_8);
       case Iop_VMsleu_vx_8 ... Iop_VMsleu_vx_64:
-         return binary_v(mce, vatom1, vatom2, 8 << (bop - Iop_VMsleu_vx_8));
+         return binaryM_v_vxi(mce, vatom1, vatom2, bop - Iop_VMsleu_vx_8);
       case Iop_VMsleu_vi_8 ... Iop_VMsleu_vi_64:
-         return mkPCast_v(mce, vatom2, 8 << (bop - Iop_VMsleu_vi_8));
+         return binaryM_v_vxi(mce, mkU64(0), vatom2, bop - Iop_VMsleu_vi_8);
 
       case Iop_VMsle_vv_8 ... Iop_VMsle_vv_64:
-         return binary_v(mce, vatom1, vatom2, 8 << (bop - Iop_VMsle_vv_8));
+         return binaryM_v_vxi(mce, vatom1, vatom2, bop - Iop_VMsle_vv_8);
       case Iop_VMsle_vx_8 ... Iop_VMsle_vx_64:
-         return binary_v(mce, vatom1, vatom2, 8 << (bop - Iop_VMsle_vx_8));
+         return binaryM_v_vxi(mce, vatom1, vatom2, bop - Iop_VMsle_vx_8);
       case Iop_VMsle_vi_8 ... Iop_VMsle_vi_64:
-         return mkPCast_v(mce, vatom2, 8 << (bop - Iop_VMsle_vi_8));
+         return binaryM_v_vxi(mce, mkU64(0), vatom2, bop - Iop_VMsle_vi_8);
 
       case Iop_VMsgtu_vx_8 ... Iop_VMsgtu_vx_64:
-         return binary_v(mce, vatom1, vatom2, 8 << (bop - Iop_VMsgtu_vx_8));
+         return binaryM_v_vxi(mce, vatom1, vatom2, bop - Iop_VMsgtu_vx_8);
       case Iop_VMsgtu_vi_8 ... Iop_VMsgtu_vi_64:
-         return mkPCast_v(mce, vatom2, 8 << (bop - Iop_VMsgtu_vi_8));
+         return binaryM_v_vxi(mce, mkU64(0), vatom2, bop - Iop_VMsgtu_vi_8);
 
       case Iop_VMsgt_vx_8 ... Iop_VMsgt_vx_64:
-         return binary_v(mce, vatom1, vatom2, 8 << (bop - Iop_VMsgt_vx_8));
+         return binaryM_v_vxi(mce, vatom1, vatom2, bop - Iop_VMsgt_vx_8);
       case Iop_VMsgt_vi_8 ... Iop_VMsgt_vi_64:
-         return mkPCast_v(mce, vatom2, 8 << (bop - Iop_VMsgt_vi_8));
+         return binaryM_v_vxi(mce, mkU64(0), vatom2, bop - Iop_VMsgt_vi_8);
 
       // TODO: revisit this memcheck semantics
       case Iop_VSll_vv_8 ... Iop_VSll_vv_64:
