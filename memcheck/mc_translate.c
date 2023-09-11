@@ -6199,6 +6199,23 @@ IRExpr* expr2vbits_Unop ( MCEnv* mce, IROp op, IRAtom* atom )
       case Iop_VMsof_m:
          return vatom;  // FIXME: op (vmv.v.i?) for all-0s or 1s
 
+      case Iop_VId_v_8 ... Iop_VId_v_64: {
+         Int index = bop - Iop_VId_v_8;
+         UInt vl = VLofVecIROp(op);
+         IRType dst_ty = typeofVecIR(vl, Ity_VLen8 + index);
+         IROp set_op = opofVecIR(vl, Iop_VMv_v_i_8 + index);
+         return assignNew('V', mce, dst_ty, unop(set_op, mkU64(0)));
+      }
+
+      case Iop_VIota_m_8 ... Iop_VIota_m_64: {
+         // need to refine
+         Int index = bop - Iop_VIota_m_8;
+         UInt vl = VLofVecIROp(op);
+         IRType dst_ty = typeofVecIR(vl, Ity_VLen8 + index);
+         IROp set_op = opofVecIR(vl, Iop_VMv_v_i_8 + index);
+         return assignNew('V', mce, dst_ty, unop(set_op, mkU64(0)));
+      }
+
       case Iop_I64UtoF32:
       default:
          ppIROp(op);

@@ -1359,6 +1359,9 @@ static irop_t irops[] = {
   DEFOP_VV1(Mv_v_x),
   DEFOP_VV1(Mv_v_i),
 
+  DEFOP_VV1(Id_v),
+  DEFOP_VV1(Iota_m),
+
   DEFOP_VV2_V_VXI(Add),
   DEFOP_VV2_V_VX(Sub),
   DEFOP_VV2_V_XI(Rsub),

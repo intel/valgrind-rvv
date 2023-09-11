@@ -2852,6 +2852,40 @@ static void h_Iop_VMsof_m(void *vd, void *vs2, int len)
     vmsetm(vd, vs2, len, ONLY_FIRST);
 }
 
+/* Vector Iota Instruction */
+#define GEN_VEXT_VIOTA_M(NAME, ETYPE)                    \
+static void h_Iop_##NAME(void *vd, void *vs2, int len)   \
+{                                                        \
+    uint32_t sum = 0;                                    \
+                                                         \
+    for (int i = 0; i < len; ++i) {                      \
+        *((ETYPE *)vd + i) = sum;                        \
+        if (vext_elem_mask(vs2, i)) {                    \
+            sum++;                                       \
+        }                                                \
+    }                                                    \
+}
+
+GEN_VEXT_VIOTA_M(VIota_m_8, uint8_t)
+GEN_VEXT_VIOTA_M(VIota_m_16, uint16_t)
+GEN_VEXT_VIOTA_M(VIota_m_32, uint32_t)
+GEN_VEXT_VIOTA_M(VIota_m_64, uint64_t)
+
+/* Vector Element Index Instruction */
+#define GEN_VEXT_VID_V(NAME, ETYPE)                      \
+static void h_Iop_##NAME(void *vd, Long dummy, int len)  \
+{                                                        \
+                                                         \
+    for (int i = 0; i < len; ++i) {                      \
+        *((ETYPE *)vd + i) = i;                          \
+    }                                                    \
+}
+
+GEN_VEXT_VID_V(VId_v_8, uint8_t)
+GEN_VEXT_VID_V(VId_v_16, uint16_t)
+GEN_VEXT_VID_V(VId_v_32, uint32_t)
+GEN_VEXT_VID_V(VId_v_64, uint64_t)
+
 struct Iop_handler {
    const char* name;
    const void* fn;
@@ -3106,6 +3140,9 @@ static const struct Iop_handler IOP_HANDLERS[] = {
    H_V1(Mv_v_v),
    H_V1(Mv_v_x),
    H_V1_ALTER(Mv_v_i, Mv_v_x),
+
+   H_V1(Id_v),
+   H_V1(Iota_m),
 
    H_M_M(Mand),
    H_M_M(Mnand),
