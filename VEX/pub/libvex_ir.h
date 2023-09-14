@@ -2089,6 +2089,9 @@ typedef
 #define IOPVV2_V_I(op) \
       Iop_V##op##_vi_8, Iop_V##op##_vi_16, Iop_V##op##_vi_32, Iop_V##op##_vi_64
 
+#define IOPVV2_V_M(op) \
+      Iop_V##op##_vm_8, Iop_V##op##_vm_16, Iop_V##op##_vm_32, Iop_V##op##_vm_64
+
 #define IOPVV2_V_VX(op) \
       IOPVV2_V_V(op), \
       IOPVV2_V_X(op)
@@ -2270,6 +2273,8 @@ typedef
 
       IOPVV2_W_VXI(Nsrl),
       IOPVV2_W_VXI(Nsra),
+
+      IOPVV2_V_M(Compress),
 
       Iop_SSS_Start,
       IOPVV3_V_VXI_M(Merge),

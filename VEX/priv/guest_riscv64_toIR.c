@@ -4509,6 +4509,32 @@ static Bool dis_viota_m(/*MB_OUT*/ DisResult* dres,
    return True;
 }
 
+static Bool dis_vcompress_vm(/*MB_OUT*/ DisResult* dres,
+                             /*OUT*/ IRSB*         irsb,
+                             UInt                  insn,
+                             Addr                  guest_pc_curr_instr,
+                             VexGuestRISCV64State* guest)
+{
+   UInt vm = INSN(25, 25);
+   UInt vs2 = INSN(24, 20);
+   UInt vs1 = INSN(19, 15);
+   UInt vd = INSN(11, 7);
+
+   vassert(vm == 1);
+
+   UInt sew = get_sew(guest);
+   Int index = sewToIndex(sew);
+   UInt vl = guest->guest_vl;
+   IRType ty = typeofVecIR(vl, Ity_VLen8 + index);
+   IRType mask_ty = typeofVecIR(vl, Ity_VLen1);
+
+   putVReg(irsb, vd, 0, binop(opofVecIR(vl, Iop_VCompress_vm_8 + index),
+                              getVReg(vs1, 0, mask_ty),
+                              getVReg(vs2, 0, ty)));
+
+   return True;
+}
+
 static Bool dis_opivv(/*MB_OUT*/ DisResult* dres,
                       /*OUT*/ IRSB*         irsb,
                       UInt                  insn,
@@ -4619,6 +4645,8 @@ static Bool dis_opmvv(/*MB_OUT*/ DisResult* dres,
          return False;
       }
       return False;
+   case 0b010111:
+      return dis_vcompress_vm(dres, irsb, insn, guest_pc_curr_instr, guest);
    case 0b011001:
       return dis_rvv_m_m(dres, irsb, insn, guest_pc_curr_instr, guest, Iop_VMand_mm);
    case 0b011101:

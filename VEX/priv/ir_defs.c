@@ -584,6 +584,9 @@ void ppIROp ( IROp op )
       case Iop_VIota_m_8 ... Iop_VIota_m_64:
          str = "VIota_v"; base = Iop_VIota_m_8; break;
 
+      case Iop_VCompress_vm_8 ... Iop_VCompress_vm_64:
+         str = "VCompress_vm"; base = Iop_VCompress_vm_8; break;
+
       /* other cases must explicitly "return;" */
       case Iop_8Uto16:   vex_printf("8Uto16");  return;
       case Iop_8Uto32:   vex_printf("8Uto32");  return;
@@ -2443,6 +2446,8 @@ Bool primopMightTrap ( IROp op )
    case Iop_VId_v_8 ... Iop_VId_v_64:
    case Iop_VIota_m_8 ... Iop_VIota_m_64:
 
+   case Iop_VCompress_vm_8 ... Iop_VCompress_vm_64:
+
       return False;
 
    case Iop_INVALID: case Iop_LAST:
@@ -3769,6 +3774,15 @@ void typeOfPrimop ( IROp op,
          UInt vl = VLofVecIROp(op); \
          IRType ty = typeofVecIR (vl, base); \
          BINARY(Ity_I64, ty, ty); \
+      }
+
+#  define VEC_VM_BINARY(bop_base) \
+      { \
+         IRType base = Ity_VLen8 + bop - bop_base; \
+         UInt vl = VLofVecIROp(op); \
+         IRType ty = typeofVecIR (vl, base); \
+         IRType mask_ty = typeofVecIR (vl, Ity_VLen1); \
+         BINARY(mask_ty, ty, ty); \
       }
 
 #  define VEC_WV_BINARY(bop_base) \
@@ -5438,6 +5452,9 @@ void typeOfPrimop ( IROp op,
       case Iop_VIota_m_8 ... Iop_VIota_m_64:
          UNARY(typeofVecIR(VLofVecIROp(op), Ity_VLen1),
                typeofVecIR(VLofVecIROp(op), Ity_VLen8 + bop - Iop_VIota_m_8));
+
+      case Iop_VCompress_vm_8 ... Iop_VCompress_vm_64:
+         VEC_VM_BINARY(Iop_VCompress_vm_8);
 
       default:
          ppIROp(op);

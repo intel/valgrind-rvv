@@ -2886,6 +2886,27 @@ GEN_VEXT_VID_V(VId_v_16, uint16_t)
 GEN_VEXT_VID_V(VId_v_32, uint32_t)
 GEN_VEXT_VID_V(VId_v_64, uint64_t)
 
+/* Vector Compress Instruction */
+#define GEN_VEXT_VCOMPRESS_VM(NAME, ETYPE)                        \
+static void h_Iop_##NAME(void *vd, void *vs1, void *vs2, int len) \
+{                                                                 \
+    uint32_t num = 0;                                             \
+                                                                  \
+    for (int i = 0; i < len; ++i) {                               \
+        if (!vext_elem_mask(vs1, i)) {                            \
+            continue;                                             \
+        }                                                         \
+        *((ETYPE *)vd + num) = *((ETYPE *)vs2 + i);               \
+        num++;                                                    \
+    }                                                             \
+}
+
+/* Compress into vd elements of vs2 where vs1 is enabled */
+GEN_VEXT_VCOMPRESS_VM(VCompress_vm_8, uint8_t)
+GEN_VEXT_VCOMPRESS_VM(VCompress_vm_16, uint16_t)
+GEN_VEXT_VCOMPRESS_VM(VCompress_vm_32, uint32_t)
+GEN_VEXT_VCOMPRESS_VM(VCompress_vm_64, uint64_t)
+
 struct Iop_handler {
    const char* name;
    const void* fn;
@@ -2931,6 +2952,12 @@ struct Iop_handler {
    [Iop_V##op##_vi_16] = {"Iop_V" #op "_vi_16", h_Iop_V##op##_vx_16}, \
    [Iop_V##op##_vi_32] = {"Iop_V" #op "_vi_32", h_Iop_V##op##_vx_32}, \
    [Iop_V##op##_vi_64] = {"Iop_V" #op "_vi_64", h_Iop_V##op##_vx_64}
+
+#define H_V_M(op) \
+   [Iop_V##op##_vm_8]  = {"Iop_V" #op "_vm_8", h_Iop_V##op##_vm_8},   \
+   [Iop_V##op##_vm_16] = {"Iop_V" #op "_vm_16", h_Iop_V##op##_vm_16}, \
+   [Iop_V##op##_vm_32] = {"Iop_V" #op "_vm_32", h_Iop_V##op##_vm_32}, \
+   [Iop_V##op##_vm_64] = {"Iop_V" #op "_vm_64", h_Iop_V##op##_vm_64}
 
 #define H_V_VX(op) \
    H_V_V(op), \
@@ -3159,6 +3186,8 @@ static const struct Iop_handler IOP_HANDLERS[] = {
    H_V_BASIC(Msbf_m),
    H_V_BASIC(Msif_m),
    H_V_BASIC(Msof_m),
+
+   H_V_M(Compress),
 
    [Iop_LAST] = {"Iop_LAST", 0}
 };

@@ -1222,6 +1222,12 @@ static irop_t irops[] = {
   { DEFOP(Iop_V##op##_vi_32, UNDEF_UNKNOWN), }, \
   { DEFOP(Iop_V##op##_vi_64, UNDEF_UNKNOWN), }
 
+#define DEFOP_VV2_V_M(op) \
+  { DEFOP(Iop_V##op##_vm_8, UNDEF_UNKNOWN), },  \
+  { DEFOP(Iop_V##op##_vm_16, UNDEF_UNKNOWN), }, \
+  { DEFOP(Iop_V##op##_vm_32, UNDEF_UNKNOWN), }, \
+  { DEFOP(Iop_V##op##_vm_64, UNDEF_UNKNOWN), }
+
 #define DEFOP_VV2_V_VX(op) \
   DEFOP_VV2_V_V(op), \
   DEFOP_VV2_V_X(op)
@@ -1398,6 +1404,8 @@ static irop_t irops[] = {
 
   DEFOP_VV2_W_VXI(Nsrl),
   DEFOP_VV2_W_VXI(Nsra),
+
+  DEFOP_VV2_V_M(Compress),
 
   DEFOP_VV2W_V_VX(Waddu),
   DEFOP_VV2W_V_VX(Wadd),

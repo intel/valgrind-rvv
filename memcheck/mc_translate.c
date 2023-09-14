@@ -5700,6 +5700,11 @@ IRAtom* expr2vbits_Binop ( MCEnv* mce,
                                  binop(op, atom1, vatom2)),
                           8 << (bop - Iop_VNsra_wi_8));
 
+      case Iop_VCompress_vm_8 ... Iop_VCompress_vm_64:
+         // complain if vs1 (mask) is undefined
+         return assignNew('V', mce, typeOfIRExpr(mce->sb->tyenv, vatom2),
+                          binop(op, atom1, vatom2));
+
       default:
          ppIROp(op);
          VG_(tool_panic)("memcheck:expr2vbits_Binop");
