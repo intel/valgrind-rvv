@@ -3463,8 +3463,8 @@ static inline Long sext_slice_ulong(ULong value, UInt bmax, UInt bmin)
    return ((Long)value) << (63 - bmax) >> (63 - (bmax - bmin));
 }
 
-#define MAX_VL  (-1UL)
-#define KEEP_VL (-2UL)
+#define MAX_VL  (-1ULL)
+#define KEEP_VL (-2ULL)
 
 static ULong helper_vsetvl(VexGuestRISCV64State* guest, ULong avl, ULong vtype)
 {
@@ -3478,6 +3478,7 @@ static ULong helper_vsetvl(VexGuestRISCV64State* guest, ULong avl, ULong vtype)
 
    guest->guest_vl = vl;
    guest->guest_vtype = vtype;
+   guest->guest_vlmax = vlmax;
 
    invalidateFastCache();
 

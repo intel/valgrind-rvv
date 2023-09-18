@@ -164,6 +164,8 @@ typedef struct {
 
    /* 1104 */ ULong guest_vl;
    /* 1112 */ ULong guest_vtype;
+   /* 1120 */ ULong guest_vlmax;
+   /* 1128 */ ULong align0;
 
    /* Padding to 16 bytes. */
 } VexGuestRISCV64State;

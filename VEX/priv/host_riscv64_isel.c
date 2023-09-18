@@ -77,8 +77,14 @@
 */
 
 typedef struct {
+   UInt vlmax;
+   UInt padding;
+} VecEnv;
+
+typedef struct {
    /* Constant -- are set at the start and do not change. */
    IRTypeEnv* type_env;
+   VecEnv vec_env;
 
    HReg* vregmaps[8];  // TODO
    HReg* vregmapHI;
@@ -4499,7 +4505,7 @@ static void iselNext(ISelEnv* env, IRExpr* next, IRJumpKind jk, Int offsIP)
 HInstrArray* iselSB_RISCV64(const IRSB*        bb,
                             VexArch            arch_host,
                             const VexArchInfo* archinfo_host,
-                            const VexAbiInfo*  vbi /*UNUSED*/,
+                            const VexAbiInfo*  vbi,
                             Int                offs_Host_EvC_Counter,
                             Int                offs_Host_EvC_FailAddr,
                             Bool               chainingAllowed,
@@ -4528,6 +4534,8 @@ HInstrArray* iselSB_RISCV64(const IRSB*        bb,
 
    /* Copy BB's type env. */
    env->type_env = bb->tyenv;
+
+   env->vec_env.vlmax = vbi->riscv64_guest_state->guest_vlmax;
 
    /* Make up an IRTemp -> virtual HReg mapping. This doesn't change as we go
       along. */
