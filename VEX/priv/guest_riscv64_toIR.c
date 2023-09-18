@@ -4742,6 +4742,10 @@ static Bool dis_opivi(/*MB_OUT*/ DisResult* dres,
       return dis_rvv2_v_i(dres, irsb, insn, guest_pc_curr_instr, guest, Iop_VXor_vi_8);
    case 0b001001:
       return dis_rvv2_v_i(dres, irsb, insn, guest_pc_curr_instr, guest, Iop_VAnd_vi_8);
+   case 0b001110:
+      return dis_rvv2_v_i(dres, irsb, insn, guest_pc_curr_instr, guest, Iop_VSlideup_vi_8);
+   case 0b001111:
+      return dis_rvv2_v_i(dres, irsb, insn, guest_pc_curr_instr, guest, Iop_VSlidedown_vi_8);
    case 0b010000 ... 0b010011:
       return dis_rvv_addsub_carry(dres, irsb, insn, guest_pc_curr_instr, guest);
    case 0b011000:
@@ -4808,6 +4812,10 @@ static Bool dis_opivx(/*MB_OUT*/ DisResult* dres,
       return dis_rvv2_v_x(dres, irsb, insn, guest_pc_curr_instr, guest, Iop_VOr_vx_8);
    case 0b001011:
       return dis_rvv2_v_x(dres, irsb, insn, guest_pc_curr_instr, guest, Iop_VXor_vx_8);
+   case 0b001110:
+      return dis_rvv2_v_x(dres, irsb, insn, guest_pc_curr_instr, guest, Iop_VSlideup_vx_8);
+   case 0b001111:
+      return dis_rvv2_v_x(dres, irsb, insn, guest_pc_curr_instr, guest, Iop_VSlidedown_vx_8);
    case 0b001001:
       return dis_rvv2_v_x(dres, irsb, insn, guest_pc_curr_instr, guest, Iop_VAnd_vx_8);
    case 0b010000 ... 0b010011:
@@ -4859,6 +4867,10 @@ static Bool dis_opmvx(/*MB_OUT*/ DisResult* dres,
    UInt funct6 = INSN(31, 26);
 
    switch (funct6) {
+   case 0b001110:
+      return dis_rvv2_v_x(dres, irsb, insn, guest_pc_curr_instr, guest, Iop_VSlide1up_vx_8);
+   case 0b001111:
+      return dis_rvv2_v_x(dres, irsb, insn, guest_pc_curr_instr, guest, Iop_VSlide1down_vx_8);
    case 0b010000:
       switch (INSN(24, 20)) {
       case 0b00000:

@@ -587,6 +587,19 @@ void ppIROp ( IROp op )
       case Iop_VCompress_vm_8 ... Iop_VCompress_vm_64:
          str = "VCompress_vm"; base = Iop_VCompress_vm_8; break;
 
+      case Iop_VSlideup_vx_8 ... Iop_VSlideup_vx_64:
+         str = "VSlideup_vx"; base = Iop_VSlideup_vx_8; break;
+      case Iop_VSlideup_vi_8 ... Iop_VSlideup_vi_64:
+         str = "VSlideup_vi"; base = Iop_VSlideup_vi_8; break;
+      case Iop_VSlide1up_vx_8 ... Iop_VSlide1up_vx_64:
+         str = "VSlide1up_vx"; base = Iop_VSlide1up_vx_8; break;
+      case Iop_VSlidedown_vx_8 ... Iop_VSlidedown_vx_64:
+         str = "VSlidedown_vx"; base = Iop_VSlidedown_vx_8; break;
+      case Iop_VSlidedown_vi_8 ... Iop_VSlidedown_vi_64:
+         str = "VSlidedown_vi"; base = Iop_VSlidedown_vi_8; break;
+      case Iop_VSlide1down_vx_8 ... Iop_VSlide1down_vx_64:
+         str = "VSlide1down_vx"; base = Iop_VSlide1down_vx_8; break;
+
       /* other cases must explicitly "return;" */
       case Iop_8Uto16:   vex_printf("8Uto16");  return;
       case Iop_8Uto32:   vex_printf("8Uto32");  return;
@@ -2447,6 +2460,13 @@ Bool primopMightTrap ( IROp op )
    case Iop_VIota_m_8 ... Iop_VIota_m_64:
 
    case Iop_VCompress_vm_8 ... Iop_VCompress_vm_64:
+
+   case Iop_VSlideup_vx_8 ... Iop_VSlideup_vx_64:
+   case Iop_VSlideup_vi_8 ... Iop_VSlideup_vi_64:
+   case Iop_VSlide1up_vx_8 ... Iop_VSlide1up_vx_64:
+   case Iop_VSlidedown_vx_8 ... Iop_VSlidedown_vx_64:
+   case Iop_VSlidedown_vi_8 ... Iop_VSlidedown_vi_64:
+   case Iop_VSlide1down_vx_8 ... Iop_VSlide1down_vx_64:
 
       return False;
 
@@ -5455,6 +5475,19 @@ void typeOfPrimop ( IROp op,
 
       case Iop_VCompress_vm_8 ... Iop_VCompress_vm_64:
          VEC_VM_BINARY(Iop_VCompress_vm_8);
+
+      case Iop_VSlideup_vx_8 ... Iop_VSlideup_vx_64:
+         VEC_VXI_BINARY(Iop_VSlideup_vx_8);
+      case Iop_VSlideup_vi_8 ... Iop_VSlideup_vi_64:
+         VEC_VXI_BINARY(Iop_VSlideup_vi_8);
+      case Iop_VSlide1up_vx_8 ... Iop_VSlide1up_vx_64:
+         VEC_VXI_BINARY(Iop_VSlide1up_vx_8);
+      case Iop_VSlidedown_vx_8 ... Iop_VSlidedown_vx_64:
+         VEC_VXI_BINARY(Iop_VSlidedown_vx_8);
+      case Iop_VSlidedown_vi_8 ... Iop_VSlidedown_vi_64:
+         VEC_VXI_BINARY(Iop_VSlidedown_vi_8);
+      case Iop_VSlide1down_vx_8 ... Iop_VSlide1down_vx_64:
+         VEC_VXI_BINARY(Iop_VSlide1down_vx_8);
 
       default:
          ppIROp(op);

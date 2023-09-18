@@ -110,6 +110,11 @@ typedef struct {
        __typeof__ (b) _b = (b); \
      _a > _b ? _a : _b; })
 
+#define MIN(a, b) \
+   ({ __typeof__ (a) _a = (a); \
+       __typeof__ (b) _b = (b); \
+     _a < _b ? _a : _b; })
+
 #define DIV_ROUND_UP(a, b)  (((a) + (b) - 1) / (b))
 #define ROUND_UP(a, b)  (((a) + (b) - 1) / (b) * (b))
 
@@ -2913,6 +2918,113 @@ GEN_VEXT_VCOMPRESS_VM(VCompress_vm_16, uint16_t)
 GEN_VEXT_VCOMPRESS_VM(VCompress_vm_32, uint32_t)
 GEN_VEXT_VCOMPRESS_VM(VCompress_vm_64, uint64_t)
 
+/*
+ * Vector Permutation Instructions
+ */
+
+/* Vector Slide Instructions */
+#define GEN_VEXT_VSLIDEUP_VX(NAME, ETYPE)                         \
+static void h_Iop_##NAME(void *vd, ULong s1, void *vs2, int len)  \
+{                                                                 \
+    int offset = s1;                                              \
+                                                                  \
+    for (int i = offset; i < len; ++i) {                          \
+        *((ETYPE *)vd + i) = *((ETYPE *)vs2 + (i - offset));      \
+    }                                                             \
+}
+
+/* vslideup.vx vd, vs2, rs1, vm # vd[i+rs1] = vs2[i] */
+GEN_VEXT_VSLIDEUP_VX(VSlideup_vx_8, uint8_t)
+GEN_VEXT_VSLIDEUP_VX(VSlideup_vx_16, uint16_t)
+GEN_VEXT_VSLIDEUP_VX(VSlideup_vx_32, uint32_t)
+GEN_VEXT_VSLIDEUP_VX(VSlideup_vx_64, uint64_t)
+
+#define GEN_VEXT_VSLIDEDOWN_VX(NAME, ETYPE)                       \
+static void h_Iop_##NAME(void *vd, ULong s1, void *vs2, int len,  \
+                         int vlmax)                               \
+{                                                                 \
+    int i_max, i;                                                 \
+                                                                  \
+    i_max = MIN(s1 < vlmax ? vlmax - s1 : 0, len);                \
+    for (i = 0; i < i_max; ++i) {                                 \
+        *((ETYPE *)vd + i) = *((ETYPE *)vs2 + (i + s1));          \
+    }                                                             \
+                                                                  \
+    for (i = i_max; i < len; ++i) {                               \
+         *((ETYPE *)vd + i) = 0;                                  \
+    }                                                             \
+}
+
+/* vslidedown.vx vd, vs2, rs1, vm # vd[i] = vs2[i+rs1] */
+GEN_VEXT_VSLIDEDOWN_VX(VSlidedown_vx_8, uint8_t)
+GEN_VEXT_VSLIDEDOWN_VX(VSlidedown_vx_16, uint16_t)
+GEN_VEXT_VSLIDEDOWN_VX(VSlidedown_vx_32, uint32_t)
+GEN_VEXT_VSLIDEDOWN_VX(VSlidedown_vx_64, uint64_t)
+
+#define GEN_VEXT_VSLIE1UP(BITWIDTH)                               \
+static void vslide1up_##BITWIDTH(void *vd, uint64_t s1,           \
+                                 void *vs2, int len)              \
+{                                                                 \
+    typedef uint##BITWIDTH##_t ETYPE;                             \
+                                                                  \
+    for (int i = 0; i < len; ++i) {                               \
+        if (i == 0) {                                             \
+            *((ETYPE *)vd + i) = s1;                              \
+        } else {                                                  \
+            *((ETYPE *)vd + i) = *((ETYPE *)vs2 + (i - 1));       \
+        }                                                         \
+    }                                                             \
+}
+
+GEN_VEXT_VSLIE1UP(8)
+GEN_VEXT_VSLIE1UP(16)
+GEN_VEXT_VSLIE1UP(32)
+GEN_VEXT_VSLIE1UP(64)
+
+#define GEN_VEXT_VSLIDE1UP_VX(NAME, BITWIDTH)                     \
+static void h_Iop_##NAME(void *vd, ULong s1, void *vs2, int len)  \
+{                                                                 \
+    vslide1up_##BITWIDTH(vd, s1, vs2, len);                       \
+}
+
+/* vslide1up.vx vd, vs2, rs1, vm # vd[0]=x[rs1], vd[i+1] = vs2[i] */
+GEN_VEXT_VSLIDE1UP_VX(VSlide1up_vx_8, 8)
+GEN_VEXT_VSLIDE1UP_VX(VSlide1up_vx_16, 16)
+GEN_VEXT_VSLIDE1UP_VX(VSlide1up_vx_32, 32)
+GEN_VEXT_VSLIDE1UP_VX(VSlide1up_vx_64, 64)
+
+#define GEN_VEXT_VSLIDE1DOWN(BITWIDTH)                            \
+static void vslide1down_##BITWIDTH(void *vd, uint64_t s1,         \
+                                   void *vs2, int len)            \
+{                                                                 \
+    typedef uint##BITWIDTH##_t ETYPE;                             \
+                                                                  \
+    for (int i = 0; i < len; ++i) {                               \
+        if (i == len - 1) {                                       \
+            *((ETYPE *)vd + i) = s1;                              \
+        } else {                                                  \
+            *((ETYPE *)vd + i) = *((ETYPE *)vs2 + (i + 1));       \
+        }                                                         \
+    }                                                             \
+}
+
+GEN_VEXT_VSLIDE1DOWN(8)
+GEN_VEXT_VSLIDE1DOWN(16)
+GEN_VEXT_VSLIDE1DOWN(32)
+GEN_VEXT_VSLIDE1DOWN(64)
+
+#define GEN_VEXT_VSLIDE1DOWN_VX(NAME, BITWIDTH)                   \
+static void h_Iop_##NAME(void *vd, ULong s1, void *vs2, int len)  \
+{                                                                 \
+    vslide1down_##BITWIDTH(vd, s1, vs2, len);                     \
+}
+
+/* vslide1down.vx vd, vs2, rs1, vm # vd[i] = vs2[i+1], vd[vl-1]=x[rs1] */
+GEN_VEXT_VSLIDE1DOWN_VX(VSlide1down_vx_8, 8)
+GEN_VEXT_VSLIDE1DOWN_VX(VSlide1down_vx_16, 16)
+GEN_VEXT_VSLIDE1DOWN_VX(VSlide1down_vx_32, 32)
+GEN_VEXT_VSLIDE1DOWN_VX(VSlide1down_vx_64, 64)
+
 struct Iop_handler {
    const char* name;
    const void* fn;
@@ -3193,6 +3305,11 @@ static const struct Iop_handler IOP_HANDLERS[] = {
    H_V_BASIC(Msif_m),
    H_V_BASIC(Msof_m),
 
+   H_V_XI(Slideup),
+   H_V_XI(Slidedown),
+   H_V_X(Slide1up),
+   H_V_X(Slide1down),
+
    H_V_M(Compress),
 
    [Iop_LAST] = {"Iop_LAST", 0}
@@ -3307,7 +3424,7 @@ static Bool iselVecExpr_R_wrk_unop(HReg dst[], ISelEnv* env, IRExpr* e)
    return True;
 }
 
-static Bool iselVecExpr_R_wrk_binop(HReg dst[], ISelEnv* env, IRExpr* e)
+static Bool iselVecExpr_R_wrk_binop(HReg dst[], ISelEnv* env, IRExpr* e, Bool extra)
 {
    const void* fn = IOP_HANDLERS[e->Iex.Binop.op & IR_OP_MASK].fn;
    if (fn == 0) {
@@ -3382,7 +3499,15 @@ static Bool iselVecExpr_R_wrk_binop(HReg dst[], ISelEnv* env, IRExpr* e)
    // a3 - vl
    addInstr(env, RISCV64Instr_ALUImm(RISCV64op_ADDI, hregRISCV64_x13(), hregRISCV64_x0(), vl));
 
-   addInstr(env, RISCV64Instr_Call(mk_RetLoc_simple(RLPri_None), (Addr64) fn, INVALID_HREG, 4, 0));
+   UChar nargs = 4;
+   if (extra) {
+      ++nargs;
+      // a4 - vlmax, so far only vlmax in extra field
+      addInstr(env, RISCV64Instr_ALUImm(RISCV64op_ADDI, hregRISCV64_x14(), hregRISCV64_x0(), env->vec_env.vlmax));
+   }
+
+
+   addInstr(env, RISCV64Instr_Call(mk_RetLoc_simple(RLPri_None), (Addr64) fn, INVALID_HREG, nargs, 0));
    loadVecReg(env, dst, dst_nregs, argp);
 
    adjust_sp(env, MAX_ARGS_STACK_SIZE);
@@ -3635,7 +3760,17 @@ static void iselVecExpr_R_wrk(HReg dst[], ISelEnv* env, IRExpr* e)
          break;
       }
       case Iex_Binop: {
-         Bool ret = iselVecExpr_R_wrk_binop(dst, env, e);
+         Bool extra = False;
+         switch (e->Iex.Binop.op & IR_OP_MASK) {
+            case Iop_VSlidedown_vx_8 ... Iop_VSlidedown_vx_64:
+            case Iop_VSlidedown_vi_8 ... Iop_VSlidedown_vi_64:
+               extra = True;
+               break;
+            default:
+               break;
+         }
+
+         Bool ret = iselVecExpr_R_wrk_binop(dst, env, e, extra);
          if (ret == True) {
             return;
          }

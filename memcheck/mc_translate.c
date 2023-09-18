@@ -5705,6 +5705,26 @@ IRAtom* expr2vbits_Binop ( MCEnv* mce,
          return assignNew('V', mce, typeOfIRExpr(mce->sb->tyenv, vatom2),
                           binop(op, atom1, vatom2));
 
+      case Iop_VSlideup_vx_8 ... Iop_VSlideup_vx_64:
+         // complain if atom1 is undefined
+         return assignNew('V', mce, typeOfIRExpr(mce->sb->tyenv, vatom2),
+                          binop(op, atom1, vatom2));
+      case Iop_VSlideup_vi_8 ... Iop_VSlideup_vi_64:
+         return assignNew('V', mce, typeOfIRExpr(mce->sb->tyenv, vatom2),
+                          binop(op, atom1, vatom2));
+      case Iop_VSlide1up_vx_8 ... Iop_VSlide1up_vx_64:
+         return assignNew('V', mce, typeOfIRExpr(mce->sb->tyenv, vatom2),
+                          binop(op, vatom1, vatom2));
+      case Iop_VSlidedown_vx_8 ... Iop_VSlidedown_vx_64:
+         return assignNew('V', mce, typeOfIRExpr(mce->sb->tyenv, vatom2),
+                          binop(op, atom1, vatom2));
+      case Iop_VSlidedown_vi_8 ... Iop_VSlidedown_vi_64:
+         return assignNew('V', mce, typeOfIRExpr(mce->sb->tyenv, vatom2),
+                          binop(op, atom1, vatom2));
+      case Iop_VSlide1down_vx_8 ... Iop_VSlide1down_vx_64:
+         return assignNew('V', mce, typeOfIRExpr(mce->sb->tyenv, vatom2),
+                          binop(op, vatom1, vatom2));
+
       default:
          ppIROp(op);
          VG_(tool_panic)("memcheck:expr2vbits_Binop");

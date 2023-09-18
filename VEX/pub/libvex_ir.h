@@ -2276,6 +2276,11 @@ typedef
 
       IOPVV2_V_M(Compress),
 
+      IOPVV2_V_XI(Slideup),
+      IOPVV2_V_XI(Slidedown),
+      IOPVV2_V_X(Slide1up),
+      IOPVV2_V_X(Slide1down),
+
       Iop_SSS_Start,
       IOPVV3_V_VXI_M(Merge),
 
