@@ -2281,6 +2281,9 @@ typedef
       IOPVV2_V_X(Slide1up),
       IOPVV2_V_X(Slide1down),
 
+      IOPVV2_V_VXI(Rgather),
+      IOPVV2_V_V(Rgatherei16),
+
       Iop_SSS_Start,
       IOPVV3_V_VXI_M(Merge),
 

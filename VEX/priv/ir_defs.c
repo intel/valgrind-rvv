@@ -600,6 +600,15 @@ void ppIROp ( IROp op )
       case Iop_VSlide1down_vx_8 ... Iop_VSlide1down_vx_64:
          str = "VSlide1down_vx"; base = Iop_VSlide1down_vx_8; break;
 
+      case Iop_VRgather_vv_8 ... Iop_VRgather_vv_64:
+         str = "VRgather_vv"; base = Iop_VRgather_vv_8; break;
+      case Iop_VRgather_vx_8 ... Iop_VRgather_vx_64:
+         str = "VRgather_vx"; base = Iop_VRgather_vx_8; break;
+      case Iop_VRgather_vi_8 ... Iop_VRgather_vi_64:
+         str = "VRgather_vi"; base = Iop_VRgather_vi_8; break;
+      case Iop_VRgatherei16_vv_8 ... Iop_VRgatherei16_vv_64:
+         str = "VRgatherei16_vv"; base = Iop_VRgatherei16_vv_8; break;
+
       /* other cases must explicitly "return;" */
       case Iop_8Uto16:   vex_printf("8Uto16");  return;
       case Iop_8Uto32:   vex_printf("8Uto32");  return;
@@ -2467,6 +2476,11 @@ Bool primopMightTrap ( IROp op )
    case Iop_VSlidedown_vx_8 ... Iop_VSlidedown_vx_64:
    case Iop_VSlidedown_vi_8 ... Iop_VSlidedown_vi_64:
    case Iop_VSlide1down_vx_8 ... Iop_VSlide1down_vx_64:
+
+   case Iop_VRgather_vv_8 ... Iop_VRgather_vv_64:
+   case Iop_VRgather_vx_8 ... Iop_VRgather_vx_64:
+   case Iop_VRgather_vi_8 ... Iop_VRgather_vi_64:
+   case Iop_VRgatherei16_vv_8 ... Iop_VRgatherei16_vv_64:
 
       return False;
 
@@ -5488,6 +5502,15 @@ void typeOfPrimop ( IROp op,
          VEC_VXI_BINARY(Iop_VSlidedown_vi_8);
       case Iop_VSlide1down_vx_8 ... Iop_VSlide1down_vx_64:
          VEC_VXI_BINARY(Iop_VSlide1down_vx_8);
+
+      case Iop_VRgather_vv_8 ... Iop_VRgather_vv_64:
+         VEC_VV_BINARY(Iop_VRgather_vv_8);
+      case Iop_VRgather_vx_8 ... Iop_VRgather_vx_64:
+         VEC_VXI_BINARY(Iop_VRgather_vx_8);
+      case Iop_VRgather_vi_8 ... Iop_VRgather_vi_64:
+         VEC_VXI_BINARY(Iop_VRgather_vi_8);
+      case Iop_VRgatherei16_vv_8 ... Iop_VRgatherei16_vv_64:
+         VEC_VV_BINARY(Iop_VRgatherei16_vv_8);
 
       default:
          ppIROp(op);

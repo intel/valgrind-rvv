@@ -1426,6 +1426,9 @@ static irop_t irops[] = {
   DEFOP_VV2_V_X(Slide1up),
   DEFOP_VV2_V_X(Slide1down),
 
+  DEFOP_VV2_V_VXI(Rgather),
+  DEFOP_VV2_V_V(Rgatherei16),
+
   DEFOP_VV3_V_VX(Macc),
   DEFOP_VV3_V_VX(Nmsac),
   DEFOP_VV3_V_VX(Madd),

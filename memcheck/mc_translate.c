@@ -5725,6 +5725,19 @@ IRAtom* expr2vbits_Binop ( MCEnv* mce,
          return assignNew('V', mce, typeOfIRExpr(mce->sb->tyenv, vatom2),
                           binop(op, vatom1, vatom2));
 
+      case Iop_VRgather_vv_8 ... Iop_VRgather_vv_64:
+         return assignNew('V', mce, typeOfIRExpr(mce->sb->tyenv, vatom2),
+                          binop(op, atom1, vatom2));
+      case Iop_VRgather_vx_8 ... Iop_VRgather_vx_64:
+         return assignNew('V', mce, typeOfIRExpr(mce->sb->tyenv, vatom2),
+                          binop(op, atom1, vatom2));
+      case Iop_VRgather_vi_8 ... Iop_VRgather_vi_64:
+         return assignNew('V', mce, typeOfIRExpr(mce->sb->tyenv, vatom2),
+                          binop(op, atom1, vatom2));
+      case Iop_VRgatherei16_vv_8 ... Iop_VRgatherei16_vv_64:
+         return assignNew('V', mce, typeOfIRExpr(mce->sb->tyenv, vatom2),
+                          binop(op, atom1, vatom2));
+
       default:
          ppIROp(op);
          VG_(tool_panic)("memcheck:expr2vbits_Binop");

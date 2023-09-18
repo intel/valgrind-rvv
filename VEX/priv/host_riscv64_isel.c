@@ -3025,6 +3025,55 @@ GEN_VEXT_VSLIDE1DOWN_VX(VSlide1down_vx_16, 16)
 GEN_VEXT_VSLIDE1DOWN_VX(VSlide1down_vx_32, 32)
 GEN_VEXT_VSLIDE1DOWN_VX(VSlide1down_vx_64, 64)
 
+/* Vector Register Gather Instruction */
+#define GEN_VEXT_VRGATHER_VV(NAME, TS1, TS2)                   \
+static void h_Iop_##NAME(void *vd, void *vs1, void *vs2,       \
+                         int len, int vlmax)                   \
+{                                                              \
+    uint64_t index;                                            \
+                                                               \
+    for (int i = 0; i < len; ++i) {                            \
+        index = *((TS1 *)vs1 + i);                             \
+        if (index >= vlmax) {                                  \
+            *((TS2 *)vd + i) = 0;                              \
+        } else {                                               \
+            *((TS2 *)vd + i) = *((TS2 *)vs2 + index);          \
+        }                                                      \
+    }                                                          \
+}
+
+/* vd[i] = (vs1[i] >= VLMAX) ? 0 : vs2[vs1[i]]; */
+GEN_VEXT_VRGATHER_VV(VRgather_vv_8, uint8_t,  uint8_t)
+GEN_VEXT_VRGATHER_VV(VRgather_vv_16, uint16_t, uint16_t)
+GEN_VEXT_VRGATHER_VV(VRgather_vv_32, uint32_t, uint32_t)
+GEN_VEXT_VRGATHER_VV(VRgather_vv_64, uint64_t, uint64_t)
+
+GEN_VEXT_VRGATHER_VV(VRgatherei16_vv_8, uint16_t, uint8_t)
+GEN_VEXT_VRGATHER_VV(VRgatherei16_vv_16, uint16_t, uint16_t)
+GEN_VEXT_VRGATHER_VV(VRgatherei16_vv_32, uint16_t, uint32_t)
+GEN_VEXT_VRGATHER_VV(VRgatherei16_vv_64, uint16_t, uint64_t)
+
+#define GEN_VEXT_VRGATHER_VX(NAME, ETYPE)                         \
+static void h_Iop_##NAME(void *vd, void *v0, ULong s1, void *vs2, \
+                         int len, int vlmax)                      \
+{                                                                 \
+    uint64_t index = s1;                                          \
+                                                                  \
+    for (int i = 0; i < len; ++i) {                               \
+        if (index >= vlmax) {                                     \
+            *((ETYPE *)vd + i) = 0;                               \
+        } else {                                                  \
+            *((ETYPE *)vd + i) = *((ETYPE *)vs2 + index);         \
+        }                                                         \
+    }                                                             \
+}
+
+/* vd[i] = (x[rs1] >= VLMAX) ? 0 : vs2[rs1] */
+GEN_VEXT_VRGATHER_VX(VRgather_vx_8, uint8_t)
+GEN_VEXT_VRGATHER_VX(VRgather_vx_16, uint16_t)
+GEN_VEXT_VRGATHER_VX(VRgather_vx_32, uint32_t)
+GEN_VEXT_VRGATHER_VX(VRgather_vx_64, uint64_t)
+
 struct Iop_handler {
    const char* name;
    const void* fn;
@@ -3309,6 +3358,9 @@ static const struct Iop_handler IOP_HANDLERS[] = {
    H_V_XI(Slidedown),
    H_V_X(Slide1up),
    H_V_X(Slide1down),
+
+   H_V_VXI(Rgather),
+   H_V_V(Rgatherei16),
 
    H_V_M(Compress),
 
@@ -3764,6 +3816,10 @@ static void iselVecExpr_R_wrk(HReg dst[], ISelEnv* env, IRExpr* e)
          switch (e->Iex.Binop.op & IR_OP_MASK) {
             case Iop_VSlidedown_vx_8 ... Iop_VSlidedown_vx_64:
             case Iop_VSlidedown_vi_8 ... Iop_VSlidedown_vi_64:
+            case Iop_VRgather_vv_8 ... Iop_VRgather_vv_64:
+            case Iop_VRgather_vx_8 ... Iop_VRgather_vx_64:
+            case Iop_VRgather_vi_8 ... Iop_VRgather_vi_64:
+            case Iop_VRgatherei16_vv_8 ... Iop_VRgatherei16_vv_64:
                extra = True;
                break;
             default:
