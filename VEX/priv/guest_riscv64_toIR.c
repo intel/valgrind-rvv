@@ -4958,77 +4958,108 @@ static UInt decode_eew(UInt raw_eew)
    }
 }
 
-static Bool dis_ldst(/*MB_OUT*/ DisResult* dres,
-                     /*OUT*/ IRSB*         irsb,
-                     UInt                  insn,
-                     Addr                  guest_pc_curr_instr,
-                     VexGuestRISCV64State* guest)
+static IRLoadGOp cvtOfIRType(IRType ty)
 {
-   UInt vd = INSN(11, 7);
-   UInt width = INSN(14, 12);
-   UInt rs1 = INSN(19, 15);
-   UInt umop = INSN(24, 20);
-   UInt vm = INSN(25, 25);
-   UInt mew_mop = INSN(28, 26);
+   IRLoadGOp no_cvt = ILGop_INVALID;
+   switch (ty) {
+      case Ity_I8:  no_cvt = ILGop_Ident8;  break;
+      case Ity_I16: no_cvt = ILGop_Ident16;  break;
+      case Ity_I32: no_cvt = ILGop_Ident32;  break;
+      case Ity_I64: no_cvt = ILGop_Ident64;  break;
+      default:  vassert(0);
+   }
+   return no_cvt;
+}
 
-   // TODO: only part of  all ld/st instructions are handled
-   if (!(mew_mop == 0b000 &&
-         (umop == 0b00000 || umop == 0b10000))) {  // ignore fault-only-first
-      return False;
+typedef enum {
+   RVV_LDST_UNIT_STRIDE,
+   RVV_LDST_STRIDE,
+   RVV_LDST_INDEX,
+} rvvLdstType;
+
+static Bool dis_ldst_common(/*MB_OUT*/ DisResult* dres,
+                            /*OUT*/ IRSB*         irsb,
+                            UInt                  insn,
+                            Addr                  guest_pc_curr_instr,
+                            VexGuestRISCV64State* guest,
+                            Bool is_load,
+                            rvvLdstType ldst_type)
+{
+   UInt nfields = INSN(31, 29) + 1;
+   UInt vm = INSN(25, 25);
+   UInt s2 = INSN(24, 20);
+   UInt rs1 = INSN(19, 15);
+   UInt width = INSN(14, 12);
+   UInt vd = INSN(11, 7);
+
+   UInt sew_b = get_sew(guest) / 8;
+   UInt eew_b = decode_eew(width) / 8;
+   UInt dew_b = (ldst_type == RVV_LDST_INDEX ? sew_b : eew_b);  // data ew
+   IRType ty = integerIRTypeOfSize(dew_b);
+   IRType index_ty = integerIRTypeOfSize(eew_b);
+   UInt vgroup_b = guest->guest_vlmax * dew_b;
+   if (vgroup_b < VLEN / 8) {
+      vgroup_b = VLEN / 8;  // at least 1 reg per segment
    }
 
-   Bool is_load = INSN(6, 0) == 0b0000111;
+   vassert(vgroup_b * nfields <= VLEN);  // emul * nfields <= 8
 
-   DIP("%s - vl: %llu, insn: %x, vtype: %llx, vreg: %s\n",
-       is_load ? "vload" : "vstore",
-       guest->guest_vl, insn, guest->guest_vtype, nameVReg(vd));
+   DIP("%s, nfields: %u, dew_b: %u, vm: %u, vreg: %s\n",
+         is_load ? "vload" : "vstore",
+         nfields, dew_b, vm, nameVReg(vd));
 
-   UInt eew_b = decode_eew(width) / 8;
-   IRType ty = integerIRTypeOfSize(eew_b);
-   UInt offset = 0;
-   if (vm == 1) {  // disabled
-      // It's possible to use larger ty them elem size
-      for (UInt i = 0; i < guest->guest_vl; ++i) {
-         IRExpr* addr = binop(Iop_Add64, getIReg64(rs1), mkU64(offset));
-
-         if (is_load) {
-            putVReg(irsb, vd, offset, loadLE(ty, addr));
-         } else {
-            storeLE(irsb, addr, getVReg(vd, offset, ty));
+   for (UInt i = 0; i < guest->guest_vl; ++i) {
+      for (UInt f = 0; f < nfields; ++f) {
+         UInt reg_off = i * dew_b + f * vgroup_b;
+         IRExpr* addr = NULL;
+         switch (ldst_type) {
+            case RVV_LDST_UNIT_STRIDE:
+               addr = binop(Iop_Add64,
+                            getIReg64(rs1),
+                            mkU64((i * nfields + f) * dew_b));
+               break;
+            case RVV_LDST_STRIDE:
+               addr = binop(Iop_Add64,
+                            getIReg64(rs1),
+                            binop(Iop_Add64,
+                                  binop(Iop_Mul64, mkU64(i), getIReg64(s2)),
+                                  mkU64(f * dew_b)));
+               break;
+            case RVV_LDST_INDEX:
+               addr = binop(Iop_Add64,
+                            getIReg64(rs1),
+                            binop(Iop_Add64,
+                                  widenSto64(index_ty, getVReg(s2, i * eew_b, index_ty)),
+                                  mkU64(f * dew_b)));
+               break;
+            default:
+               vassert(0);
          }
 
-         offset += eew_b;
-      }
-   } else {  // enabled
-      for (UInt i = 0; i < guest->guest_vl; ++i) {
-         IRExpr* addr = binop(Iop_Add64, getIReg64(rs1), mkU64(offset));
-         UInt mask_offset = i / 64 * 8;
-         IRExpr* guard = binop(Iop_CmpNE64,
-                               mkU64(0),
-                               binop(Iop_And64,
-                                     getVReg(0 /* v0 */, mask_offset, Ity_I64),
-                                     mkU64(1UL << (i % 64))));
-
-         if (is_load) {
-            IRLoadGOp no_cvt = ILGop_INVALID;
-            switch (ty) {
-               case Ity_I8:  no_cvt = ILGop_Ident8;  break;
-               case Ity_I16: no_cvt = ILGop_Ident16;  break;
-               case Ity_I32: no_cvt = ILGop_Ident32;  break;
-               case Ity_I64: no_cvt = ILGop_Ident64;  break;
-               default:  vassert(0);
+         if (vm == 1) {  // disabled
+            if (is_load) {
+               putVReg(irsb, vd, reg_off, loadLE(ty, addr));
+            } else {
+               storeLE(irsb, addr, getVReg(vd, reg_off, ty));
+            }
+         } else {  // enabled
+            UInt mask_off = i / 64 * 8;
+            IRExpr* guard = binop(Iop_CmpNE64,
+                                  mkU64(0),
+                                  binop(Iop_And64,
+                                        getVReg(0 /* v0 */, mask_off, Ity_I64),
+                                        mkU64(1ULL << (i % 64))));
+            if (is_load) {
+               UInt vma = SLICE_UInt(guest->guest_vtype, 7, 7);
+               IRExpr* alt = (vma == 0) ? getVReg(vd, reg_off, ty) : mkU(ty, -1ULL);
+               IRTemp res = newTemp(irsb, ty);
+               stmt(irsb, IRStmt_LoadG(Iend_LE, cvtOfIRType(ty), res, addr, alt, guard));
+               putVReg(irsb, vd, reg_off, mkexpr(res));
+            } else {
+               stmt(irsb, IRStmt_StoreG(Iend_LE, addr, getVReg(vd, reg_off, ty), guard));
             }
 
-            UInt vma = SLICE_UInt(guest->guest_vtype, 7, 7);
-            IRExpr* alt = (vma == 0) ? getVReg(vd, offset, ty) : mkU(ty, -1UL);
-            IRTemp res = newTemp(irsb, ty);
-            stmt(irsb, IRStmt_LoadG(Iend_LE, no_cvt, res, addr, alt, guard));
-            putVReg(irsb, vd, offset, mkexpr(res));
-         } else {
-            stmt(irsb, IRStmt_StoreG(Iend_LE, addr, getVReg(vd, offset, ty), guard));
          }
-
-         offset += eew_b;
       }
    }
 
@@ -5037,6 +5068,124 @@ static Bool dis_ldst(/*MB_OUT*/ DisResult* dres,
    dres->jk_StopHere = Ijk_TooManyIR;
 
    return True;
+}
+
+static Bool dis_ldst_whole(/*MB_OUT*/ DisResult* dres,
+                           /*OUT*/ IRSB*         irsb,
+                           UInt                  insn,
+                           Addr                  guest_pc_curr_instr,
+                           VexGuestRISCV64State* guest,
+                           Bool is_load)
+{
+   UInt nfields = INSN(31, 29) + 1;
+   UInt vm = INSN(25, 25);
+   UInt rs1 = INSN(19, 15);
+   // UInt width = INSN(14, 12); ignore
+   UInt vd = INSN(11, 7);
+
+   vassert(vm == 1);
+   vassert(nfields == 1 || nfields == 2 || nfields == 4 || nfields == 8);
+
+   IRType ty = Ity_I64;
+   UInt total = nfields * VLEN / 64;
+   for (UInt i = 0; i < total; ++i) {
+      UInt off = i * 8;
+      IRExpr* addr = binop(Iop_Add64, getIReg64(rs1), mkU64(off));
+
+      if (is_load) {
+         putVReg(irsb, vd, off, loadLE(ty, addr));
+      } else {
+         storeLE(irsb, addr, getVReg(vd, off, ty));
+      }
+   }
+
+   putPC(irsb, mkU64(guest_pc_curr_instr + 4));
+   dres->whatNext    = Dis_StopHere;
+   dres->jk_StopHere = Ijk_TooManyIR;
+
+   return True;
+}
+
+static Bool dis_ldst_mask(/*MB_OUT*/ DisResult* dres,
+                          /*OUT*/ IRSB*         irsb,
+                          UInt                  insn,
+                          Addr                  guest_pc_curr_instr,
+                          VexGuestRISCV64State* guest,
+                          Bool is_load)
+{
+   UInt nfields = INSN(31, 29) + 1;
+   UInt vm = INSN(25, 25);
+   UInt rs1 = INSN(19, 15);
+   UInt width = INSN(14, 12);
+   UInt vd = INSN(11, 7);
+
+   vassert(nfields == 1);
+   vassert(vm == 1);
+   vassert(width == 0);
+
+   IRType ty = Ity_I8;
+   UInt evl = (guest->guest_vl + 7) / 8;
+   for (UInt i = 0; i < evl; ++i) {
+      IRExpr* addr = binop(Iop_Add64, getIReg64(rs1), mkU64(i));
+      if (is_load) {
+         putVReg(irsb, vd, i, loadLE(ty, addr));
+      } else {
+         storeLE(irsb, addr, getVReg(vd, i, ty));
+      }
+   }
+
+   putPC(irsb, mkU64(guest_pc_curr_instr + 4));
+   dres->whatNext    = Dis_StopHere;
+   dres->jk_StopHere = Ijk_TooManyIR;
+
+   return True;
+}
+
+static Bool dis_ldst(/*MB_OUT*/ DisResult* dres,
+                     /*OUT*/ IRSB*         irsb,
+                     UInt                  insn,
+                     Addr                  guest_pc_curr_instr,
+                     VexGuestRISCV64State* guest,
+                     Bool is_load)
+{
+   UInt mew = INSN(28, 28);
+   UInt mop = INSN(27, 26);
+   UInt umop = INSN(24, 20);
+
+   vassert(mew == 0);  // no 128b support
+
+   switch (mop) {
+      case 0b00:  // unit-stride
+         switch (umop) {
+            case 0b00000:
+               return dis_ldst_common(dres, irsb, insn, guest_pc_curr_instr,
+                                      guest, is_load, RVV_LDST_UNIT_STRIDE);
+            case 0b01000:
+               return dis_ldst_whole(dres, irsb, insn, guest_pc_curr_instr,
+                                     guest, is_load);
+            case 0b01011:
+               return dis_ldst_mask(dres, irsb, insn, guest_pc_curr_instr,
+                                    guest, is_load);
+            case 0b10000:
+               // ignore fault-on-first
+               vassert(is_load == True);
+               return dis_ldst_common(dres, irsb, insn, guest_pc_curr_instr,
+                                      guest, is_load, RVV_LDST_UNIT_STRIDE);
+            default:
+               vassert(0);
+         }
+      case 0b10:  // stride
+         return dis_ldst_common(dres, irsb, insn, guest_pc_curr_instr,
+                                guest, is_load, RVV_LDST_STRIDE);
+      case 0b01:  // indexed-unordered
+      case 0b11:  // indexed-ordered
+         return dis_ldst_common(dres, irsb, insn, guest_pc_curr_instr,
+                                guest, is_load, RVV_LDST_INDEX);
+      default:
+         vassert(0);
+   }
+
+   return False;
 }
 
 static Bool dis_RV64V(/*MB_OUT*/ DisResult* dres,
@@ -5068,8 +5217,9 @@ static Bool dis_RV64V(/*MB_OUT*/ DisResult* dres,
          return False;
       }
    case 0b0000111:  // load
+      return dis_ldst(dres, irsb, insn, guest_pc_curr_instr, guest, True);
    case 0b0100111:  // store
-      return dis_ldst(dres, irsb, insn, guest_pc_curr_instr, guest);
+      return dis_ldst(dres, irsb, insn, guest_pc_curr_instr, guest, False);
    default:
       return False;
    }
