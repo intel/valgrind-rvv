@@ -6749,8 +6749,11 @@ Int sizeofIRType ( IRType ty )
       case Ity_D128: return 16;
       case Ity_V128: return 16;
       case Ity_V256: return 32;
+
+      // FIXME: a mocked large size
       case Ity_VLen1:
-      case Ity_VLen8 ... Ity_VLen64: return sizeofVecIRType(ty);
+      case Ity_VLen8 ... Ity_VLen64: return 1024;
+
       default: vex_printf("\n"); ppIRType(ty); vex_printf("\n");
                vpanic("sizeofIRType");
    }
