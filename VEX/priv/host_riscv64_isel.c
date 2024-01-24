@@ -154,7 +154,7 @@ static UInt get_sew(VexGuestRISCV64State* guest)
 static Int vtype_to_nregs(IRType ty, ISelEnv* env)
 {
    Int bits = 0;
-   switch (ty & IR_TYPE_MASK) {
+   switch (ty) {
       case Ity_VLen1: bits = 1; break;
       case Ity_VLen8: bits = 8; break;
       case Ity_VLen16: bits = 16; break;
@@ -1057,7 +1057,7 @@ static HReg iselIntExpr_R_wrk(ISelEnv* env, IRExpr* e)
 
    /* ---------------------- UNARY OP ----------------------- */
    case Iex_Unop: {
-      switch (e->Iex.Unop.op & IR_OP_MASK) {
+      switch (e->Iex.Unop.op) {
       case Iop_Not64:
       case Iop_Not32: {
          HReg dst = newVRegI(env);
@@ -3460,7 +3460,7 @@ static void loadVecReg(ISelEnv* env, HReg dst[], Int nregs, HReg addr)
 
 static Bool iselVecExpr_R_wrk_unop(HReg dst[], ISelEnv* env, IRExpr* e)
 {
-   const void* fn = IOP_HANDLERS[e->Iex.Unop.op & IR_OP_MASK].fn;
+   const void* fn = IOP_HANDLERS[e->Iex.Unop.op].fn;
    if (fn == 0) {
       return False;
    }
@@ -3523,7 +3523,7 @@ static Bool iselVecExpr_R_wrk_unop(HReg dst[], ISelEnv* env, IRExpr* e)
 
 static Bool iselVecExpr_R_wrk_binop(HReg dst[], ISelEnv* env, IRExpr* e, Bool extra)
 {
-   const void* fn = IOP_HANDLERS[e->Iex.Binop.op & IR_OP_MASK].fn;
+   const void* fn = IOP_HANDLERS[e->Iex.Binop.op].fn;
    if (fn == 0) {
       return False;
    }
@@ -3614,7 +3614,7 @@ static Bool iselVecExpr_R_wrk_binop(HReg dst[], ISelEnv* env, IRExpr* e, Bool ex
 
 static Bool iselVecExpr_R_wrk_triop_sss(HReg dst[], ISelEnv* env, IRExpr* e)
 {
-   const void* fn = IOP_HANDLERS[e->Iex.Triop.details->op & IR_OP_MASK].fn;
+   const void* fn = IOP_HANDLERS[e->Iex.Triop.details->op].fn;
    if (fn == 0) {
       return False;
    }
@@ -3715,7 +3715,7 @@ static Bool iselVecExpr_R_wrk_triop_sss(HReg dst[], ISelEnv* env, IRExpr* e)
 
 static Bool iselVecExpr_R_wrk_triop_ssd(HReg dst[], ISelEnv* env, IRExpr* e)
 {
-   const void* fn = IOP_HANDLERS[e->Iex.Triop.details->op & IR_OP_MASK].fn;
+   const void* fn = IOP_HANDLERS[e->Iex.Triop.details->op].fn;
    if (fn == 0) {
       return False;
    }
@@ -3841,7 +3841,7 @@ static void iselVecExpr_R_wrk(HReg dst[], ISelEnv* env, IRExpr* e)
 
          /*
          RISCV64VALUOp op;
-         IROp ir_op = e->Iex.Unop.op & IR_OP_MASK;
+         IROp ir_op = e->Iex.Unop.op;
          switch (ir_op) {
             default:
                goto irreducible;
@@ -3857,7 +3857,7 @@ static void iselVecExpr_R_wrk(HReg dst[], ISelEnv* env, IRExpr* e)
       }
       case Iex_Binop: {
          Bool extra = False;
-         switch (e->Iex.Binop.op & IR_OP_MASK) {
+         switch (e->Iex.Binop.op) {
             case Iop_VSlidedown_vx_8 ... Iop_VSlidedown_vx_64:
             case Iop_VSlidedown_vi_8 ... Iop_VSlidedown_vi_64:
             case Iop_VRgather_vv_8 ... Iop_VRgather_vv_64:
@@ -3877,7 +3877,7 @@ static void iselVecExpr_R_wrk(HReg dst[], ISelEnv* env, IRExpr* e)
 
          /*
          RISCV64VALUOp op;
-         IROp ir_op = e->Iex.Binop.op & IR_OP_MASK;
+         IROp ir_op = e->Iex.Binop.op;
          switch (ir_op) {
             case Iop_VAdd8 ... Iop_VAdd64:
                op = RISCV64op_VADD8 + (ir_op - Iop_VAdd8); break;
@@ -3897,7 +3897,7 @@ static void iselVecExpr_R_wrk(HReg dst[], ISelEnv* env, IRExpr* e)
       }
       case Iex_Triop: {
          Bool ret = False;
-         IROp bop = e->Iex.Triop.details->op & IR_OP_MASK;
+         IROp bop = e->Iex.Triop.details->op;
          if (bop > Iop_SSS_Start && bop < Iop_SSS_End) {
             ret = iselVecExpr_R_wrk_triop_sss(dst, env, e);
          } else if (bop > Iop_SSD_Start && bop < Iop_SSD_End) {
@@ -4369,10 +4369,9 @@ static void iselStmt(ISelEnv* env, IRStmt* stmt)
             vassert(0);
          return;
       }
-      IRType vty = tyd & IR_TYPE_MASK;
-      if (vty >= Ity_VLen1 && vty <= Ity_VLen64) {
+      if (tyd >= Ity_VLen1 && tyd <= Ity_VLen64) {
          Int vlen_b = VLEN / 8;
-         Int nregs = vtype_to_nregs(vty, env);
+         Int nregs = vtype_to_nregs(tyd, env);
          Int vl_ldst64  = vlen_b / 8;
 
          HReg src[MAX_REGS] = {0};
@@ -4410,7 +4409,7 @@ static void iselStmt(ISelEnv* env, IRStmt* stmt)
          addInstr(env, RISCV64Instr_FpMove(RISCV64op_FMV_D, dst, src));
          return;
       }
-      IRType vty = ty & IR_TYPE_MASK;
+      IRType vty = ty;
       if (vty >= Ity_VLen1 && vty <= Ity_VLen64) {
          Int nregs = vtype_to_nregs(vty, env);
 
@@ -4788,7 +4787,7 @@ HInstrArray* iselSB_RISCV64(const IRSB*        bb,
    j = 0;
    for (i = 0; i < env->n_vregmap; i++) {
       hregHI = hreg = INVALID_HREG;
-      switch (bb->tyenv->types[i] & IR_TYPE_MASK) {
+      switch (bb->tyenv->types[i]) {
       case Ity_I1:
       case Ity_I8:
       case Ity_I16:

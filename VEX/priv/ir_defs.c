@@ -37,41 +37,14 @@
 
 #include "main_util.h"
 
-Int sizeofVecIRTypeElem (IRType ty)
-{
-   ty &= IR_TYPE_MASK;
-   vassert(ty >= Ity_VLen8 && ty <= Ity_VLen64);
-   return 1 << (ty - Ity_VLen8);
-}
-
-Int VLofVecIRType (IRType ty)
-{
-	return ty >> IR_TYPE_VL_OFFSET;
-}
-
-Int VLofVecIROp ( IROp op)
-{
-   return op >> IR_OP_VL_OFFSET;
-}
-
-Int sizeofVecIRType ( IRType ty)
-{
-   if ((ty & IR_TYPE_MASK) == Ity_VLen1) {
-      return (VLofVecIRType(ty) + 7) / 8;
-   }
-   return VLofVecIRType(ty) * sizeofVecIRTypeElem(ty);
-}
-
 Bool isVecIRExpr ( const IRTypeEnv* tyenv, const IRExpr* e )
 {
    IRType ty = typeOfIRExpr(tyenv, e);
-   ty &= IR_TYPE_MASK;
    return (ty >= Ity_VLen1 && ty <= Ity_VLen64);
 }
 
 Bool isVecIRType ( IRType ty )
 {
-   ty &= IR_TYPE_MASK;
    return (ty >= Ity_VLen1 && ty <= Ity_VLen64);
 }
 
@@ -81,7 +54,7 @@ Bool isVecIRType ( IRType ty )
 
 void ppIRType ( IRType ty )
 {
-   switch (ty & IR_TYPE_MASK) {
+   switch (ty) {
       case Ity_INVALID: vex_printf("Ity_INVALID"); break;
       case Ity_I1:      vex_printf( "I1");   break;
       case Ity_I8:      vex_printf( "I8");   break;
@@ -98,11 +71,11 @@ void ppIRType ( IRType ty )
       case Ity_D128:    vex_printf( "D128"); break;
       case Ity_V128:    vex_printf( "V128"); break;
       case Ity_V256:    vex_printf( "V256"); break;
-      case Ity_VLen1:    vex_printf( "VLen1-%d",  VLofVecIRType(ty) ); break;
-      case Ity_VLen8:    vex_printf( "VLen8-%d",  VLofVecIRType(ty) ); break;
-      case Ity_VLen16:   vex_printf( "VLen16-%d", VLofVecIRType(ty) ); break;
-      case Ity_VLen32:   vex_printf( "VLen32-%d", VLofVecIRType(ty) ); break;
-      case Ity_VLen64:   vex_printf( "VLen64-%d", VLofVecIRType(ty) ); break;
+      case Ity_VLen1:    vex_printf( "VLen1"); break;
+      case Ity_VLen8:    vex_printf( "VLen8"); break;
+      case Ity_VLen16:   vex_printf( "VLen16"); break;
+      case Ity_VLen32:   vex_printf( "VLen32"); break;
+      case Ity_VLen64:   vex_printf( "VLen64"); break;
       default: vex_printf("ty = 0x%x\n", (UInt)ty);
                vpanic("ppIRType");
    }
@@ -162,7 +135,6 @@ void ppIROp ( IROp op )
 {
    const HChar* str = NULL; 
    IROp   base;
-   op &= IR_OP_MASK;
    switch (op) {
       case Iop_Add8 ... Iop_Add64:
          str = "Add"; base = Iop_Add8; break;
@@ -1835,21 +1807,11 @@ void ppIROp ( IROp op )
    }
 }
 
-IRType typeofVecIR ( UInt vl, IRType base )
-{
-   return (vl << IR_TYPE_VL_OFFSET) | base;
-}
-
-IROp opofVecIR ( UInt vl, IROp base )
-{
-   return (vl << IR_OP_VL_OFFSET) | base;
-}
-
 // A very few primops might trap (eg, divide by zero).  We need to be able to
 // identify them.
 Bool primopMightTrap ( IROp op )
 {
-   switch (op & IR_OP_MASK) {
+   switch (op) {
 
    // The few potentially trapping ones
    case Iop_DivU32: case Iop_DivS32: case Iop_DivU64: case Iop_DivS64:
@@ -2446,6 +2408,7 @@ Bool primopMightTrap ( IROp op )
    case Iop_VMadc_vim_8 ... Iop_VMadc_vim_64:
    case Iop_VMadc_vv_8 ... Iop_VMadc_vv_64:
    case Iop_VMadc_vx_8 ... Iop_VMadc_vx_64:
+   case Iop_VMadc_vi_8 ... Iop_VMadc_vi_64:
    case Iop_VMsbc_vvm_8 ... Iop_VMsbc_vvm_64:
    case Iop_VMsbc_vxm_8 ... Iop_VMsbc_vxm_64:
    case Iop_VMsbc_vv_8 ... Iop_VMsbc_vv_64:
@@ -2481,6 +2444,34 @@ Bool primopMightTrap ( IROp op )
    case Iop_VRgather_vx_8 ... Iop_VRgather_vx_64:
    case Iop_VRgather_vi_8 ... Iop_VRgather_vi_64:
    case Iop_VRgatherei16_vv_8 ... Iop_VRgatherei16_vv_64:
+
+   case Iop_VMinu_vv_8 ... Iop_VMinu_vv_64:
+   case Iop_VMinu_vx_8 ... Iop_VMinu_vx_64:
+   case Iop_VMin_vv_8 ... Iop_VMin_vv_64:
+   case Iop_VMin_vx_8 ... Iop_VMin_vx_64:
+   case Iop_VMaxu_vv_8 ... Iop_VMaxu_vv_64:
+   case Iop_VMaxu_vx_8 ... Iop_VMaxu_vx_64:
+   case Iop_VMax_vv_8 ... Iop_VMax_vv_64:
+   case Iop_VMax_vx_8 ... Iop_VMax_vx_64:
+
+   case Iop_VMul_vv_8 ... Iop_VMul_vv_64:
+   case Iop_VMul_vx_8 ... Iop_VMul_vx_64:
+   case Iop_VMulh_vv_8 ... Iop_VMulh_vv_64:
+   case Iop_VMulh_vx_8 ... Iop_VMulh_vx_64:
+   case Iop_VMulhu_vv_8 ... Iop_VMulhu_vv_64:
+   case Iop_VMulhu_vx_8 ... Iop_VMulhu_vx_64:
+   case Iop_VMulhsu_vv_8 ... Iop_VMulhsu_vv_64:
+   case Iop_VMulhsu_vx_8 ... Iop_VMulhsu_vx_64:
+
+   case Iop_VDiv_vv_8 ... Iop_VDiv_vv_64:
+   case Iop_VDiv_vx_8 ... Iop_VDiv_vx_64:
+   case Iop_VDivu_vv_8 ... Iop_VDivu_vv_64:
+   case Iop_VDivu_vx_8 ... Iop_VDivu_vx_64:
+
+   case Iop_VRem_vv_8 ... Iop_VRem_vv_64:
+   case Iop_VRem_vx_8 ... Iop_VRem_vx_64:
+   case Iop_VRemu_vv_8 ... Iop_VRemu_vv_64:
+   case Iop_VRemu_vx_8 ... Iop_VRemu_vx_64:
 
       return False;
 
@@ -3776,248 +3767,189 @@ void typeOfPrimop ( IROp op,
 #  define UNARY_COMPARISON(_ta)                                \
      *t_dst = Ity_I1; *t_arg1 = (_ta); break;
 
-#  define VEC_VVto1_BINARY(bop_base) \
+#  define VEC_VVto1_BINARY(op_base) \
       { \
-         IRType base = Ity_VLen8 + bop - bop_base; \
-         UInt vl = VLofVecIROp(op); \
-         IRType ty = typeofVecIR (vl, base); \
-         IRType dst_ty = typeofVecIR (vl, Ity_VLen1); \
-         BINARY(ty, ty, dst_ty); \
+         IRType ty = Ity_VLen8 + op - op_base; \
+         BINARY(ty, ty, Ity_VLen1); \
       }
 
-#  define VEC_VXIto1_BINARY(bop_base) \
+#  define VEC_VXIto1_BINARY(op_base) \
       { \
-         IRType base = Ity_VLen8 + bop - bop_base; \
-         UInt vl = VLofVecIROp(op); \
-         IRType ty = typeofVecIR (vl, base); \
-         IRType dst_ty = typeofVecIR (vl, Ity_VLen1); \
-         BINARY(Ity_I64, ty, dst_ty); \
+         IRType ty = Ity_VLen8 + op - op_base; \
+         BINARY(Ity_I64, ty, Ity_VLen1); \
       }
 
-#  define VEC_VV_BINARY(bop_base) \
+#  define VEC_VV_BINARY(op_base) \
       { \
-         IRType base = Ity_VLen8 + bop - bop_base; \
-         UInt vl = VLofVecIROp(op); \
-         IRType ty = typeofVecIR (vl, base); \
+         IRType ty = Ity_VLen8 + op - op_base; \
          BINARY(ty, ty, ty); \
       }
 
-#  define VEC_VXI_BINARY(bop_base) \
+#  define VEC_VXI_BINARY(op_base) \
       { \
-         IRType base = Ity_VLen8 + bop - bop_base; \
-         UInt vl = VLofVecIROp(op); \
-         IRType ty = typeofVecIR (vl, base); \
+         IRType ty = Ity_VLen8 + op - op_base; \
          BINARY(Ity_I64, ty, ty); \
       }
 
-#  define VEC_VM_BINARY(bop_base) \
+#  define VEC_VM_BINARY(op_base) \
       { \
-         IRType base = Ity_VLen8 + bop - bop_base; \
-         UInt vl = VLofVecIROp(op); \
-         IRType ty = typeofVecIR (vl, base); \
-         IRType mask_ty = typeofVecIR (vl, Ity_VLen1); \
-         BINARY(mask_ty, ty, ty); \
+         IRType ty = Ity_VLen8 + op - op_base; \
+         BINARY(Ity_VLen1, ty, ty); \
       }
 
-#  define VEC_WV_BINARY(bop_base) \
+#  define VEC_WV_BINARY(op_base) \
       { \
-         IRType base = Ity_VLen8 + bop - bop_base; \
-         UInt vl = VLofVecIROp(op); \
-         IRType ty = typeofVecIR (vl, base); \
+         IRType ty = Ity_VLen8 + op - op_base; \
          BINARY(ty, ty + 1, ty); \
       }
 
-#  define VEC_WXI_BINARY(bop_base) \
+#  define VEC_WXI_BINARY(op_base) \
       { \
-         IRType base = Ity_VLen8 + bop - bop_base; \
-         UInt vl = VLofVecIROp(op); \
-         IRType ty = typeofVecIR (vl, base); \
+         IRType ty = Ity_VLen8 + op - op_base; \
          BINARY(Ity_I64, ty + 1, ty); \
       }
 
-#  define VEC_VV_BINARY_W(bop_base) \
+#  define VEC_VV_BINARY_W(op_base) \
       { \
-         UInt vl = VLofVecIROp(op); \
-         IRType src_base = Ity_VLen8 + bop - bop_base; \
-         IRType src_ty = typeofVecIR (vl, src_base); \
-         IRType dst_base = src_base + 1; \
-         IRType dst_ty = typeofVecIR (vl, dst_base); \
+         IRType src_ty = Ity_VLen8 + op - op_base; \
+         IRType dst_ty = src_ty + 1; \
          BINARY(src_ty, src_ty, dst_ty); \
       }
 
-#  define VEC_VX_BINARY_W(bop_base) \
+#  define VEC_VX_BINARY_W(op_base) \
       { \
-         UInt vl = VLofVecIROp(op); \
-         IRType src2_base = Ity_VLen8 + bop - bop_base; \
-         IRType src2_ty = typeofVecIR (vl, src2_base); \
-         IRType dst_base = src2_base + 1; \
-         IRType dst_ty = typeofVecIR (vl, dst_base); \
+         IRType src2_ty = Ity_VLen8 + op - op_base; \
+         IRType dst_ty = src2_ty + 1; \
          BINARY(Ity_I64, src2_ty, dst_ty); \
       }
 
-#  define VEC_WV_BINARY_W(bop_base) \
+#  define VEC_WV_BINARY_W(op_base) \
       { \
-         UInt vl = VLofVecIROp(op); \
-         IRType src1_base = Ity_VLen8 + bop - bop_base; \
-         IRType src1_ty = typeofVecIR (vl, src1_base); \
-         IRType src2_base = src1_base + 1; \
-         IRType src2_ty = typeofVecIR (vl, src2_base); \
+         IRType src1_ty = Ity_VLen8 + op - op_base; \
+         IRType src2_ty = src1_ty + 1; \
          IRType dst_ty = src2_ty; \
          BINARY(src1_ty, src2_ty, dst_ty); \
       }
 
-#  define VEC_WX_BINARY_W(bop_base) \
+#  define VEC_WX_BINARY_W(op_base) \
       { \
-         UInt vl = VLofVecIROp(op); \
-         IRType src2_base = Ity_VLen8 + bop - bop_base; \
-         IRType src2_ty = typeofVecIR (vl, src2_base + 1); \
+         IRType src2_ty = Ity_VLen8 + op - op_base + 1; \
          IRType dst_ty = src2_ty; \
          BINARY(Ity_I64, src2_ty, dst_ty); \
       }
 
-#  define VEC_VV_TERNARY(bop_base) \
+#  define VEC_VV_TERNARY(op_base) \
       { \
-         IRType base = Ity_VLen8 + bop - bop_base; \
-         UInt vl = VLofVecIROp(op); \
-         IRType ty = typeofVecIR (vl, base); \
+         IRType ty = Ity_VLen8 + op - op_base; \
          TERNARY(ty, ty, ty, ty); \
       }
 
-#  define VEC_VXI_TERNARY(bop_base) \
+#  define VEC_VXI_TERNARY(op_base) \
       { \
-         IRType base = Ity_VLen8 + bop - bop_base; \
-         UInt vl = VLofVecIROp(op); \
-         IRType ty = typeofVecIR (vl, base); \
+         IRType ty = Ity_VLen8 + op - op_base; \
          TERNARY(Ity_I64, ty, ty, ty); \
       }
 
-#  define VEC_VV_TERNARY_W(bop_base) \
+#  define VEC_VV_TERNARY_W(op_base) \
       { \
-         UInt vl = VLofVecIROp(op); \
-         IRType src_base = Ity_VLen8 + bop - bop_base; \
-         IRType src_ty = typeofVecIR (vl, src_base); \
-         IRType dst_base = src_base + 1; \
-         IRType dst_ty = typeofVecIR (vl, dst_base); \
+         IRType src_ty = Ity_VLen8 + op - op_base; \
+         IRType dst_ty = src_ty + 1; \
          TERNARY(src_ty, src_ty, dst_ty, dst_ty); \
       }
 
-#  define VEC_VX_TERNARY_W(bop_base) \
+#  define VEC_VX_TERNARY_W(op_base) \
       { \
-         UInt vl = VLofVecIROp(op); \
-         IRType src2_base = Ity_VLen8 + bop - bop_base; \
-         IRType src2_ty = typeofVecIR (vl, src2_base); \
-         IRType dst_base = src2_base + 1; \
-         IRType dst_ty = typeofVecIR (vl, dst_base); \
+         IRType src2_ty = Ity_VLen8 + op - op_base; \
+         IRType dst_ty = src2_ty + 1; \
          TERNARY(Ity_I64, src2_ty, dst_ty, dst_ty); \
       }
 
-#  define VEC_UNARY(bop_base) \
+#  define VEC_UNARY(op_base) \
       { \
-         IRType base = Ity_VLen8 + bop - bop_base; \
-         UInt vl = VLofVecIROp(op); \
-         IRType ty = typeofVecIR (vl, base); \
+         IRType ty = Ity_VLen8 + op - op_base; \
          UNARY(ty, ty); \
       }
 
-#define VEC_UNARY_GENERIC(dst_base, src_base)	\
+#define VEC_UNARY_GENERIC(dst_ty, src_ty)	\
       { \
-         UInt vl = VLofVecIROp(op); \
-         IRType dst_ty = typeofVecIR (vl, dst_base); \
-         IRType src_ty = typeofVecIR (vl, src_base); \
          UNARY(src_ty, dst_ty); \
       }
 
-#  define VEC_VVM_TERNARY(bop_base) \
+#  define VEC_VVM_TERNARY(op_base) \
       { \
-         IRType base = Ity_VLen8 + bop - bop_base; \
-         UInt vl = VLofVecIROp(op); \
-         IRType ty = typeofVecIR (vl, base); \
-         IRType mask_ty = typeofVecIR (vl, Ity_VLen1); \
+         IRType ty = Ity_VLen8 + op - op_base; \
+         IRType mask_ty = Ity_VLen1; \
          TERNARY(ty, ty, mask_ty, ty); \
       }
 
-#  define VEC_VXM_TERNARY(bop_base) \
+#  define VEC_VXM_TERNARY(op_base) \
       { \
-         IRType base = Ity_VLen8 + bop - bop_base; \
-         UInt vl = VLofVecIROp(op); \
-         IRType ty = typeofVecIR (vl, base); \
-         IRType mask_ty = typeofVecIR (vl, Ity_VLen1); \
+         IRType ty = Ity_VLen8 + op - op_base; \
+         IRType mask_ty = Ity_VLen1; \
          TERNARY(Ity_I64, ty, mask_ty, ty); \
       }
 
-#  define VEC_VS_BINARY(bop_base) \
+/*
+ * FIXME: is it right to set dst ty of reduce as this?
+ * or a specialized Ity_VLen8_1? 1 for single element.
+ */
+#  define VEC_VS_BINARY(op_base) \
       { \
-         IRType base = Ity_VLen8 + bop - bop_base; \
-         UInt vl = VLofVecIROp(op); \
-         IRType src2_ty = typeofVecIR (vl, base); \
-         IRType dst_ty = typeofVecIR (1, base); \
+         IRType src2_ty = Ity_VLen8 + op - op_base; \
+         IRType dst_ty = Ity_VLen8 + op - op_base; \
          BINARY(Ity_I64, src2_ty, dst_ty); \
       }
 
 /* vs with mask */
-#  define VEC_VS_TERNARY(bop_base) \
+#  define VEC_VS_TERNARY(op_base) \
       { \
-         IRType base = Ity_VLen8 + bop - bop_base; \
-         UInt vl = VLofVecIROp(op); \
-         IRType src2_ty = typeofVecIR (vl, base); \
-         IRType mask_ty = typeofVecIR(vl, Ity_VLen1); \
-         IRType dst_ty = typeofVecIR (1, base); \
+         IRType src2_ty = Ity_VLen8 + op - op_base; \
+         IRType mask_ty = Ity_VLen1; \
+         IRType dst_ty = Ity_VLen8 + op - op_base; \
          TERNARY(Ity_I64, src2_ty, mask_ty, dst_ty); \
       }
 
-#  define VEC_VS_BINARY_W(bop_base) \
+#  define VEC_VS_BINARY_W(op_base) \
       { \
-         IRType base = Ity_VLen8 + bop - bop_base; \
-         UInt vl = VLofVecIROp(op); \
-         IRType src2_ty = typeofVecIR (vl, base); \
-         IRType dst_ty = typeofVecIR (1, base + 1); \
+         IRType src2_ty = Ity_VLen8 + op - op_base; \
+         IRType dst_ty = Ity_VLen8 + op - op_base + 1; \
          BINARY(Ity_I64, src2_ty, dst_ty); \
       }
 
 /* vs with mask */
-#  define VEC_VS_TERNARY_W(bop_base) \
+#  define VEC_VS_TERNARY_W(op_base) \
       { \
-         IRType base = Ity_VLen8 + bop - bop_base; \
-         UInt vl = VLofVecIROp(op); \
-         IRType src2_ty = typeofVecIR (vl, base); \
-         IRType mask_ty = typeofVecIR(vl, Ity_VLen1); \
-         IRType dst_ty = typeofVecIR (1, base + 1); \
+         IRType src2_ty = Ity_VLen8 + op - op_base; \
+         IRType mask_ty = Ity_VLen1; \
+         IRType dst_ty = Ity_VLen8 + op - op_base + 1; \
          TERNARY(Ity_I64, src2_ty, mask_ty, dst_ty); \
       }
 
-#  define VEC_VV_BINARY_M(bop_base) \
+#  define VEC_VV_BINARY_M(op_base) \
       { \
-         IRType base = Ity_VLen8 + bop - bop_base; \
-         UInt vl = VLofVecIROp(op); \
-         IRType ty = typeofVecIR (vl, base); \
-         IRType mask_ty = typeofVecIR (vl, Ity_VLen1); \
+         IRType ty = Ity_VLen8 + op - op_base; \
+         IRType mask_ty = Ity_VLen1; \
          BINARY(ty, ty, mask_ty); \
       }
 
-#  define VEC_VX_BINARY_M(bop_base) \
+#  define VEC_VX_BINARY_M(op_base) \
       { \
-         IRType base = Ity_VLen8 + bop - bop_base; \
-         UInt vl = VLofVecIROp(op); \
-         IRType ty = typeofVecIR (vl, base); \
-         IRType mask_ty = typeofVecIR (vl, Ity_VLen1); \
+         IRType ty = Ity_VLen8 + op - op_base; \
+         IRType mask_ty = Ity_VLen1; \
          BINARY(Ity_I64, ty, mask_ty); \
       }
 
-#  define VEC_VVM_TERNARY_M(bop_base) \
+#  define VEC_VVM_TERNARY_M(op_base) \
       { \
-         IRType base = Ity_VLen8 + bop - bop_base; \
-         UInt vl = VLofVecIROp(op); \
-         IRType ty = typeofVecIR (vl, base); \
-         IRType mask_ty = typeofVecIR (vl, Ity_VLen1); \
+         IRType ty = Ity_VLen8 + op - op_base; \
+         IRType mask_ty = Ity_VLen1; \
          TERNARY(ty, ty, mask_ty, mask_ty); \
       }
 
-#  define VEC_VXM_TERNARY_M(bop_base) \
+#  define VEC_VXM_TERNARY_M(op_base) \
       { \
-         IRType base = Ity_VLen8 + bop - bop_base; \
-         UInt vl = VLofVecIROp(op); \
-         IRType ty = typeofVecIR (vl, base); \
-         IRType mask_ty = typeofVecIR (vl, Ity_VLen1); \
+         IRType ty = Ity_VLen8 + op - op_base; \
+         IRType mask_ty = Ity_VLen1; \
          TERNARY(Ity_I64, ty, mask_ty, mask_ty); \
       }
 
@@ -4030,8 +3962,7 @@ void typeOfPrimop ( IROp op,
    *t_arg2 = Ity_INVALID;
    *t_arg3 = Ity_INVALID;
    *t_arg4 = Ity_INVALID;
-   IROp bop = op & IR_OP_MASK;
-   switch (bop) {
+   switch (op) {
       case Iop_Add8: case Iop_Sub8: case Iop_Mul8: 
       case Iop_Or8:  case Iop_And8: case Iop_Xor8:
          BINARY(Ity_I8,Ity_I8, Ity_I8);
@@ -5345,24 +5276,18 @@ void typeOfPrimop ( IROp op,
       case Iop_VNot_8 ... Iop_VNot_64:
          VEC_UNARY(Iop_VNot_8);
       case Iop_VExpandBitsTo_8 ... Iop_VExpandBitsTo_64: {
-         IRType base = Ity_VLen8 + bop - Iop_VExpandBitsTo_8;
-         UInt vl = VLofVecIROp(op);
-         IRType dst_ty = typeofVecIR (vl, base);
-         IRType src_ty = typeofVecIR (vl, Ity_VLen1);
+         IRType dst_ty = Ity_VLen8 + op - Iop_VExpandBitsTo_8;
+         IRType src_ty = Ity_VLen1;
          UNARY(src_ty, dst_ty);
       }
       case Iop_VMv_v_v_8 ... Iop_VMv_v_v_64:
          VEC_UNARY(Iop_VMv_v_v_8);
       case Iop_VMv_v_x_8 ... Iop_VMv_v_x_64: {
-         IRType base = Ity_VLen8 + bop - Iop_VMv_v_x_8;
-         UInt vl = VLofVecIROp(op);
-         IRType dst_ty = typeofVecIR (vl, base);
+         IRType dst_ty = Ity_VLen8 + op - Iop_VMv_v_x_8;
          UNARY(Ity_I64, dst_ty);
       }
       case Iop_VMv_v_i_8 ... Iop_VMv_v_i_64: {
-         IRType base = Ity_VLen8 + bop - Iop_VMv_v_i_8;
-         UInt vl = VLofVecIROp(op);
-         IRType dst_ty = typeofVecIR (vl, base);
+         IRType dst_ty = Ity_VLen8 + op - Iop_VMv_v_i_8;
          UNARY(Ity_I64, dst_ty);
       }
       case Iop_VMerge_vvm_8 ... Iop_VMerge_vvm_64:
@@ -5453,8 +5378,7 @@ void typeOfPrimop ( IROp op,
       case Iop_VMnor_mm:
       case Iop_VMorn_mm:
       case Iop_VMxnor_mm: {
-         UInt vl = VLofVecIROp(op);
-         IRType ty = typeofVecIR(vl, Ity_VLen1);
+         IRType ty = Ity_VLen1;
          BINARY(ty, ty, ty);
       }
 
@@ -5473,19 +5397,17 @@ void typeOfPrimop ( IROp op,
 
       case Iop_VCpop_m:
       case Iop_VFirst_m:
-         UNARY(typeofVecIR(VLofVecIROp(op), Ity_VLen1), Ity_I64);
+         UNARY(Ity_VLen1, Ity_I64);
 
       case Iop_VMsbf_m:
       case Iop_VMsif_m:
       case Iop_VMsof_m:
-         UNARY(typeofVecIR(VLofVecIROp(op), Ity_VLen1),
-               typeofVecIR(VLofVecIROp(op), Ity_VLen1));
+         UNARY(Ity_VLen1, Ity_VLen1);
 
       case Iop_VId_v_8 ... Iop_VId_v_64:
-         UNARY(Ity_I64, typeofVecIR(VLofVecIROp(op), Ity_VLen8 + bop - Iop_VId_v_8));
+         UNARY(Ity_I64, Ity_VLen8 + op - Iop_VId_v_8);
       case Iop_VIota_m_8 ... Iop_VIota_m_64:
-         UNARY(typeofVecIR(VLofVecIROp(op), Ity_VLen1),
-               typeofVecIR(VLofVecIROp(op), Ity_VLen8 + bop - Iop_VIota_m_8));
+         UNARY(Ity_VLen1, Ity_VLen8 + op - Iop_VIota_m_8);
 
       case Iop_VCompress_vm_8 ... Iop_VCompress_vm_64:
          VEC_VM_BINARY(Iop_VCompress_vm_8);
@@ -5679,7 +5601,7 @@ IRType typeOfIRExpr ( const IRTypeEnv* tyenv, const IRExpr* e )
 /* Is this any value actually in the enumeration 'IRType' ? */
 Bool isPlausibleIRType ( IRType ty )
 {
-   switch (ty & IR_TYPE_MASK) {
+   switch (ty) {
       case Ity_INVALID: case Ity_I1:
       case Ity_I8: case Ity_I16: case Ity_I32: 
       case Ity_I64: case Ity_I128:
@@ -6734,7 +6656,7 @@ Bool eqIRRegArray ( const IRRegArray* descr1, const IRRegArray* descr2 )
 
 Int sizeofIRType ( IRType ty )
 {
-   switch (ty & IR_TYPE_MASK) {
+   switch (ty) {
       case Ity_I8:   return 1;
       case Ity_I16:  return 2;
       case Ity_I32:  return 4;

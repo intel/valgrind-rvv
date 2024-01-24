@@ -6602,7 +6602,7 @@ static void considerExpensives ( /*OUT*/Bool* hasGetIorPutI,
          case Ist_WrTmp:  
             if (st->Ist.WrTmp.data->tag == Iex_GetI)
                *hasGetIorPutI = True;
-            switch (typeOfIRTemp(bb->tyenv, st->Ist.WrTmp.tmp) & IR_TYPE_MASK) {
+            switch (typeOfIRTemp(bb->tyenv, st->Ist.WrTmp.tmp)) {
                case Ity_I1: case Ity_I8: case Ity_I16: 
                case Ity_I32: case Ity_I64: case Ity_I128: 
                   break;
