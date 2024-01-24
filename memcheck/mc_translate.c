@@ -3540,6 +3540,25 @@ IRAtom* ternaryM_v_vxi_m ( MCEnv* mce, IRAtom* vatom1, IRAtom* vatom2, IRAtom* v
    return mkUifUVLen1(mce, a12m, vatom3);
 }
 
+// FIXME
+static
+IRAtom* reduce_v ( MCEnv* mce, IRAtom* vatom1, IRAtom* vatom2, UInt index )
+{
+   UInt vl = VLofVecIRType(typeOfIRExpr(mce->sb->tyenv, vatom2));
+   IRType ty = typeofVecIR(1, Ity_VLen8 + index);
+   IROp op = opofVecIR(vl, Iop_VRedand_vs_8 + index);
+   return assignNew('V', mce, ty, binop(op, vatom1, vatom2));
+}
+
+static
+IRAtom* reduce_w ( MCEnv* mce, IRAtom* vatom1, IRAtom* vatom2, UInt index )
+{
+   UInt vl = VLofVecIRType(typeOfIRExpr(mce->sb->tyenv, vatom2));
+   IRType ty = typeofVecIR(1, Ity_VLen8 + index + 1);
+   IROp op = opofVecIR(vl, Iop_VRedand_vs_8 + index + 1);
+   return assignNew('V', mce, ty, binop(op, zwiden_v(mce, vatom1), zwiden_v(mce, vatom2)));
+}
+
 /* --- 64-bit versions --- */
 
 static
@@ -3858,19 +3877,26 @@ IRAtom* expr2vbits_Triop ( MCEnv* mce,
 
       // FIXME
       case Iop_VWredsumu_vsm_8 ... Iop_VWredsumu_vsm_32:
+         return reduce_w(mce, vatom1, vatom2, bop - Iop_VWredsumu_vsm_8);
       case Iop_VWredsum_vsm_8 ... Iop_VWredsum_vsm_32:
+         return reduce_w(mce, vatom1, vatom2, bop - Iop_VWredsum_vsm_8);
+
       case Iop_VRedsum_vsm_8 ... Iop_VRedsum_vsm_64:
+         return reduce_v(mce, vatom1, vatom2, bop - Iop_VRedsum_vsm_8);
       case Iop_VRedand_vsm_8 ... Iop_VRedand_vsm_64:
+         return reduce_v(mce, vatom1, vatom2, bop - Iop_VRedand_vsm_8);
       case Iop_VRedor_vsm_8 ... Iop_VRedor_vsm_64:
+         return reduce_v(mce, vatom1, vatom2, bop - Iop_VRedor_vsm_8);
       case Iop_VRedxor_vsm_8 ... Iop_VRedxor_vsm_64:
+         return reduce_v(mce, vatom1, vatom2, bop - Iop_VRedxor_vsm_8);
       case Iop_VRedminu_vsm_8 ... Iop_VRedminu_vsm_64:
+         return reduce_v(mce, vatom1, vatom2, bop - Iop_VRedminu_vsm_8);
       case Iop_VRedmin_vsm_8 ... Iop_VRedmin_vsm_64:
+         return reduce_v(mce, vatom1, vatom2, bop - Iop_VRedmin_vsm_8);
       case Iop_VRedmaxu_vsm_8 ... Iop_VRedmaxu_vsm_64:
-      case Iop_VRedmax_vsm_8 ... Iop_VRedmax_vsm_64: {
-         Int vl = VLEN / 64;
-         IRType ty = typeofVecIR(vl, Ity_VLen64);
-         return assignNew('V', mce, ty, unop(opofVecIR(vl, Iop_VMv_v_i_64), mkU64(0)));
-      }
+         return reduce_v(mce, vatom1, vatom2, bop - Iop_VRedmaxu_vsm_8);
+      case Iop_VRedmax_vsm_8 ... Iop_VRedmax_vsm_64:
+         return reduce_v(mce, vatom1, vatom2, bop - Iop_VRedmax_vsm_8);
 
       case Iop_VAdc_vvm_8 ... Iop_VAdc_vvm_64:
          return ternary_v_vxi_m(mce, vatom1, vatom2, vatom3, bop - Iop_VAdc_vvm_8);
@@ -5633,19 +5659,26 @@ IRAtom* expr2vbits_Binop ( MCEnv* mce,
 
       // FIXME
       case Iop_VWredsumu_vs_8 ... Iop_VWredsumu_vs_32:
+         return reduce_w(mce, vatom1, vatom2, bop - Iop_VWredsumu_vs_8);
       case Iop_VWredsum_vs_8 ... Iop_VWredsum_vs_32:
+         return reduce_w(mce, vatom1, vatom2, bop - Iop_VWredsum_vs_8);
+
       case Iop_VRedsum_vs_8 ... Iop_VRedsum_vs_64:
+         return reduce_v(mce, vatom1, vatom2, bop - Iop_VRedsum_vs_8);
       case Iop_VRedand_vs_8 ... Iop_VRedand_vs_64:
+         return reduce_v(mce, vatom1, vatom2, bop - Iop_VRedand_vs_8);
       case Iop_VRedor_vs_8 ... Iop_VRedor_vs_64:
+         return reduce_v(mce, vatom1, vatom2, bop - Iop_VRedor_vs_8);
       case Iop_VRedxor_vs_8 ... Iop_VRedxor_vs_64:
+         return reduce_v(mce, vatom1, vatom2, bop - Iop_VRedxor_vs_8);
       case Iop_VRedminu_vs_8 ... Iop_VRedminu_vs_64:
+         return reduce_v(mce, vatom1, vatom2, bop - Iop_VRedminu_vs_8);
       case Iop_VRedmin_vs_8 ... Iop_VRedmin_vs_64:
+         return reduce_v(mce, vatom1, vatom2, bop - Iop_VRedmin_vs_8);
       case Iop_VRedmaxu_vs_8 ... Iop_VRedmaxu_vs_64:
-      case Iop_VRedmax_vs_8 ... Iop_VRedmax_vs_64: {
-         Int vl = VLEN / 64;
-         IRType ty = typeofVecIR(vl, Ity_VLen64);
-         return assignNew('V', mce, ty, unop(opofVecIR(vl, Iop_VMv_v_i_64), mkU64(0)));
-      }
+         return reduce_v(mce, vatom1, vatom2, bop - Iop_VRedmaxu_vs_8);
+      case Iop_VRedmax_vs_8 ... Iop_VRedmax_vs_64:
+         return reduce_v(mce, vatom1, vatom2, bop - Iop_VRedmax_vs_8);
 
       case Iop_VMand_mm:
       case Iop_VMnand_mm:

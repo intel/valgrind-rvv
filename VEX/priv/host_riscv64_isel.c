@@ -77,8 +77,8 @@
 */
 
 typedef struct {
-   UInt vlmax;
-   UInt padding;
+   UInt lmul;
+   UInt sew;
 } VecEnv;
 
 typedef struct {
@@ -117,6 +117,53 @@ typedef struct {
 
 #define DIV_ROUND_UP(a, b)  (((a) + (b) - 1) / (b))
 #define ROUND_UP(a, b)  (((a) + (b) - 1) / (b) * (b))
+
+/*
+ * FIXME: cleanup - some of these are same as guest code
+ */
+
+static inline Long sext_slice_ulong(ULong value, UInt bmax, UInt bmin)
+{
+   return ((Long)value) << (63 - bmax) >> (63 - (bmax - bmin));
+}
+
+#define SLICE_UInt(_uint, _bMax, _bMin)                \
+   ((((UInt)(_uint)) >> (_bMin)) &                     \
+    (UInt)((1ULL << ((_bMax) - (_bMin) + 1)) - 1ULL))
+
+// return lmul * 8
+static UInt get_lmul(VexGuestRISCV64State* guest)
+{
+   Int raw = sext_slice_ulong(guest->guest_vtype, 2, 0);
+   return 1 << (3 + raw);
+}
+
+// return sew in bits
+static UInt get_sew(VexGuestRISCV64State* guest)
+{
+   UInt raw_sew = SLICE_UInt(guest->guest_vtype, 5, 3);
+   switch (raw_sew) {
+   case 0b000: return 8;
+   case 0b001: return 16;
+   case 0b010: return 32;
+   case 0b011: return 64;
+   default: vassert(0);
+   }
+}
+
+static Int vtype_to_nregs(IRType ty, ISelEnv* env)
+{
+   Int bits = 0;
+   switch (ty & IR_TYPE_MASK) {
+      case Ity_VLen1: bits = 1; break;
+      case Ity_VLen8: bits = 8; break;
+      case Ity_VLen16: bits = 16; break;
+      case Ity_VLen32: bits = 32; break;
+      case Ity_VLen64: bits = 64; break;
+      default: vassert(0);
+   }
+   return MAX(1, (bits * env->vec_env.lmul / 8) / env->vec_env.sew);
+}
 
 static HReg lookupIRTemp(ISelEnv* env, IRTemp tmp)
 {
@@ -3424,18 +3471,16 @@ static Bool iselVecExpr_R_wrk_unop(HReg dst[], ISelEnv* env, IRExpr* e)
    Int dst_nregs = 1;
    IRType dst_ty = typeOfIRExpr(env->type_env, e);
    if (isVecIRType(dst_ty)) {
-      Int dst_sz = ROUND_UP(sizeofVecIRType(dst_ty), vlen_b);
-      dst_nregs = dst_sz / vlen_b;
-      sz = MAX(sz, dst_sz);
+      dst_nregs = vtype_to_nregs(dst_ty, env);
+      sz = MAX(sz, dst_nregs * vlen_b);
    }
 
    Int src_nregs = 0;
    HReg src[MAX_REGS] = {0};
    IRType src_ty = typeOfIRExpr(env->type_env, e->Iex.Unop.arg);
    if (isVecIRType(src_ty)) {
-      Int src_sz = sizeofVecIRType(src_ty);
-      src_nregs = DIV_ROUND_UP(src_sz, vlen_b);
-      sz = MAX(src_sz, sz);
+      src_nregs = vtype_to_nregs(src_ty, env);
+      sz = MAX(sz, src_nregs * vlen_b);
 
       iselVecExpr_R(src, env, e->Iex.Unop.arg);
    } else {
@@ -3495,15 +3540,14 @@ static Bool iselVecExpr_R_wrk_binop(HReg dst[], ISelEnv* env, IRExpr* e, Bool ex
    Int dst_nregs = 1;
    IRType dst_ty = typeOfIRExpr(env->type_env, e);
    if (isVecIRType(dst_ty)) {
-      Int dst_sz = ROUND_UP(sizeofVecIRType(dst_ty), vlen_b);
-      dst_nregs = dst_sz / vlen_b;
-      sz = MAX(sz, dst_sz);
+      dst_nregs = vtype_to_nregs(dst_ty, env);
+      sz = MAX(sz, dst_nregs * vlen_b);
    }
 
    Int src1_nregs = 0;
    IRType src1_ty = typeOfIRExpr(env->type_env, e->Iex.Binop.arg1);
    if (isVecIRType(src1_ty)) {
-      src1_nregs = DIV_ROUND_UP(sizeofVecIRType(src1_ty), vlen_b);
+      src1_nregs = vtype_to_nregs(src1_ty, env);
 
       iselVecExpr_R(src1, env, e->Iex.Binop.arg1);
    } else {
@@ -3513,9 +3557,8 @@ static Bool iselVecExpr_R_wrk_binop(HReg dst[], ISelEnv* env, IRExpr* e, Bool ex
    Int src2_nregs = 0;
    IRType src2_ty = typeOfIRExpr(env->type_env, e->Iex.Binop.arg2);
    if (isVecIRType(src2_ty)) {
-      Int src2_sz = ROUND_UP(sizeofVecIRType(src2_ty), vlen_b);
-      src2_nregs = src2_sz / vlen_b;
-      sz = MAX(sz, src2_sz);
+      src2_nregs = vtype_to_nregs(src2_ty, env);
+      sz = MAX(sz, src2_nregs * vlen_b);
 
       iselVecExpr_R(src2, env, e->Iex.Binop.arg2);
    } else {
@@ -3589,15 +3632,14 @@ static Bool iselVecExpr_R_wrk_triop_sss(HReg dst[], ISelEnv* env, IRExpr* e)
    Int dst_nregs = 1;
    IRType dst_ty = typeOfIRExpr(env->type_env, e);
    if (isVecIRType(dst_ty)) {
-      Int dst_sz = ROUND_UP(sizeofVecIRType(dst_ty), vlen_b);
-      dst_nregs = dst_sz / vlen_b;
-      sz = MAX(sz, dst_sz);
+      dst_nregs = vtype_to_nregs(dst_ty, env);
+      sz = MAX(sz, dst_nregs * vlen_b);
    }
 
    Int src1_nregs = 0;
    IRType src1_ty = typeOfIRExpr(env->type_env, e->Iex.Triop.details->arg1);
    if (isVecIRType(src1_ty)) {
-      src1_nregs = DIV_ROUND_UP(sizeofVecIRType(src1_ty), vlen_b);
+      src1_nregs = vtype_to_nregs(src1_ty, env);
 
       iselVecExpr_R(src1, env, e->Iex.Triop.details->arg1);
    } else {
@@ -3607,9 +3649,8 @@ static Bool iselVecExpr_R_wrk_triop_sss(HReg dst[], ISelEnv* env, IRExpr* e)
    Int src2_nregs = 0;
    IRType src2_ty = typeOfIRExpr(env->type_env, e->Iex.Triop.details->arg2);
    if (isVecIRType(src2_ty)) {
-      Int src2_sz = ROUND_UP(sizeofVecIRType(src2_ty), vlen_b);
-      src2_nregs = src2_sz / vlen_b;
-      sz = MAX(sz, src2_sz);
+      src2_nregs = vtype_to_nregs(src2_ty, env);
+      sz = MAX(sz, src2_nregs * vlen_b);
 
       iselVecExpr_R(src2, env, e->Iex.Triop.details->arg2);
    } else {
@@ -3619,7 +3660,7 @@ static Bool iselVecExpr_R_wrk_triop_sss(HReg dst[], ISelEnv* env, IRExpr* e)
    Int src3_nregs = 0;
    IRType src3_ty = typeOfIRExpr(env->type_env, e->Iex.Triop.details->arg3);
    if (isVecIRType(src3_ty)) {
-      src3_nregs = DIV_ROUND_UP(sizeofVecIRType(src3_ty), vlen_b);
+      src3_nregs = vtype_to_nregs(src3_ty, env);
 
       iselVecExpr_R(src3, env, e->Iex.Triop.details->arg3);
    } else {
@@ -3691,15 +3732,14 @@ static Bool iselVecExpr_R_wrk_triop_ssd(HReg dst[], ISelEnv* env, IRExpr* e)
    Int dst_nregs = 1;
    IRType dst_ty = typeOfIRExpr(env->type_env, e);
    if (isVecIRType(dst_ty)) {
-      Int dst_sz = ROUND_UP(sizeofVecIRType(dst_ty), vlen_b);
-      dst_nregs = dst_sz / vlen_b;
-      sz = MAX(sz, dst_sz);
+      dst_nregs = vtype_to_nregs(dst_ty, env);
+      sz = MAX(sz, dst_nregs * vlen_b);
    }
 
    Int src1_nregs = 0;
    IRType src1_ty = typeOfIRExpr(env->type_env, e->Iex.Triop.details->arg1);
    if (isVecIRType(src1_ty)) {
-      src1_nregs = DIV_ROUND_UP(sizeofVecIRType(src1_ty), vlen_b);
+      src1_nregs = vtype_to_nregs(src1_ty, env);
 
       iselVecExpr_R(src1, env, e->Iex.Triop.details->arg1);
    } else {
@@ -3709,9 +3749,8 @@ static Bool iselVecExpr_R_wrk_triop_ssd(HReg dst[], ISelEnv* env, IRExpr* e)
    Int src2_nregs = 0;
    IRType src2_ty = typeOfIRExpr(env->type_env, e->Iex.Triop.details->arg2);
    if (isVecIRType(src2_ty)) {
-      Int src2_sz = ROUND_UP(sizeofVecIRType(src2_ty), vlen_b);
-      src2_nregs = src2_sz / vlen_b;
-      sz = MAX(sz, src2_sz);
+      src2_nregs = vtype_to_nregs(src2_ty, env);
+      sz = MAX(sz, src2_nregs * vlen_b);
 
       iselVecExpr_R(src2, env, e->Iex.Triop.details->arg2);
    } else {
@@ -3768,7 +3807,7 @@ static void iselVecExpr_R_wrk(HReg dst[], ISelEnv* env, IRExpr* e)
    IRType ty = typeOfIRExpr(env->type_env, e);
    Int nregs = 0;
    if (isVecIRType(ty)) {
-      nregs = DIV_ROUND_UP(sizeofVecIRType(ty), vlen_b);
+      nregs = vtype_to_nregs(ty, env);
       for (int i = 0; i < nregs; ++i) {
          dst[i] = newVRegV(env);
       }
@@ -4332,10 +4371,8 @@ static void iselStmt(ISelEnv* env, IRStmt* stmt)
       }
       IRType vty = tyd & IR_TYPE_MASK;
       if (vty >= Ity_VLen1 && vty <= Ity_VLen64) {
-         //Int vl = VLofVecIRType(tyd);
-         Int sz = sizeofVecIRType(tyd);
          Int vlen_b = VLEN / 8;
-         Int nregs = DIV_ROUND_UP(sz, vlen_b);
+         Int nregs = vtype_to_nregs(vty, env);
          Int vl_ldst64  = vlen_b / 8;
 
          HReg src[MAX_REGS] = {0};
@@ -4375,9 +4412,7 @@ static void iselStmt(ISelEnv* env, IRStmt* stmt)
       }
       IRType vty = ty & IR_TYPE_MASK;
       if (vty >= Ity_VLen1 && vty <= Ity_VLen64) {
-         Int sz = sizeofVecIRType(ty);
-         Int vlen_b = VLEN / 8;
-         Int nregs = DIV_ROUND_UP(sz, vlen_b);
+         Int nregs = vtype_to_nregs(vty, env);
 
          HReg dst[MAX_REGS];
          HReg src[MAX_REGS];
@@ -4730,6 +4765,9 @@ HInstrArray* iselSB_RISCV64(const IRSB*        bb,
 
    /* Copy BB's type env. */
    env->type_env = bb->tyenv;
+
+   env->vec_env.lmul = get_lmul(vbi->riscv64_guest_state);
+   env->vec_env.sew = get_sew(vbi->riscv64_guest_state);
 
    /* Make up an IRTemp -> virtual HReg mapping. This doesn't change as we go
       along. */
