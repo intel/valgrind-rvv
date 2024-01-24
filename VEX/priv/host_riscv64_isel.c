@@ -3419,7 +3419,6 @@ static Bool iselVecExpr_R_wrk_unop(HReg dst[], ISelEnv* env, IRExpr* e)
    }
 
    const Int vlen_b = VLEN / 8;
-   Int vl = 0;
    Int sz = 8;  // address gap between parameters
 
    Int dst_nregs = 1;
@@ -3428,7 +3427,6 @@ static Bool iselVecExpr_R_wrk_unop(HReg dst[], ISelEnv* env, IRExpr* e)
       Int dst_sz = ROUND_UP(sizeofVecIRType(dst_ty), vlen_b);
       dst_nregs = dst_sz / vlen_b;
       sz = MAX(sz, dst_sz);
-      vl = VLofVecIRType(dst_ty);
    }
 
    Int src_nregs = 0;
@@ -3438,7 +3436,6 @@ static Bool iselVecExpr_R_wrk_unop(HReg dst[], ISelEnv* env, IRExpr* e)
       Int src_sz = sizeofVecIRType(src_ty);
       src_nregs = DIV_ROUND_UP(src_sz, vlen_b);
       sz = MAX(src_sz, sz);
-      vl = VLofVecIRType(src_ty);
 
       iselVecExpr_R(src, env, e->Iex.Unop.arg);
    } else {
@@ -3463,7 +3460,10 @@ static Bool iselVecExpr_R_wrk_unop(HReg dst[], ISelEnv* env, IRExpr* e)
    }
 
    // a2 - vl
-   addInstr(env, RISCV64Instr_ALUImm(RISCV64op_ADDI, hregRISCV64_x12(), hregRISCV64_x0(), vl));
+   HReg base = get_baseblock_register();
+   Int  off  = offsetof(VexGuestRISCV64State, guest_vl) - BASEBLOCK_OFFSET_ADJUSTMENT;
+   vassert(off >= -2048 && off < 2048);
+   addInstr(env, RISCV64Instr_Load(RISCV64op_LW, hregRISCV64_x12(), base, off));
 
    addInstr(env, RISCV64Instr_Call(mk_RetLoc_simple(RLPri_None), (Addr64) fn, INVALID_HREG, 3, 0));
    if (isVecIRType(dst_ty)) {
@@ -3484,11 +3484,13 @@ static Bool iselVecExpr_R_wrk_binop(HReg dst[], ISelEnv* env, IRExpr* e, Bool ex
    }
 
    const Int vlen_b = VLEN / 8;
-   Int vl = 0;
    Int sz = 0;  // address gap between parameters
 
    HReg src1[MAX_REGS] = {0};
    HReg src2[MAX_REGS] = {0};
+
+   HReg base = get_baseblock_register();
+   Int  off  = 0;
 
    Int dst_nregs = 1;
    IRType dst_ty = typeOfIRExpr(env->type_env, e);
@@ -3496,7 +3498,6 @@ static Bool iselVecExpr_R_wrk_binop(HReg dst[], ISelEnv* env, IRExpr* e, Bool ex
       Int dst_sz = ROUND_UP(sizeofVecIRType(dst_ty), vlen_b);
       dst_nregs = dst_sz / vlen_b;
       sz = MAX(sz, dst_sz);
-      vl = VLofVecIRType(dst_ty);
    }
 
    Int src1_nregs = 0;
@@ -3515,8 +3516,6 @@ static Bool iselVecExpr_R_wrk_binop(HReg dst[], ISelEnv* env, IRExpr* e, Bool ex
       Int src2_sz = ROUND_UP(sizeofVecIRType(src2_ty), vlen_b);
       src2_nregs = src2_sz / vlen_b;
       sz = MAX(sz, src2_sz);
-      /* vl in src2 overwrites dst vl, which could be 1 for reduce */
-      vl = VLofVecIRType(src2_ty);
 
       iselVecExpr_R(src2, env, e->Iex.Binop.arg2);
    } else {
@@ -3549,15 +3548,19 @@ static Bool iselVecExpr_R_wrk_binop(HReg dst[], ISelEnv* env, IRExpr* e, Bool ex
    }
 
    // a3 - vl
-   addInstr(env, RISCV64Instr_ALUImm(RISCV64op_ADDI, hregRISCV64_x13(), hregRISCV64_x0(), vl));
+   off = offsetof(VexGuestRISCV64State, guest_vl) - BASEBLOCK_OFFSET_ADJUSTMENT;
+   vassert(off >= -2048 && off < 2048);
+   addInstr(env, RISCV64Instr_Load(RISCV64op_LW, hregRISCV64_x13(), base, off));
 
    UChar nargs = 4;
    if (extra) {
       ++nargs;
       // a4 - vlmax, so far only vlmax in extra field
-      addInstr(env, RISCV64Instr_ALUImm(RISCV64op_ADDI, hregRISCV64_x14(), hregRISCV64_x0(), env->vec_env.vlmax));
-   }
 
+      off = offsetof(VexGuestRISCV64State, guest_vlmax) - BASEBLOCK_OFFSET_ADJUSTMENT;
+      vassert(off >= -2048 && off < 2048);
+      addInstr(env, RISCV64Instr_Load(RISCV64op_LW, hregRISCV64_x14(), base, off));
+   }
 
    addInstr(env, RISCV64Instr_Call(mk_RetLoc_simple(RLPri_None), (Addr64) fn, INVALID_HREG, nargs, 0));
    loadVecReg(env, dst, dst_nregs, argp);
@@ -3574,12 +3577,14 @@ static Bool iselVecExpr_R_wrk_triop_sss(HReg dst[], ISelEnv* env, IRExpr* e)
    }
 
    const Int vlen_b = VLEN / 8;
-   Int vl = 0;
    Int sz = 0;  // address gap between parameters
 
    HReg src1[MAX_REGS] = {0};
    HReg src2[MAX_REGS] = {0};
    HReg src3[MAX_REGS] = {0};
+
+   HReg base = get_baseblock_register();
+   Int  off  = 0;
 
    Int dst_nregs = 1;
    IRType dst_ty = typeOfIRExpr(env->type_env, e);
@@ -3587,7 +3592,6 @@ static Bool iselVecExpr_R_wrk_triop_sss(HReg dst[], ISelEnv* env, IRExpr* e)
       Int dst_sz = ROUND_UP(sizeofVecIRType(dst_ty), vlen_b);
       dst_nregs = dst_sz / vlen_b;
       sz = MAX(sz, dst_sz);
-      vl = VLofVecIRType(dst_ty);
    }
 
    Int src1_nregs = 0;
@@ -3606,8 +3610,6 @@ static Bool iselVecExpr_R_wrk_triop_sss(HReg dst[], ISelEnv* env, IRExpr* e)
       Int src2_sz = ROUND_UP(sizeofVecIRType(src2_ty), vlen_b);
       src2_nregs = src2_sz / vlen_b;
       sz = MAX(sz, src2_sz);
-      /* vl in src2 overwrites dst vl, which could be 1 for reduce */
-      vl = VLofVecIRType(src2_ty);
 
       iselVecExpr_R(src2, env, e->Iex.Triop.details->arg2);
    } else {
@@ -3659,7 +3661,9 @@ static Bool iselVecExpr_R_wrk_triop_sss(HReg dst[], ISelEnv* env, IRExpr* e)
    }
 
    // a4 - vl
-   addInstr(env, RISCV64Instr_ALUImm(RISCV64op_ADDI, hregRISCV64_x14(), hregRISCV64_x0(), vl));
+   off = offsetof(VexGuestRISCV64State, guest_vl) - BASEBLOCK_OFFSET_ADJUSTMENT;
+   vassert(off >= -2048 && off < 2048);
+   addInstr(env, RISCV64Instr_Load(RISCV64op_LW, hregRISCV64_x14(), base, off));
 
    addInstr(env, RISCV64Instr_Call(mk_RetLoc_simple(RLPri_None), (Addr64) fn, INVALID_HREG, 5, 0));
    loadVecReg(env, dst, dst_nregs, argp);
@@ -3676,11 +3680,13 @@ static Bool iselVecExpr_R_wrk_triop_ssd(HReg dst[], ISelEnv* env, IRExpr* e)
    }
 
    const Int vlen_b = VLEN / 8;
-   Int vl = 0;
    Int sz = 0;  // address gap between parameters
 
    HReg src1[MAX_REGS] = {0};
    HReg src2[MAX_REGS] = {0};
+
+   HReg base = get_baseblock_register();
+   Int  off  = 0;
 
    Int dst_nregs = 1;
    IRType dst_ty = typeOfIRExpr(env->type_env, e);
@@ -3688,7 +3694,6 @@ static Bool iselVecExpr_R_wrk_triop_ssd(HReg dst[], ISelEnv* env, IRExpr* e)
       Int dst_sz = ROUND_UP(sizeofVecIRType(dst_ty), vlen_b);
       dst_nregs = dst_sz / vlen_b;
       sz = MAX(sz, dst_sz);
-      vl = VLofVecIRType(dst_ty);
    }
 
    Int src1_nregs = 0;
@@ -3707,8 +3712,6 @@ static Bool iselVecExpr_R_wrk_triop_ssd(HReg dst[], ISelEnv* env, IRExpr* e)
       Int src2_sz = ROUND_UP(sizeofVecIRType(src2_ty), vlen_b);
       src2_nregs = src2_sz / vlen_b;
       sz = MAX(sz, src2_sz);
-      /* vl in src2 overwrites dst vl, which could be 1 for reduce */
-      vl = VLofVecIRType(src2_ty);
 
       iselVecExpr_R(src2, env, e->Iex.Triop.details->arg2);
    } else {
@@ -3747,7 +3750,9 @@ static Bool iselVecExpr_R_wrk_triop_ssd(HReg dst[], ISelEnv* env, IRExpr* e)
    }
 
    // a3 - vl
-   addInstr(env, RISCV64Instr_ALUImm(RISCV64op_ADDI, hregRISCV64_x13(), hregRISCV64_x0(), vl));
+   off = offsetof(VexGuestRISCV64State, guest_vl) - BASEBLOCK_OFFSET_ADJUSTMENT;
+   vassert(off >= -2048 && off < 2048);
+   addInstr(env, RISCV64Instr_Load(RISCV64op_LW, hregRISCV64_x13(), base, off));
 
    addInstr(env, RISCV64Instr_Call(mk_RetLoc_simple(RLPri_None), (Addr64) fn, INVALID_HREG, 4, 0));
    loadVecReg(env, dst, dst_nregs, argp);
@@ -4725,8 +4730,6 @@ HInstrArray* iselSB_RISCV64(const IRSB*        bb,
 
    /* Copy BB's type env. */
    env->type_env = bb->tyenv;
-
-   env->vec_env.vlmax = vbi->riscv64_guest_state->guest_vlmax;
 
    /* Make up an IRTemp -> virtual HReg mapping. This doesn't change as we go
       along. */
