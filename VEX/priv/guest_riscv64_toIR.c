@@ -3599,8 +3599,7 @@ static Bool dis_rvv_iext(/*MB_OUT*/ DisResult* dres,
    UInt vma = SLICE_UInt(guest->guest_vtype, 7, 7);
    UInt sew = get_sew(guest);
    Int index = sewToIndex(sew);
-   UInt vl = guest->guest_vl;
-   IRType dst_ty = typeofVecIR(vl, Ity_VLen8 + index);
+   IRType dst_ty = Ity_VLen8 + index;
    IRType src_ty;
 
    vassert(sew >= 16);
@@ -3616,22 +3615,22 @@ static Bool dis_rvv_iext(/*MB_OUT*/ DisResult* dres,
    default: vassert(0);
    }
 
-   IRExpr* res = unop(opofVecIR(vl, op), getVReg(vs2, 0, src_ty));
+   IRExpr* res = unop(op, getVReg(vs2, 0, src_ty));
    if (vm == 0) {
-      IRType mask_ty = typeofVecIR(vl, Ity_VLen1);
-      IRExpr* mask = unop(opofVecIR(vl, Iop_VExpandBitsTo_8 + index),
+      IRType mask_ty = Ity_VLen1;
+      IRExpr* mask = unop(Iop_VExpandBitsTo_8 + index,
                           getVReg(0 /*v0*/, 0, mask_ty));
 
       if (vma == 0) { // undisturbed, read it first
          IRExpr* origin = getVReg(vd, 0, dst_ty);
-         IRExpr* inactive = binop(opofVecIR(vl, Iop_VAnd_vv_8 + index),
-                                  unop(opofVecIR(vl, Iop_VNot_8 + index), mask),
+         IRExpr* inactive = binop(Iop_VAnd_vv_8 + index,
+                                  unop(Iop_VNot_8 + index, mask),
                                   origin);
-         IRExpr* active = binop(opofVecIR(vl, Iop_VAnd_vv_8 + index), mask, res);
-         res = binop(opofVecIR(vl, Iop_VOr_vv_8 + index), active, inactive);
+         IRExpr* active = binop(Iop_VAnd_vv_8 + index, mask, res);
+         res = binop(Iop_VOr_vv_8 + index, active, inactive);
       } else { // agnostic, set to 1
-         res = binop(opofVecIR(vl, Iop_VOr_vv_8 + index),
-                     unop(opofVecIR(vl, Iop_VNot_8 + index), mask),
+         res = binop(Iop_VOr_vv_8 + index,
+                     unop(Iop_VNot_8 + index, mask),
                      res);
       }
    }
@@ -3663,8 +3662,7 @@ static Bool dis_rvv2_vw_vxi(/*MB_OUT*/ DisResult* dres,
    UInt vma = SLICE_UInt(guest->guest_vtype, 7, 7);
    UInt sew = get_sew(guest);
    Int index = sewToIndex(sew);
-   UInt vl = guest->guest_vl;
-   IRType ty = typeofVecIR(vl, Ity_VLen8 + index);
+   IRType ty = Ity_VLen8 + index;
 
    IRExpr* es1 = NULL;
    if (s1_type == RVV_V) {
@@ -3684,28 +3682,28 @@ static Bool dis_rvv2_vw_vxi(/*MB_OUT*/ DisResult* dres,
    } else if (s2_type == RVV_W) {
       vassert(sew != 64);
       Int index2 = sewToIndex(sew * 2);
-      IRType type2 = typeofVecIR(vl, Ity_VLen8 + index2);
+      IRType type2 = Ity_VLen8 + index2;
       es2 = getVReg(vs2, 0, type2);
    } else {
       vassert(0);
    }
 
-   IRExpr* res = binop(opofVecIR(vl, base_op + index), es1, es2);
+   IRExpr* res = binop(base_op + index, es1, es2);
    if (vm == 0) {
-      IRType mask_ty = typeofVecIR(vl, Ity_VLen1);
-      IRExpr* mask = unop(opofVecIR(vl, Iop_VExpandBitsTo_8 + index),
+      IRType mask_ty = Ity_VLen1;
+      IRExpr* mask = unop(Iop_VExpandBitsTo_8 + index,
                           getVReg(0 /*v0*/, 0, mask_ty));
 
       if (vma == 0) { // undisturbed, read it first
          IRExpr* origin = getVReg(vd, 0, ty);
-         IRExpr* inactive = binop(opofVecIR(vl, Iop_VAnd_vv_8 + index),
-                                  unop(opofVecIR(vl, Iop_VNot_8 + index), mask),
+         IRExpr* inactive = binop(Iop_VAnd_vv_8 + index,
+                                  unop(Iop_VNot_8 + index, mask),
                                   origin);
-         IRExpr* active = binop(opofVecIR(vl, Iop_VAnd_vv_8 + index), mask, res);
-         res = binop(opofVecIR(vl, Iop_VOr_vv_8 + index), active, inactive);
+         IRExpr* active = binop(Iop_VAnd_vv_8 + index, mask, res);
+         res = binop(Iop_VOr_vv_8 + index, active, inactive);
       } else { // agnostic, set to 1
-         res = binop(opofVecIR(vl, Iop_VOr_vv_8 + index),
-                     unop(opofVecIR(vl, Iop_VNot_8 + index), mask),
+         res = binop(Iop_VOr_vv_8 + index,
+                     unop(Iop_VNot_8 + index, mask),
                      res);
       }
    }
@@ -3803,9 +3801,8 @@ static Bool dis_rvv2w_vw_vx(/*MB_OUT*/ DisResult* dres,
    UInt vma = SLICE_UInt(guest->guest_vtype, 7, 7);
    UInt sew = get_sew(guest);
    Int index = sewToIndex(sew);
-   UInt vl = guest->guest_vl;
    Int dst_index = index + 1;
-   IRType ty = typeofVecIR(vl, Ity_VLen8 + index);
+   IRType ty = Ity_VLen8 + index;
    IRType dst_ty = ty + 1;
 
    IRExpr* es2 = NULL;
@@ -3826,22 +3823,22 @@ static Bool dis_rvv2w_vw_vx(/*MB_OUT*/ DisResult* dres,
       vassert(0);
    }
 
-   IRExpr* res = binop(opofVecIR(vl, base_op + index), es1, es2);
+   IRExpr* res = binop(base_op + index, es1, es2);
    if (vm == 0) {
-      IRType mask_ty = typeofVecIR(vl, Ity_VLen1);
-      IRExpr* mask = unop(opofVecIR(vl, Iop_VExpandBitsTo_8 + dst_index),
+      IRType mask_ty = Ity_VLen1;
+      IRExpr* mask = unop(Iop_VExpandBitsTo_8 + dst_index,
                           getVReg(0 /*v0*/, 0, mask_ty));
 
       if (vma == 0) { // undisturbed, read it first
          IRExpr* origin = getVReg(vd, 0, dst_ty);
-         IRExpr* inactive = binop(opofVecIR(vl, Iop_VAnd_vv_8 + dst_index),
-                                  unop(opofVecIR(vl, Iop_VNot_8 + dst_index), mask),
+         IRExpr* inactive = binop(Iop_VAnd_vv_8 + dst_index,
+                                  unop(Iop_VNot_8 + dst_index, mask),
                                   origin);
-         IRExpr* active = binop(opofVecIR(vl, Iop_VAnd_vv_8 + dst_index), mask, res);
-         res = binop(opofVecIR(vl, Iop_VOr_vv_8 + dst_index), active, inactive);
+         IRExpr* active = binop(Iop_VAnd_vv_8 + dst_index, mask, res);
+         res = binop(Iop_VOr_vv_8 + dst_index, active, inactive);
       } else { // agnostic, set to 1
-         res = binop(opofVecIR(vl, Iop_VOr_vv_8 + dst_index),
-                     unop(opofVecIR(vl, Iop_VNot_8 + dst_index), mask),
+         res = binop(Iop_VOr_vv_8 + dst_index,
+                     unop(Iop_VNot_8 + dst_index, mask),
                      res);
       }
    }
@@ -3916,8 +3913,7 @@ static Bool dis_rvv3_v_vx(/*MB_OUT*/ DisResult* dres,
    UInt vma = SLICE_UInt(guest->guest_vtype, 7, 7);
    UInt sew = get_sew(guest);
    Int index = sewToIndex(sew);
-   UInt vl = guest->guest_vl;
-   IRType ty = typeofVecIR(vl, Ity_VLen8 + index);
+   IRType ty = Ity_VLen8 + index;
 
    IRExpr* es1 = NULL;
    if (s1_type == RVV_V) {
@@ -3928,23 +3924,23 @@ static Bool dis_rvv3_v_vx(/*MB_OUT*/ DisResult* dres,
       vassert(0);
    }
 
-   IRExpr* res = triop(opofVecIR(vl, base_op + index),
+   IRExpr* res = triop(base_op + index,
                        es1, getVReg(vs2, 0, ty), getVReg(vd, 0, ty));
    if (vm == 0) {
-      IRType mask_ty = typeofVecIR(vl, Ity_VLen1);
-      IRExpr* mask = unop(opofVecIR(vl, Iop_VExpandBitsTo_8 + index),
+      IRType mask_ty = Ity_VLen1;
+      IRExpr* mask = unop(Iop_VExpandBitsTo_8 + index,
                           getVReg(0 /*v0*/, 0, mask_ty));
 
       if (vma == 0) { // undisturbed, read it first
          IRExpr* origin = getVReg(vd, 0, ty);
-         IRExpr* inactive = binop(opofVecIR(vl, Iop_VAnd_vv_8 + index),
-                                  unop(opofVecIR(vl, Iop_VNot_8 + index), mask),
+         IRExpr* inactive = binop(Iop_VAnd_vv_8 + index,
+                                  unop(Iop_VNot_8 + index, mask),
                                   origin);
-         IRExpr* active = binop(opofVecIR(vl, Iop_VAnd_vv_8 + index), mask, res);
-         res = binop(opofVecIR(vl, Iop_VOr_vv_8 + index), active, inactive);
+         IRExpr* active = binop(Iop_VAnd_vv_8 + index, mask, res);
+         res = binop(Iop_VOr_vv_8 + index, active, inactive);
       } else { // agnostic, set to 1
-         res = binop(opofVecIR(vl, Iop_VOr_vv_8 + index),
-                     unop(opofVecIR(vl, Iop_VNot_8 + index), mask),
+         res = binop(Iop_VOr_vv_8 + index,
+                     unop(Iop_VNot_8 + index, mask),
                      res);
       }
    }
@@ -3997,9 +3993,8 @@ static Bool dis_rvv3w_v_vx(/*MB_OUT*/ DisResult* dres,
    UInt vma = SLICE_UInt(guest->guest_vtype, 7, 7);
    UInt sew = get_sew(guest);
    Int index = sewToIndex(sew);
-   UInt vl = guest->guest_vl;
    Int dst_index = index + 1;
-   IRType ty = typeofVecIR(vl, Ity_VLen8 + index);
+   IRType ty = Ity_VLen8 + index;
    IRType dst_ty = ty + 1;
 
    IRExpr* es1 = NULL;
@@ -4011,23 +4006,23 @@ static Bool dis_rvv3w_v_vx(/*MB_OUT*/ DisResult* dres,
       vassert(0);
    }
 
-   IRExpr* res = triop(opofVecIR(vl, base_op + index),
+   IRExpr* res = triop(base_op + index,
                        es1, getVReg(vs2, 0, ty), getVReg(vd, 0, dst_ty));
    if (vm == 0) {
-      IRType mask_ty = typeofVecIR(vl, Ity_VLen1);
-      IRExpr* mask = unop(opofVecIR(vl, Iop_VExpandBitsTo_8 + dst_index),
+      IRType mask_ty = Ity_VLen1;
+      IRExpr* mask = unop(Iop_VExpandBitsTo_8 + dst_index,
                           getVReg(0 /*v0*/, 0, mask_ty));
 
       if (vma == 0) { // undisturbed, read it first
          IRExpr* origin = getVReg(vd, 0, dst_ty);
-         IRExpr* inactive = binop(opofVecIR(vl, Iop_VAnd_vv_8 + dst_index),
-                                  unop(opofVecIR(vl, Iop_VNot_8 + dst_index), mask),
+         IRExpr* inactive = binop(Iop_VAnd_vv_8 + dst_index,
+                                  unop(Iop_VNot_8 + dst_index, mask),
                                   origin);
-         IRExpr* active = binop(opofVecIR(vl, Iop_VAnd_vv_8 + dst_index), mask, res);
-         res = binop(opofVecIR(vl, Iop_VOr_vv_8 + dst_index), active, inactive);
+         IRExpr* active = binop(Iop_VAnd_vv_8 + dst_index, mask, res);
+         res = binop(Iop_VOr_vv_8 + dst_index, active, inactive);
       } else { // agnostic, set to 1
-         res = binop(opofVecIR(vl, Iop_VOr_vv_8 + dst_index),
-                     unop(opofVecIR(vl, Iop_VNot_8 + dst_index), mask),
+         res = binop(Iop_VOr_vv_8 + dst_index,
+                     unop(Iop_VNot_8 + dst_index, mask),
                      res);
       }
    }
@@ -4074,8 +4069,7 @@ static Bool dis_rvv_vmvr(/*MB_OUT*/ DisResult* dres,
 
    UInt sew = get_sew(guest);
    Int index = sewToIndex(sew);
-   UInt vl = VLEN / sew;  // one vreg
-   IRType ty = typeofVecIR(vl, Ity_VLen8 + index);
+   IRType ty = Ity_VLen8 + index;
 
    for (int i = 0; i < nreg; ++i) {
       putVReg(irsb, vd++, 0, getVReg(vs++, 0, ty));
@@ -4139,8 +4133,7 @@ static Bool dis_rvv_vmv_v_vxi(/*MB_OUT*/ DisResult* dres,
 
    UInt sew = get_sew(guest);
    Int index = sewToIndex(sew);
-   UInt vl = guest->guest_vl;
-   IRType ty = typeofVecIR(vl, Ity_VLen8 + index);
+   IRType ty = Ity_VLen8 + index;
 
    IRExpr* es1;
    IROp base_op;
@@ -4155,7 +4148,7 @@ static Bool dis_rvv_vmv_v_vxi(/*MB_OUT*/ DisResult* dres,
       base_op = Iop_VMv_v_i_8;
    }
 
-   IRExpr* res = unop(opofVecIR(vl, base_op + index), es1);
+   IRExpr* res = unop(base_op + index, es1);
    putVReg(irsb, vd, 0, res);
 
    return True;
@@ -4174,8 +4167,7 @@ static Bool dis_rvv_vmerge_vxi(/*MB_OUT*/ DisResult* dres,
 
    UInt sew = get_sew(guest);
    Int index = sewToIndex(sew);
-   UInt vl = guest->guest_vl;
-   IRType ty = typeofVecIR(vl, Ity_VLen8 + index);
+   IRType ty = Ity_VLen8 + index;
 
    IRExpr* es1;
    IROp base_op;
@@ -4190,8 +4182,8 @@ static Bool dis_rvv_vmerge_vxi(/*MB_OUT*/ DisResult* dres,
       base_op = Iop_VMerge_vim_8;
    }
 
-   IRExpr* mask = getVReg(0 /*v0*/, 0, typeofVecIR(vl, Ity_VLen1));
-   IRExpr* res = triop(opofVecIR(vl, base_op + index),
+   IRExpr* mask = getVReg(0 /*v0*/, 0, Ity_VLen1);
+   IRExpr* res = triop(base_op + index,
                        es1, getVReg(vs2, 0, ty), mask);
    putVReg(irsb, vd, 0, res);
 
@@ -4212,8 +4204,7 @@ static Bool dis_rvv_reduce(/*MB_OUT*/ DisResult* dres,
 
    UInt sew = get_sew(guest);
    Int index = sewToIndex(sew);
-   UInt vl = guest->guest_vl;
-   IRType ty = typeofVecIR(vl, Ity_VLen8 + index);
+   IRType ty = Ity_VLen8 + index;
 
    IROp base_op;
    switch (funct6) {
@@ -4236,11 +4227,11 @@ static Bool dis_rvv_reduce(/*MB_OUT*/ DisResult* dres,
 
    IRExpr* res;
    if (vm == 0) {
-      IRType mask_ty = typeofVecIR(vl, Ity_VLen1);
+      IRType mask_ty = Ity_VLen1;
       IRExpr* mask = getVReg(0 /*v0*/, 0, mask_ty);
-      res = triop(opofVecIR(vl, base_op + index), s1, s2, mask);
+      res = triop(base_op + index, s1, s2, mask);
    } else {
-      res = binop(opofVecIR(vl, base_op + index), s1, s2);
+      res = binop(base_op + index, s1, s2);
    }
 
    putVReg(irsb, vd, 0, res);
@@ -4262,13 +4253,12 @@ static Bool dis_rvv_m_m(/*MB_OUT*/ DisResult* dres,
 
    vassert(vm == 1);
 
-   UInt vl = VLEN;
-   IRType ty = typeofVecIR(vl, Ity_VLen1);
+   IRType ty = Ity_VLen1;
 
    IRExpr* s1 = getVReg(vs1, 0, ty);
    IRExpr* s2 = getVReg(vs2, 0, ty);
 
-   putVReg(irsb, vd, 0, binop(opofVecIR(vl, base_op), s1, s2));
+   putVReg(irsb, vd, 0, binop(base_op, s1, s2));
 
    return True;
 }
@@ -4288,8 +4278,7 @@ static Bool dis_rvv_addsub_carry(/*MB_OUT*/ DisResult* dres,
 
    UInt sew = get_sew(guest);
    Int index = sewToIndex(sew);
-   UInt vl = guest->guest_vl;
-   IRType ty = typeofVecIR(vl, Ity_VLen8 + index);
+   IRType ty = Ity_VLen8 + index;
    rvvRegType s1_type;
 
    IROp base_op;
@@ -4345,11 +4334,11 @@ static Bool dis_rvv_addsub_carry(/*MB_OUT*/ DisResult* dres,
 
    IRExpr* res;
    if (vm == 0) {
-      IRType mask_ty = typeofVecIR(vl, Ity_VLen1);
+      IRType mask_ty = Ity_VLen1;
       IRExpr* mask = getVReg(0 /*v0*/, 0, mask_ty);
-      res = triop(opofVecIR(vl, base_op + index), es1, es2, mask);
+      res = triop(base_op + index, es1, es2, mask);
    } else {
-      res = binop(opofVecIR(vl, base_op + index), es1, es2);
+      res = binop(base_op + index, es1, es2);
    }
    putVReg(irsb, vd, 0, res);
 
@@ -4366,15 +4355,14 @@ static Bool dis_vcpop_m(/*MB_OUT*/ DisResult* dres,
    UInt vs2 = INSN(24, 20);
    UInt rd = INSN(11, 7);
 
-   UInt vl = guest->guest_vl;
-   IRType ty = typeofVecIR(vl, Ity_VLen1);
+   IRType ty = Ity_VLen1;
 
    IRExpr* e = getVReg(vs2, 0, ty);
    if (vm == 0) {
       IRExpr* mask = getVReg(0 /*v0*/, 0, ty);
-      e = binop(opofVecIR(vl, Iop_VMand_mm), e, mask);
+      e = binop(Iop_VMand_mm, e, mask);
    }
-   putIReg64(irsb, rd, unop(opofVecIR(vl, Iop_VCpop_m), e));
+   putIReg64(irsb, rd, unop(Iop_VCpop_m, e));
 
    return True;
 }
@@ -4389,15 +4377,14 @@ static Bool dis_vfirst_m(/*MB_OUT*/ DisResult* dres,
    UInt vs2 = INSN(24, 20);
    UInt rd = INSN(11, 7);
 
-   UInt vl = guest->guest_vl;
-   IRType ty = typeofVecIR(vl, Ity_VLen1);
+   IRType ty = Ity_VLen1;
 
    IRExpr* e = getVReg(vs2, 0, ty);
    if (vm == 0) {
       IRExpr* mask = getVReg(0 /*v0*/, 0, ty);
-      e = binop(opofVecIR(vl, Iop_VMand_mm), e, mask);
+      e = binop(Iop_VMand_mm, e, mask);
    }
-   putIReg64(irsb, rd, unop(opofVecIR(vl, Iop_VFirst_m), e));
+   putIReg64(irsb, rd, unop(Iop_VFirst_m, e));
 
    return True;
 }
@@ -4413,15 +4400,14 @@ static Bool dis_vmsBIOf_m(/*MB_OUT*/ DisResult* dres,
    UInt vs2 = INSN(24, 20);
    UInt vd = INSN(11, 7);
 
-   UInt vl = guest->guest_vl;
-   IRType ty = typeofVecIR(vl, Ity_VLen1);
+   IRType ty = Ity_VLen1;
 
    IRExpr* e = getVReg(vs2, 0, ty);
    if (vm == 0) {
       IRExpr* mask = getVReg(0 /*v0*/, 0, ty);
-      e = binop(opofVecIR(vl, Iop_VMand_mm), e, mask);
+      e = binop(Iop_VMand_mm, e, mask);
    }
-   putVReg(irsb, vd, 0, unop(opofVecIR(vl, op), e));
+   putVReg(irsb, vd, 0, unop(op, e));
 
    return True;
 }
@@ -4438,25 +4424,24 @@ static Bool dis_vid_v(/*MB_OUT*/ DisResult* dres,
    UInt vma = SLICE_UInt(guest->guest_vtype, 7, 7);
    UInt sew = get_sew(guest);
    Int index = sewToIndex(sew);
-   UInt vl = guest->guest_vl;
-   IRType ty = typeofVecIR(vl, Ity_VLen8 + index);
+   IRType ty = Ity_VLen8 + index;
 
-   IRExpr* res = unop(opofVecIR(vl, Iop_VId_v_8 + index), mkU64(0));
+   IRExpr* res = unop(Iop_VId_v_8 + index, mkU64(0));
    if (vm == 0) {
-      IRType mask_ty = typeofVecIR(vl, Ity_VLen1);
-      IRExpr* mask = unop(opofVecIR(vl, Iop_VExpandBitsTo_8 + index),
+      IRType mask_ty = Ity_VLen1;
+      IRExpr* mask = unop(Iop_VExpandBitsTo_8 + index,
                           getVReg(0 /*v0*/, 0, mask_ty));
 
       if (vma == 0) { // undisturbed, read it first
          IRExpr* origin = getVReg(vd, 0, ty);
-         IRExpr* inactive = binop(opofVecIR(vl, Iop_VAnd_vv_8 + index),
-                                  unop(opofVecIR(vl, Iop_VNot_8 + index), mask),
+         IRExpr* inactive = binop(Iop_VAnd_vv_8 + index,
+                                  unop(Iop_VNot_8 + index, mask),
                                   origin);
-         IRExpr* active = binop(opofVecIR(vl, Iop_VAnd_vv_8 + index), mask, res);
-         res = binop(opofVecIR(vl, Iop_VOr_vv_8 + index), active, inactive);
+         IRExpr* active = binop(Iop_VAnd_vv_8 + index, mask, res);
+         res = binop(Iop_VOr_vv_8 + index, active, inactive);
       } else { // agnostic, set to 1
-         res = binop(opofVecIR(vl, Iop_VOr_vv_8 + index),
-                     unop(opofVecIR(vl, Iop_VNot_8 + index), mask),
+         res = binop(Iop_VOr_vv_8 + index,
+                     unop(Iop_VNot_8 + index, mask),
                      res);
       }
    }
@@ -4478,30 +4463,29 @@ static Bool dis_viota_m(/*MB_OUT*/ DisResult* dres,
    UInt vma = SLICE_UInt(guest->guest_vtype, 7, 7);
    UInt sew = get_sew(guest);
    Int index = sewToIndex(sew);
-   UInt vl = guest->guest_vl;
-   IRType ty = typeofVecIR(vl, Ity_VLen8 + index);
+   IRType ty = Ity_VLen8 + index;
 
-   IRType mask_ty = typeofVecIR(vl, Ity_VLen1);
+   IRType mask_ty = Ity_VLen1;
    IRExpr* e = getVReg(vs2, 0, mask_ty);
    if (vm == 0) {
-      e = binop(opofVecIR(vl, Iop_VMand_mm), e, getVReg(0 /*v0*/, 0, mask_ty));
+      e = binop(Iop_VMand_mm, e, getVReg(0 /*v0*/, 0, mask_ty));
    }
 
-   IRExpr* res = unop(opofVecIR(vl, Iop_VIota_m_8 + index), e);
+   IRExpr* res = unop(Iop_VIota_m_8 + index, e);
    if (vm == 0) {
-      IRExpr* mask = unop(opofVecIR(vl, Iop_VExpandBitsTo_8 + index),
+      IRExpr* mask = unop(Iop_VExpandBitsTo_8 + index,
                           getVReg(0 /*v0*/, 0, mask_ty));
 
       if (vma == 0) { // undisturbed, read it first
          IRExpr* origin = getVReg(vd, 0, ty);
-         IRExpr* inactive = binop(opofVecIR(vl, Iop_VAnd_vv_8 + index),
-                                  unop(opofVecIR(vl, Iop_VNot_8 + index), mask),
+         IRExpr* inactive = binop(Iop_VAnd_vv_8 + index,
+                                  unop(Iop_VNot_8 + index, mask),
                                   origin);
-         IRExpr* active = binop(opofVecIR(vl, Iop_VAnd_vv_8 + index), mask, res);
-         res = binop(opofVecIR(vl, Iop_VOr_vv_8 + index), active, inactive);
+         IRExpr* active = binop(Iop_VAnd_vv_8 + index, mask, res);
+         res = binop(Iop_VOr_vv_8 + index, active, inactive);
       } else { // agnostic, set to 1
-         res = binop(opofVecIR(vl, Iop_VOr_vv_8 + index),
-                     unop(opofVecIR(vl, Iop_VNot_8 + index), mask),
+         res = binop(Iop_VOr_vv_8 + index,
+                     unop(Iop_VNot_8 + index, mask),
                      res);
       }
    }
@@ -4525,11 +4509,10 @@ static Bool dis_vcompress_vm(/*MB_OUT*/ DisResult* dres,
 
    UInt sew = get_sew(guest);
    Int index = sewToIndex(sew);
-   UInt vl = guest->guest_vl;
-   IRType ty = typeofVecIR(vl, Ity_VLen8 + index);
-   IRType mask_ty = typeofVecIR(vl, Ity_VLen1);
+   IRType ty = Ity_VLen8 + index;
+   IRType mask_ty = Ity_VLen1;
 
-   putVReg(irsb, vd, 0, binop(opofVecIR(vl, Iop_VCompress_vm_8 + index),
+   putVReg(irsb, vd, 0, binop(Iop_VCompress_vm_8 + index,
                               getVReg(vs1, 0, mask_ty),
                               getVReg(vs2, 0, ty)));
 
